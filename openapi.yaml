@@ -1,0 +1,877 @@
+openapi: 3.0.1
+info:
+  title: Viking-App ApiREST
+  description: |-
+    Documentación de mi API Rest
+
+    Para autenticarte:
+    1. Usa el endpoint /auth/login para obtener el token
+    2. Copia el token devuelto
+    3. Click en el botón 'Authorize' (🔓) arriba
+    4. Pega el token en el campo 'Value' (incluye 'Bearer ')
+  contact:
+    name: mirazopablo
+    email: mirazopablo@gmail.com
+  version: "1.0"
+servers:
+  - url: http://0.0.0.0:8080
+    description: Server URL
+security:
+  - bearer-jwt: []
+tags:
+  - name: Role Controller
+    description: API para la gestión de roles
+  - name: File Controller
+    description: API para la gestión de archivos
+  - name: Home Controller
+    description: API para test de funcionamiento
+  - name: User Controller
+    description: API para la gestión de usuarios
+  - name: Work Order Controller
+    description: API para la gestión de órdenes de trabajo
+  - name: DiagnosticPoint
+    description: Endpoints para la gestión de puntos de diagnóstico
+  - name: Auth
+    description: Endpoints para autenticación y registro de usuarios
+  - name: Device Controller
+    description: API para la gestión de dispositivos
+  - name: User Role Controller
+    description: API para la gestión de roles de usuario
+paths:
+  /auth/roles/{id}:
+    get:
+      tags:
+        - Role Controller
+      summary: Buscar Rol
+      description: Busca un rol en la base de datos
+      operationId: getRoleById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                $ref: "#/components/schemas/RoleDto"
+    put:
+      tags:
+        - Role Controller
+      summary: Actualizar Rol
+      description: Actualiza un rol existente
+      operationId: updateRole
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoleDto"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                $ref: "#/components/schemas/RoleDto"
+    delete:
+      tags:
+        - Role Controller
+      summary: Eliminar Rol
+      description: Elimina un rol existente
+      operationId: deleteRole
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: OK
+  /api/user/update/{id}:
+    put:
+      tags:
+        - User Controller
+      summary: Actualizar Usuario
+      description: Actualiza un usuario existente
+      operationId: updateUser
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserUpdateRequestDto"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                $ref: "#/components/schemas/UserResponseDto"
+  /api/device/update/{id}:
+    put:
+      tags:
+        - Device Controller
+      summary: Actualizar Dispositivo
+      description: Actualiza un dispositivo existente
+      operationId: updateDevice
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeviceUpdateRequestDto"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                $ref: "#/components/schemas/DeviceResponseDto"
+  /auth/signup:
+    post:
+      tags:
+        - Auth
+      operationId: registerUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterDto"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                type: string
+  /auth/roles:
+    get:
+      tags:
+        - Role Controller
+      operationId: getAllRoles
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RoleDto"
+    post:
+      tags:
+        - Role Controller
+      summary: Crear Rol
+      description: Crea un nuevo rol
+      operationId: createRole
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoleDto"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoleDto"
+  /auth/login:
+    post:
+      tags:
+        - Auth
+      operationId: authenticateUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginUserDto"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                type: object
+  /api/work-order/save:
+    post:
+      tags:
+        - Work Order Controller
+      operationId: saveWorkOrder
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WorkOrderCreateRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                type: object
+  /api/user/save:
+    post:
+      tags:
+        - User Controller
+      summary: Guardar Usuario
+      description: Guarda un nuevo usuario en la base de datos
+      operationId: registerUser_1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserCreateRequestDto"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                type: string
+  /api/diagnostic-points/add:
+    post:
+      tags:
+        - DiagnosticPoint
+      summary: Agregar punto de diagnóstico
+      description: Agrega un nuevo punto de diagnóstico a una orden de trabajo
+      operationId: addDiagnosticPoint
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              required:
+                - diagnosticPoint
+                - file
+              type: object
+              properties:
+                diagnosticPoint:
+                  type: string
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                type: object
+  /api/device/save:
+    post:
+      tags:
+        - Device Controller
+      summary: Guardar Dispositivos
+      description: Guarda un dispositivo en la base de datos
+      operationId: registerDevice
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeviceCreateRequestDto"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                $ref: "#/components/schemas/DeviceResponseDto"
+  /api/work-order/update/{orderId}:
+    patch:
+      tags:
+        - Work Order Controller
+      operationId: updateWorkOrderStatus
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WorkOrderStatusUpdateRequestDto"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                type: object
+  /auth/validate:
+    get:
+      tags:
+        - Auth
+      operationId: validateToken
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                type: boolean
+  /auth/uploads/{filename}:
+    get:
+      tags:
+        - File Controller
+      summary: Cargar archivo
+      description: Carga un archivo
+      operationId: serveFile
+      parameters:
+        - name: filename
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                type: string
+                format: binary
+  /api/work-order/search:
+    get:
+      tags:
+        - Work Order Controller
+      operationId: searchWorkOrder
+      parameters:
+        - name: staffId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: clientDni
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+        - name: deviceSerialNumber
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: query
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                type: object
+  /api/user/search:
+    get:
+      tags:
+        - User Controller
+      summary: Buscar Usuario
+      description: Busca un usuario en la base de datos
+      operationId: searchUser
+      parameters:
+        - name: id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: dni
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+        - name: roleId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: email
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: query
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                type: object
+  /api/user/current:
+    get:
+      tags:
+        - User Controller
+      summary: Obtener Usuario Actual
+      description: Obtiene la información del usuario autenticado
+      operationId: getCurrentUser
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                type: object
+  /api/user-roles/user-permission:
+    get:
+      tags:
+        - User Role Controller
+      summary: Verificar si el usuario es admin
+      description: Verifica si el usuario es admin
+      operationId: getUserPermission
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                type: string
+  /api/user-roles/is-staff:
+    get:
+      tags:
+        - User Role Controller
+      summary: Verificar si el usuario es staff
+      description: Verifica si el usuario es staff
+      operationId: isUserStaff
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                type: boolean
+  /api/diagnostic-points/by-work-order/{workOrderId}/client/{clientId}:
+    get:
+      tags:
+        - DiagnosticPoint
+      summary: Obtener puntos de diagnóstico por ID de orden de trabajo
+      description: |-
+        Obtiene una lista de puntos de diagnóstico por ID de orden de trabajo
+        y Cliente Asociado a la orden de trabajo
+      operationId: getDiagnosticPointsByWorkOrderAndClient
+      parameters:
+        - name: workOrderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: clientId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                type: object
+  /api/device/search:
+    get:
+      tags:
+        - Device Controller
+      summary: Buscar Dispositivos
+      description: Busca dispositivos en la base de datos
+      operationId: searchDevice
+      parameters:
+        - name: id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: serialNumber
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: brand
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: userDni
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+        - name: query
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                type: object
+  /api/:
+    get:
+      tags:
+        - Home Controller
+      summary: Saludo
+      description: Mensaje de bienvenida
+      operationId: greeting
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                type: string
+  /api/work-order/delete/{orderId}:
+    delete:
+      tags:
+        - Work Order Controller
+      operationId: deleteWorkOrder
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                type: object
+  /api/user/delete/{id}:
+    delete:
+      tags:
+        - User Controller
+      summary: Eliminar Usuario
+      description: Elimina un usuario existente
+      operationId: deleteUser
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                type: object
+  /api/device/delete/{id}:
+    delete:
+      tags:
+        - Device Controller
+      summary: Eliminar Dispositivo
+      description: Elimina un dispositivo existente
+      operationId: deleteDevice
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                type: object
+components:
+  schemas:
+    RoleDto:
+      title: RoleDto
+      required:
+        - descripcion
+      type: object
+      properties:
+        id:
+          type: string
+          description: Identificador único del rol
+          format: uuid
+          readOnly: true
+          example: 123e4567-e89b-12d3-a456-426614174000
+        descripcion:
+          maxLength: 100
+          minLength: 2
+          type: string
+          description: Nombre del rol
+          example: ADMIN
+      description: Objeto de transferencia de datos para roles
+    UserUpdateRequestDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        address:
+          type: string
+        phoneNumber:
+          type: string
+        secondaryPhoneNumber:
+          type: string
+        email:
+          type: string
+        dni:
+          type: integer
+          format: int32
+        password:
+          type: string
+        roleId:
+          type: string
+          format: uuid
+    UserResponseDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        dni:
+          type: integer
+          format: int32
+        address:
+          type: string
+        phoneNumber:
+          type: string
+        secondaryPhoneNumber:
+          type: string
+        email:
+          type: string
+        roleId:
+          type: string
+          format: uuid
+    DeviceUpdateRequestDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+        brand:
+          type: string
+        model:
+          type: string
+        serialNumber:
+          type: string
+        userId:
+          type: string
+          format: uuid
+    DeviceResponseDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+        brand:
+          type: string
+        model:
+          type: string
+        serialNumber:
+          type: string
+        userId:
+          type: string
+          format: uuid
+        userName:
+          type: string
+        userDni:
+          type: integer
+          format: int32
+    RegisterDto:
+      required:
+        - address
+        - dni
+        - email
+        - name
+        - password
+        - phoneNumber
+        - roleId
+      type: object
+      properties:
+        name:
+          type: string
+          description: Nombre completo del usuario
+        dni:
+          type: integer
+          description: Documento Nacional de Identidad
+          format: int32
+        address:
+          type: string
+          description: Dirección del usuario
+        phoneNumber:
+          type: string
+          description: Número de teléfono principal
+        secondaryPhoneNumber:
+          type: string
+        email:
+          type: string
+          description: Correo electrónico del usuario
+        password:
+          type: string
+          description: Contraseña del usuario
+        roleId:
+          type: string
+          description: Identificador del rol
+          format: uuid
+    LoginUserDto:
+      type: object
+      properties:
+        email:
+          type: string
+          description: Correo electrónico del usuario
+          example: example@example.com
+        password:
+          type: string
+          description: Contraseña del usuario
+          example: password
+      description: DTO para el inicio de sesión
+    WorkOrderCreateRequest:
+      required:
+        - clientId
+        - deviceId
+        - issueDescription
+        - repairStatus
+      type: object
+      properties:
+        clientId:
+          type: string
+          description: Identificador único del cliente
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        deviceId:
+          type: string
+          description: Identificador único del dispositivo
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        issueDescription:
+          maxLength: 200
+          minLength: 2
+          type: string
+          description: Descripción del problema
+          example: Pantalla rota
+        repairStatus:
+          type: string
+          description: Estado inicial de la reparación
+          example: RECEIVED
+          enum:
+            - RECEIVED
+            - IN_PROGRESS
+            - IN_QUEUE
+            - DONE
+            - WITHDRAWN
+      description: Request para crear una orden de trabajo
+    UserCreateRequestDto:
+      type: object
+      properties:
+        name:
+          type: string
+        dni:
+          type: integer
+          format: int32
+        address:
+          type: string
+        phoneNumber:
+          type: string
+        secondaryPhoneNumber:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+        roleId:
+          type: string
+          format: uuid
+    DeviceCreateRequestDto:
+      type: object
+      properties:
+        type:
+          type: string
+        brand:
+          type: string
+        model:
+          type: string
+        serialNumber:
+          type: string
+        userId:
+          type: string
+          format: uuid
+    WorkOrderStatusUpdateRequestDto:
+      required:
+        - repairStatus
+      type: object
+      properties:
+        repairStatus:
+          type: string
+  securitySchemes:
+    bearer-jwt:
+      type: http
+      description: "Ingrese el token JWT con el prefijo Bearer: Bearer <token>"
+      scheme: bearer
+      bearerFormat: JWT
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

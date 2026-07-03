@@ -1,0 +1,928 @@
+basePath: /
+definitions:
+  models.DeviceCreateRequestDto:
+    properties:
+      brand:
+        type: string
+      model:
+        type: string
+      serialNumber:
+        type: string
+      type:
+        type: string
+      userId:
+        type: string
+    required:
+    - brand
+    - model
+    - serialNumber
+    - type
+    - userId
+    type: object
+  models.DeviceResponseDto:
+    properties:
+      brand:
+        type: string
+      id:
+        type: string
+      model:
+        type: string
+      serialNumber:
+        type: string
+      type:
+        type: string
+      userDni:
+        type: integer
+      userId:
+        type: string
+      userName:
+        type: string
+    type: object
+  models.DeviceUpdateRequestDto:
+    properties:
+      brand:
+        type: string
+      id:
+        type: string
+      model:
+        type: string
+      serialNumber:
+        type: string
+      type:
+        type: string
+      userId:
+        type: string
+    required:
+    - brand
+    - model
+    - serialNumber
+    - type
+    - userId
+    type: object
+  models.DiagnosticPointResponseDto:
+    properties:
+      clientId:
+        type: string
+      createdAt:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      imageUrl:
+        type: string
+      workOrderId:
+        type: string
+    type: object
+  models.LoginUserDto:
+    properties:
+      email:
+        example: admin@viking.com
+        type: string
+      password:
+        example: secret123
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  models.RegisterDto:
+    properties:
+      address:
+        example: Calle Valhalla 123
+        type: string
+      dni:
+        example: 30123456
+        type: integer
+      email:
+        example: admin@viking.com
+        type: string
+      name:
+        example: Viking Admin
+        maxLength: 150
+        minLength: 2
+        type: string
+      password:
+        example: secret123
+        minLength: 6
+        type: string
+      phoneNumber:
+        example: "5491112345678"
+        type: string
+      roleId:
+        example: 123e4567-e89b-12d3-a456-426614174000
+        type: string
+      secondaryPhoneNumber:
+        example: "5491187654321"
+        type: string
+    required:
+    - address
+    - dni
+    - email
+    - name
+    - phoneNumber
+    - roleId
+    type: object
+  models.Role:
+    properties:
+      descripcion:
+        example: ADMIN
+        maxLength: 100
+        minLength: 2
+        type: string
+      id:
+        example: 123e4567-e89b-12d3-a456-426614174000
+        type: string
+    required:
+    - descripcion
+    type: object
+  models.RoleCreateRequest:
+    properties:
+      descripcion:
+        example: ADMIN
+        maxLength: 100
+        minLength: 2
+        type: string
+    required:
+    - descripcion
+    type: object
+  models.UserResponseDto:
+    properties:
+      address:
+        example: Calle Valhalla 123
+        type: string
+      dni:
+        example: 30123456
+        type: integer
+      email:
+        example: admin@viking.com
+        type: string
+      id:
+        example: 123e4567-e89b-12d3-a456-426614174000
+        type: string
+      name:
+        example: Viking Admin
+        type: string
+      phoneNumber:
+        example: "5491112345678"
+        type: string
+      roleId:
+        example: 123e4567-e89b-12d3-a456-426614174000
+        type: string
+      secondaryPhoneNumber:
+        example: "5491187654321"
+        type: string
+    type: object
+  models.WorkOrderCreateRequest:
+    properties:
+      clientId:
+        type: string
+      deviceId:
+        type: string
+      issueDescription:
+        maxLength: 200
+        minLength: 2
+        type: string
+      repairStatus:
+        type: string
+    required:
+    - clientId
+    - deviceId
+    - issueDescription
+    - repairStatus
+    type: object
+  models.WorkOrderResponseDto:
+    properties:
+      clientDni:
+        type: integer
+      clientId:
+        type: string
+      clientName:
+        type: string
+      createdAt:
+        type: string
+      deviceBrand:
+        type: string
+      deviceId:
+        type: string
+      deviceModel:
+        type: string
+      deviceSerialNumber:
+        type: string
+      id:
+        type: string
+      issueDescription:
+        type: string
+      repairStatus:
+        type: string
+      staffId:
+        type: string
+      staffName:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  models.WorkOrderStatusUpdateRequestDto:
+    properties:
+      repairStatus:
+        type: string
+    required:
+    - repairStatus
+    type: object
+host: 0.0.0.0:8080
+info:
+  contact:
+    email: mirazopablo@gmail.com
+    name: mirazopablo
+  description: "Documentación de mi API Rest\n\nPara autenticarte:\n1. Usa el endpoint
+    /auth/login para obtener el token\n2. Copia el token devuelto\n3. Click en el
+    botón 'Authorize' (\U0001F513) arriba\n4. Pega el token en el campo 'Value' (incluye
+    'Bearer ')"
+  title: Viking-App ApiREST
+  version: "1.0"
+paths:
+  /api/:
+    get:
+      description: Mensaje de bienvenida
+      operationId: greeting
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      security:
+      - bearer-jwt: []
+      summary: Saludo
+      tags:
+      - Home Controller
+  /api/device/delete/{id}:
+    delete:
+      description: Elimina un dispositivo de la base de datos
+      operationId: deleteDevice
+      parameters:
+      - description: Device UUID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+      security:
+      - bearer-jwt: []
+      summary: Eliminar Dispositivo
+      tags:
+      - Device Controller
+  /api/device/save:
+    post:
+      consumes:
+      - application/json
+      description: Guarda un dispositivo en la base de datos
+      operationId: registerDevice
+      parameters:
+      - description: Device Create Request
+        in: body
+        name: device
+        required: true
+        schema:
+          $ref: '#/definitions/models.DeviceCreateRequestDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.DeviceResponseDto'
+      security:
+      - bearer-jwt: []
+      summary: Guardar Dispositivos
+      tags:
+      - Device Controller
+  /api/device/search:
+    get:
+      description: Busca dispositivos en la base de datos
+      operationId: searchDevice
+      parameters:
+      - description: Device UUID
+        format: uuid
+        in: query
+        name: id
+        type: string
+      - description: Serial Number
+        in: query
+        name: serialNumber
+        type: string
+      - description: Brand
+        in: query
+        name: brand
+        type: string
+      - description: User DNI
+        format: int32
+        in: query
+        name: userDni
+        type: integer
+      - description: General Search Term
+        in: query
+        name: query
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.DeviceResponseDto'
+            type: array
+      security:
+      - bearer-jwt: []
+      summary: Buscar Dispositivos
+      tags:
+      - Device Controller
+  /api/device/update/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Actualiza un dispositivo existente
+      operationId: updateDevice
+      parameters:
+      - description: Device UUID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Device Update Request
+        in: body
+        name: device
+        required: true
+        schema:
+          $ref: '#/definitions/models.DeviceUpdateRequestDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.DeviceResponseDto'
+      security:
+      - bearer-jwt: []
+      summary: Actualizar Dispositivo
+      tags:
+      - Device Controller
+  /api/diagnostic-points/add:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Agrega un nuevo punto de diagnóstico a una orden de trabajo
+      operationId: addDiagnosticPoint
+      parameters:
+      - description: Work Order UUID
+        in: formData
+        name: workOrderId
+        type: string
+      - description: Client UUID
+        in: formData
+        name: clientId
+        type: string
+      - description: Diagnostic description or JSON string
+        in: formData
+        name: diagnosticPoint
+        required: true
+        type: string
+      - description: Attached image file
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.DiagnosticPointResponseDto'
+      security:
+      - bearer-jwt: []
+      summary: Agregar punto de diagnóstico
+      tags:
+      - DiagnosticPoint
+  /api/diagnostic-points/by-work-order/{workOrderId}/client/{clientId}:
+    get:
+      description: Obtiene una lista de puntos de diagnóstico por ID de orden de trabajo
+        y Cliente Asociado a la orden de trabajo
+      operationId: getDiagnosticPointsByWorkOrderAndClient
+      parameters:
+      - description: Work Order UUID
+        format: uuid
+        in: path
+        name: workOrderId
+        required: true
+        type: string
+      - description: Client UUID
+        format: uuid
+        in: path
+        name: clientId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.DiagnosticPointResponseDto'
+            type: array
+      security:
+      - bearer-jwt: []
+      summary: Obtener puntos de diagnóstico por ID de orden de trabajo
+      tags:
+      - DiagnosticPoint
+  /api/diagnostic-points/delete/{id}:
+    delete:
+      description: Borra una evidencia multimedia por UUID
+      operationId: deleteDiagnosticPoint
+      parameters:
+      - description: Diagnostic Point UUID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+      security:
+      - bearer-jwt: []
+      summary: Eliminar Punto de Diagnóstico
+      tags:
+      - DiagnosticPoint
+  /api/user-roles/is-staff:
+    get:
+      description: Verifica si el usuario es staff
+      operationId: isUserStaff
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: boolean
+      security:
+      - bearer-jwt: []
+      summary: Verificar si el usuario es staff
+      tags:
+      - User Role Controller
+  /api/user-roles/user-permission:
+    get:
+      description: Verifica si el usuario es admin
+      operationId: getUserPermission
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      security:
+      - bearer-jwt: []
+      summary: Verificar si el usuario es admin
+      tags:
+      - User Role Controller
+  /api/user/current:
+    get:
+      description: Obtiene la información del usuario autenticado vía JWT en cabecera
+        Authorization
+      operationId: getCurrentUser
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.UserResponseDto'
+      security:
+      - bearer-jwt: []
+      summary: Obtener Usuario Actual
+      tags:
+      - User Controller
+  /api/user/delete/{id}:
+    delete:
+      description: Elimina un usuario existente
+      operationId: deleteUser
+      parameters:
+      - description: User UUID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+      security:
+      - bearer-jwt: []
+      summary: Eliminar Usuario
+      tags:
+      - User Controller
+  /api/user/save:
+    post:
+      consumes:
+      - application/json
+      description: Guarda un nuevo usuario en la base de datos
+      operationId: registerUser_1
+      parameters:
+      - description: User Create Request
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/models.RegisterDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      security:
+      - bearer-jwt: []
+      summary: Guardar Usuario
+      tags:
+      - User Controller
+  /api/user/search:
+    get:
+      description: Busca un usuario en la base de datos por ID o lista todos
+      operationId: searchUser
+      parameters:
+      - description: User UUID
+        format: uuid
+        in: query
+        name: id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.UserResponseDto'
+      security:
+      - bearer-jwt: []
+      summary: Buscar Usuario
+      tags:
+      - User Controller
+  /api/user/update/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Actualiza un usuario existente
+      operationId: updateUser
+      parameters:
+      - description: User UUID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: User Update Request
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/models.RegisterDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.UserResponseDto'
+      security:
+      - bearer-jwt: []
+      summary: Actualizar Usuario
+      tags:
+      - User Controller
+  /api/work-order/delete/{orderId}:
+    delete:
+      description: Borra o cancela una orden de trabajo por UUID
+      operationId: deleteWorkOrder
+      parameters:
+      - description: Work Order UUID
+        format: uuid
+        in: path
+        name: orderId
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+      security:
+      - bearer-jwt: []
+      summary: Eliminar Orden de Trabajo
+      tags:
+      - Work Order Controller
+  /api/work-order/save:
+    post:
+      consumes:
+      - application/json
+      description: Genera una nueva orden uniendo clientId, deviceId, descripción
+        del problema y estado inicial
+      operationId: saveWorkOrder
+      parameters:
+      - description: Work Order Create Request
+        in: body
+        name: workOrder
+        required: true
+        schema:
+          $ref: '#/definitions/models.WorkOrderCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.WorkOrderResponseDto'
+      security:
+      - bearer-jwt: []
+      summary: Crear Orden de Trabajo
+      tags:
+      - Work Order Controller
+  /api/work-order/search:
+    get:
+      description: Permite rastrear reparaciones por staffId, clientDni, deviceSerialNumber
+        o término general
+      operationId: searchWorkOrder
+      parameters:
+      - description: Staff UUID
+        format: uuid
+        in: query
+        name: staffId
+        type: string
+      - description: Client DNI
+        format: int32
+        in: query
+        name: clientDni
+        type: integer
+      - description: Device Serial Number
+        in: query
+        name: deviceSerialNumber
+        type: string
+      - description: General Search Term
+        in: query
+        name: query
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.WorkOrderResponseDto'
+            type: array
+      security:
+      - bearer-jwt: []
+      summary: Buscar Órdenes de Trabajo
+      tags:
+      - Work Order Controller
+  /api/work-order/update/{orderId}:
+    patch:
+      consumes:
+      - application/json
+      description: Cambia el estado de reparación de una orden (RECEIVED -> IN_PROGRESS
+        -> DONE)
+      operationId: updateWorkOrderStatus
+      parameters:
+      - description: Work Order UUID
+        format: uuid
+        in: path
+        name: orderId
+        required: true
+        type: string
+      - description: Status Update Request
+        in: body
+        name: status
+        required: true
+        schema:
+          $ref: '#/definitions/models.WorkOrderStatusUpdateRequestDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.WorkOrderResponseDto'
+      security:
+      - bearer-jwt: []
+      summary: Actualizar Estado de Orden de Trabajo
+      tags:
+      - Work Order Controller
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Autentica a un usuario y retorna su token JWT
+      operationId: authenticateUser
+      parameters:
+      - description: Login Credentials
+        in: body
+        name: creds
+        required: true
+        schema:
+          $ref: '#/definitions/models.LoginUserDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Iniciar Sesión
+      tags:
+      - Auth
+  /auth/roles:
+    get:
+      description: Retorna la lista completa de roles disponibles en el sistema
+      operationId: getAllRoles
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Role'
+            type: array
+      security:
+      - bearer-jwt: []
+      summary: Listar Roles
+      tags:
+      - Role Controller
+    post:
+      consumes:
+      - application/json
+      description: Crea un nuevo rol
+      operationId: createRole
+      parameters:
+      - description: Role Create Request
+        in: body
+        name: role
+        required: true
+        schema:
+          $ref: '#/definitions/models.RoleCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Role'
+      security:
+      - bearer-jwt: []
+      summary: Crear Rol
+      tags:
+      - Role Controller
+  /auth/roles/{id}:
+    delete:
+      description: Elimina un rol existente
+      operationId: deleteRole
+      parameters:
+      - description: Role UUID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+      security:
+      - bearer-jwt: []
+      summary: Eliminar Rol
+      tags:
+      - Role Controller
+    get:
+      description: Busca un rol en la base de datos
+      operationId: getRoleById
+      parameters:
+      - description: Role UUID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Role'
+      security:
+      - bearer-jwt: []
+      summary: Buscar Rol
+      tags:
+      - Role Controller
+    put:
+      consumes:
+      - application/json
+      description: Actualiza un rol existente
+      operationId: updateRole
+      parameters:
+      - description: Role UUID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Role Update Request
+        in: body
+        name: role
+        required: true
+        schema:
+          $ref: '#/definitions/models.RoleCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Role'
+      security:
+      - bearer-jwt: []
+      summary: Actualizar Rol
+      tags:
+      - Role Controller
+  /auth/signup:
+    post:
+      consumes:
+      - application/json
+      description: Crea y registra un nuevo usuario en la base de datos
+      operationId: registerUser
+      parameters:
+      - description: Register Request
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/models.RegisterDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      security:
+      - bearer-jwt: []
+      summary: Registrar Usuario
+      tags:
+      - Auth
+  /auth/uploads/{filepath}:
+    get:
+      description: Carga un archivo o imagen desde el servidor (incluso en subcarpetas)
+      operationId: serveFile
+      parameters:
+      - description: Ruta relativa del archivo
+        in: path
+        name: filepath
+        required: true
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+      summary: Cargar archivo
+      tags:
+      - File Controller
+  /auth/validate:
+    get:
+      description: Verifica si un token JWT enviado en la cabecera Authorization es
+        válido
+      operationId: validateToken
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: boolean
+      summary: Validar Token JWT
+      tags:
+      - Auth
+securityDefinitions:
+  bearer-jwt:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
