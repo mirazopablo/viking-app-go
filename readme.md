@@ -8,25 +8,25 @@
 ![Swagger](https://img.shields.io/badge/OpenAPI-Swagger_3.0-85EA2D?style=for-the-badge&logo=swagger&logoColor=black)
 ![Status](https://img.shields.io/badge/Status-Active_Dev-yellow?style=for-the-badge)
 
-> **Servicio Backend de Alto Rendimiento para el Ecosistema Viking-App (El Vikingo Store)**  
-> Plataforma de gestión transaccional para talleres de servicio técnico, control de inventario de equipos, seguimiento de órdenes de trabajo en tiempo real y registro de evidencias multimedia.
+> **High-Performance Backend Service for the Viking-App Ecosystem (El Vikingo Store)**  
+> Transactional management platform for technical repair shops, inventory tracking of technological devices, real-time work order lifecycle management, and multimedia diagnostic evidence logging.
 
-> 📱 **¿Buscas el Frontend de la Aplicación?**  
-> Consulta nuestro repositorio cliente en React Native / Expo y React Web: [Viking-App Frontend](https://github.com/mirazopablo/Viking-App-Front)
-
----
-
-## 📋 Sobre el Proyecto
-
-Esta API REST constituye el núcleo arquitectónico de **Viking App**, una solución integral diseñada para optimizar los flujos operativos de talleres técnicos y servicios de reparación de computadoras, consolas y dispositivos móviles. 
-
-El proyecto representa una evolución y **migración arquitectónica desde Spring Boot (Java) hacia Go (Golang)** utilizando el framework web **Gin** y el ORM **GORM**. El objetivo de esta reingeniería es lograr una **latencia ultra baja**, un consumo de memoria mínimo (*footprint* reducido) y una alta capacidad de concurrencia nativa (Goroutines) sin estado (*stateless*).
+> 📱 **Looking for the Frontend Application?**  
+> Check out our client repository built with React Native / Expo and React Web: [Viking-App Frontend](https://github.com/mirazopablo/Viking-App-Front)
 
 ---
 
-## 🏗 Arquitectura de Datos y MER (Modelo Entidad-Relación)
+## 📋 About The Project
 
-El sistema está modelado sobre una base de datos relacional altamente normalizada, centrada en el ciclo de vida de las **Órdenes de Trabajo (`work_orders`)** y los **Dispositivos (`devices`)**. Utiliza identificadores universales **UUID v4** como claves primarias y mecanismo de borrado lógico (**Soft Deletes** a través de `deleted_at`) para garantizar trazabilidad y auditoría.
+This REST API serves as the core architectural backbone of **Viking App**, an integrated platform designed to streamline operational workflows for technical service shops, computer repair centers, mobile device technicians, and game console repair laboratories.
+
+This project represents an architectural evolution and **migration from Spring Boot (Java) to Go (Golang)** using the **Gin** web framework and **GORM** ORM. The primary goal of this reengineering effort is to achieve **ultra-low latency**, a minimal memory footprint, and native stateless high concurrency leveraging Go routines.
+
+---
+
+## 🏗 Data Architecture & ERD (Entity-Relationship Diagram)
+
+The system is modeled on a highly normalized relational database focused on the lifecycle of **Work Orders (`work_orders`)** and **Devices (`devices`)**. It utilizes universal **UUID v4** identifiers as primary keys and a logical soft-delete mechanism (**Soft Deletes** via `deleted_at`) to ensure data immutability, traceability, and comprehensive audit trails.
 
 ```mermaid
 erDiagram
@@ -45,7 +45,7 @@ erDiagram
     }
     ROLES {
         uuid id PK
-        string description
+        string name
         string permission
         timestamp created_at
         timestamp updated_at
@@ -93,115 +93,118 @@ erDiagram
         timestamp deleted_at
     }
 
-    USERS ||--o{ USER_ROLES : "tiene asignados"
-    ROLES ||--o{ USER_ROLES : "define permisos para"
-    USERS ||--o{ DEVICES : "es propietario de (cliente)"
-    USERS ||--o{ WORK_ORDERS : "solicita (client_id)"
-    USERS ||--o{ WORK_ORDERS : "ejecuta y gestiona (staff_id)"
-    DEVICES ||--o{ WORK_ORDERS : "se repara en"
-    WORK_ORDERS ||--o{ DIAGNOSTIC_POINTS : "registra historial en"
-    USERS ||--o{ DIAGNOSTIC_POINTS : "asociado a (client_id)"
+    USERS ||--o{ USER_ROLES : "assigned to"
+    ROLES ||--o{ USER_ROLES : "defines permissions for"
+    USERS ||--o{ DEVICES : "owns (client)"
+    USERS ||--o{ WORK_ORDERS : "requests (client_id)"
+    USERS ||--o{ WORK_ORDERS : "executes and manages (staff_id)"
+    DEVICES ||--o{ WORK_ORDERS : "repaired in"
+    WORK_ORDERS ||--o{ DIAGNOSTIC_POINTS : "records diagnostic history in"
+    USERS ||--o{ DIAGNOSTIC_POINTS : "associated with (client_id)"
 ```
 
 ---
 
-## 🛠 Stack Tecnológico y Dependencias
+## 🛠 Tech Stack & Dependencies
 
 ### Core & Framework
-* **Lenguaje:** [Go 1.26+](https://golang.org/)
-* **Router / Web Framework:** [Gin Web Framework v1.12.0](https://github.com/gin-gonic/gin) - Enrutamiento HTTP de alto rendimiento.
-* **Manejo de Configuración:** `godotenv` - Gestión segura de variables de entorno por archivo `.env`.
+* **Language:** [Go 1.26+](https://golang.org/)
+* **Router / Web Framework:** [Gin Web Framework v1.12.0](https://github.com/gin-gonic/gin) - High-performance HTTP web framework and routing engine.
+* **Configuration Management:** `godotenv` - Secure environment variable loading via `.env` configuration files.
 
-### Persistencia y Base de Datos
-* **ORM:** [GORM v1.31.2](https://gorm.io/) - Mapeo objeto-relacional con soporte de ganchos (*hooks*) transaccionales.
-* **Drivers de Base de Datos:** Soporte multi-motor para **PostgreSQL** (`gorm.io/driver/postgres`) y **MySQL/SQLite**.
-* **Almacenamiento de Archivos:** Gestión en sistema de archivos local (`uploads/`) con soporte de transmisión por bloques (`multipart/form-data`).
+### Persistence & Database
+* **ORM:** [GORM v1.31.2](https://gorm.io/) - Developer-friendly ORM supporting transactional callbacks, associations, and hooks.
+* **Database Drivers:** Multi-engine database driver support for **PostgreSQL** (`gorm.io/driver/postgres`), **MySQL**, and **SQLite**.
+* **File Storage:** Local filesystem storage (`uploads/`) supporting multipart chunked streaming (`multipart/form-data`) for diagnostic media attachments.
 
-### Seguridad & Autenticación
-* **Estándar:** JWT Stateless (JSON Web Tokens).
-* **Librería Criptográfica:** `golang-jwt/jwt/v5` - Firma y verificación HMAC-SHA256/512.
-* **Hashing de Contraseñas:** `golang.org/x/crypto/bcrypt` - Hashing adaptativo seguro con salt nativo.
-* **Control de Acceso:** Middleware personalizado para RBAC (*Role-Based Access Control*: `ADMIN`, `STAFF`, `CLIENT`).
+### Security & Authentication
+* **Standard:** Stateless JWT (JSON Web Tokens).
+* **Cryptographic Library:** `golang-jwt/jwt/v5` - HMAC-SHA256/512 token signing and verification.
+* **Password Hashing:** `golang.org/x/crypto/bcrypt` - Secure adaptive bcrypt hashing with automatic salting.
+* **Access Control:** Custom middleware enforcing RBAC (*Role-Based Access Control*: `ADMIN`, `STAFF`, `CLIENT`).
 
-### Documentación y API Contract
-* **Generador de Documentación:** [Swaggo (`swaggo/gin-swagger`)](https://github.com/swaggo/gin-swagger) - Integración nativa de Swagger UI a partir de comentarios y anotaciones de código.
-* **Especificaciones:** OpenAPI 3.0 / Swagger 2.0 (`openapi.yaml`, `docs/swagger.json`).
+### Documentation & API Contract
+* **Documentation Generator:** [Swaggo (`swaggo/gin-swagger`)](https://github.com/swaggo/gin-swagger) - Automated Swagger UI integration generated directly from code annotations and docstrings.
+* **Specifications:** OpenAPI 3.0 / Swagger 2.0 (`openapi.yaml`, `docs/swagger.json`).
 
 ---
 
-## 📂 Estructura Arquitectónica del Proyecto
+## 📂 Architectural Project Structure
 
-El código está estructurado siguiendo los principios de **Clean Architecture** (Arquitectura Limpia) y separación estricta por capas horizontales de responsabilidad:
+The codebase strictly adheres to **Clean Architecture** principles and horizontal layer separation of concerns:
 
 ```text
 viking-app-go/
-├── config/                  # Inicialización y configuración del sistema
-│   ├── config.go            # Carga y validación de variables de entorno (.env)
-│   └── database.go          # Conexión a base de datos y auto-migración de esquemas GORM
-├── controllers/             # Capa de Presentación (REST Handlers)
-│   ├── auth_controller.go   # Endpoints públicos de login y registro
-│   ├── device_controller.go # Gestión del inventario de equipos tecnológicos
-│   ├── ...                  # Controladores por dominio (Usuarios, Roles, Órdenes, Diagnósticos)
+├── cmd/                     # Standalone CLI tools and executable commands
+│   └── seeder/              # Interactive console database seeder tool (main.go)
+├── config/                  # System initialization and configuration management
+│   ├── config.go            # Environment variable loading (.env) and struct parsing
+│   └── database.go          # Database connection pool and automatic GORM schema migrations
+├── controllers/             # Presentation Layer (REST HTTP Handlers)
+│   ├── auth_controller.go   # Public authentication endpoints (login, registration)
+│   ├── device_controller.go # Device inventory management handlers
+│   ├── ...                  # Domain-specific controllers (Users, Roles, Orders, Diagnostics)
 │   └── work_order_controller.go
-├── docs/                    # Documentación autogenerada por Swaggo
+├── docs/                    # Automated Swagger documentation artifacts
 │   ├── docs.go
 │   ├── swagger.json
 │   └── swagger.yaml
-├── middlewares/             # Interceptores y Filtros HTTP
-│   └── auth_middleware.go   # Validación criptográfica del Bearer Token y roles RBAC
-├── models/                  # Dominio / Entidades de Base de Datos (Tags GORM y JSON)
+├── middlewares/             # HTTP Interceptors and Filters
+│   ├── auth_middleware.go   # Cryptographic Bearer Token validation and RBAC authorization
+│   └── logger_middleware.go # Structured request logging and panic recovery
+├── models/                  # Domain Layer / Database Entities (GORM and JSON tags)
 │   ├── device.go
 │   ├── diagnostic_point.go
-│   ├── role.go
-│   ├── user.go
+│   ├── role.go              # Role entity (standardized Name attribute)
+│   ├── user.go              # User entity (supporting nullable secondary phone and optional passwords)
 │   ├── user_role.go
 │   └── work_order.go
-├── repositories/            # Capa de Acceso a Datos (Patrón Repository / GORM Queries)
+├── repositories/            # Data Access Layer (Repository Pattern / GORM SQL queries)
 │   ├── device_repository.go
 │   ├── ...
 │   └── work_order_repository.go
-├── routes/                  # Configuración centralizada del enrutador Gin y grupos /api, /auth
+├── routes/                  # Router configuration and centralized API grouping (/api, /auth)
 │   └── routes.go
-├── services/                # Capa de Lógica de Negocio (Reglas de negocio y transacciones)
+├── services/                # Business Logic Layer (Domain rules and transactions)
 │   ├── device_service.go
-│   ├── jwt_service.go       # Emisión, firma y verificación de tokens de acceso
+│   ├── jwt_service.go       # Access token issuance, rotation, and cryptographic verification
 │   ├── ...
 │   └── work_order_service.go
-├── uploads/                 # Almacenamiento local de evidencias multimedia (Ignorado por Git)
-├── Viking_app_documentation.md # Manual técnico detallado del proyecto en español
-├── openapi.yaml             # Contrato estático OpenAPI 3.0
-├── main.go                  # Punto de entrada de la aplicación Go
-├── go.mod / go.sum          # Gestión de dependencias del módulo Go
-└── README.md                # Este documento
+├── uploads/                 # Local directory for multimedia diagnostic evidence (Git-ignored)
+├── Viking_app_documentation.md # Comprehensive technical project documentation
+├── openapi.yaml             # Static OpenAPI 3.0 contract specification
+├── main.go                  # Main application entry point and HTTP server lifecycle
+├── go.mod / go.sum          # Go module dependencies and checksums
+└── README.md                # Project README documentation
 ```
 
 ---
 
-## 🚀 Guía de Inicio Rápido (Getting Started)
+## 🚀 Getting Started Guide
 
-### 1. Prerrequisitos
-* **Go** instalado en el sistema (Versión recomendada: `1.26+` o superior).
-* Servidor de base de datos **PostgreSQL** o **MySQL** activo.
-* Herramienta de control de versiones **Git**.
+### 1. Prerequisites
+* **Go** installed on your operating system (Recommended version: `1.26+` or newer).
+* An active **PostgreSQL** or **MySQL** database server instance.
+* **Git** version control system.
 
-### 2. Clonar el Repositorio
+### 2. Clone the Repository
 ```bash
 git clone git@github.com:mirazopablo/viking-app-go.git
 cd viking-app-go
 ```
 
-### 3. Configuración de Variables de Entorno
-Crea tu archivo de entorno local copiando la plantilla de ejemplo:
+### 3. Environment Configuration
+Create your local environment configuration file by duplicating the example template:
 ```bash
 cp .env.example .env
 ```
 
-Edita el archivo **`.env`** con tus credenciales locales:
+Edit the **`.env`** file with your local database credentials and security settings:
 ```ini
-# Puerto del Servidor HTTP
+# HTTP Server Port
 PORT=8080
 
-# Configuración de Base de Datos
+# PostgreSQL Database Configuration
 DB_HOST=localhost
 DB_USER=postgres
 DB_PASSWORD=secret_password
@@ -209,60 +212,67 @@ DB_NAME=viking_db
 DB_PORT=5432
 DB_SSLMODE=disable
 
-# Seguridad JWT (Secreto criptográfico HMAC mínimo 256 bits)
-JWT_SECRET=TU_CLAVE_SECRETA_SUPER_SEGURA_PARA_FIRMAR_TOKENS
+# JWT Security (Minimum 256-bit HMAC secret key)
+JWT_SECRET=YOUR_SUPER_SECURE_SECRET_KEY_FOR_SIGNING_TOKENS
 JWT_EXPIRATION_HOURS=24
 ```
 
-### 4. Descargar Dependencias y Ejecutar
-Instala los módulos de Go y levanta el servidor de desarrollo:
+### 4. Database Seeding (CLI Tool)
+Before starting the API server for the first time, initialize the core system roles (`ADMIN`, `STAFF`, `CLIENT`) and create your initial primary Admin account using our interactive console seeder:
+```bash
+go run cmd/seeder/main.go
+```
+The seeder will guide you through an interactive terminal prompt to securely register the root Administrator profile with full contact details without leaving hardcoded passwords in version control.
+
+### 5. Install Dependencies and Run Server
+Download Go module dependencies and launch the backend server:
 ```bash
 go mod download
 go run main.go
 ```
-La API iniciará en `http://localhost:8080` y ejecutará la sincronización automática de modelos (`AutoMigrate`).
+The API server will initialize on `http://localhost:8080` and automatically execute GORM schema migrations (`AutoMigrate`) for all domain models.
 
 ---
 
-## 📚 Documentación de la API (Swagger UI & OpenAPI)
+## 📚 API Documentation (Swagger UI & OpenAPI)
 
-El proyecto cuenta con documentación interactiva en tiempo real gracias a la integración nativa con **Swagger UI**. Puedes explorar los endpoints, probar llamadas REST y verificar esquemas DTO directamente desde el navegador:
+The project features real-time interactive REST API documentation powered by **Swagger UI**. You can explore available endpoints, inspect request/response payloads, and execute live REST calls directly from your web browser:
 
-> 🌐 **Swagger UI Interactivo:** `http://localhost:8080/swagger/index.html`  
-> 📄 **Contrato OpenAPI YAML:** Disponible localmente en [openapi.yaml](file:///mnt/GitHub/viking-app-go/openapi.yaml) o [Viking_app_documentation.md](file:///mnt/GitHub/viking-app-go/Viking_app_documentation.md)
+> 🌐 **Interactive Swagger UI:** `http://localhost:8080/swagger/index.html`  
+> 📄 **OpenAPI YAML Contract:** Available locally at [openapi.yaml](file:///mnt/GitHub/viking-app-go/openapi.yaml) or [Viking_app_documentation.md](file:///mnt/GitHub/viking-app-go/Viking_app_documentation.md)
 
 ---
 
-## 🔒 Flujo de Seguridad y Roles (RBAC Stateless)
+## 🔒 Security Flow & Role Hierarchy (Stateless RBAC)
 
-El sistema utiliza autenticación sin estado mediante **JSON Web Tokens (JWT)**. Para interactuar con rutas protegidas:
+The platform implements stateless authentication using **JSON Web Tokens (JWT)**. To interact with protected API endpoints:
 
-1. **Autenticación:** Realiza un `POST` a `/auth/login` con tus credenciales (`email` y `password`).
-2. **Obtención de Token:** Recibirás una cadena JWT firmada criptográficamente en el servidor.
-3. **Peticiones Autorizadas:** Envia el token en el encabezado HTTP de tus peticiones hacia `/api/*`:
+1. **Authentication:** Submit an HTTP `POST` request to `/auth/login` containing your account credentials (`email` and `password`).
+2. **Token Issuance:** If authenticated, the server returns a cryptographically signed JWT string.
+3. **Authorized Requests:** Include the token in the `Authorization` HTTP header of your subsequent requests to `/api/*`:
    ```http
-   Authorization: Bearer <tu_jwt_token_aqui>
+   Authorization: Bearer <your_jwt_token_here>
    ```
 
-### Jerarquía de Roles
-* **`ADMIN`**: Acceso total al sistema, gestión de usuarios, catálogo de roles y eliminación física/lógica de registros.
-* **`STAFF`**: Técnicos de taller. Pueden registrar equipos, gestionar estados de órdenes de trabajo (`RECEIVED`, `IN_PROGRESS`, `DONE`, `WITHDRAWN`), buscar clientes y adjuntar diagnósticos con fotos.
-* **`CLIENT`**: Usuarios finales. Acceso de solo lectura a sus propios equipos y al historial y estado de sus órdenes de trabajo en tiempo real.
+### Role Hierarchy & Permissions
+* **`ADMIN`**: Root system access. Authorized to manage user accounts, oversee role catalogs, perform physical/logical record deletions, and access all operational metrics.
+* **`STAFF`**: Technical workshop staff. Authorized to register client devices, transition work order repair statuses (`RECEIVED`, `IN_PROGRESS`, `DONE`, `WITHDRAWN`), search customer directories, and upload diagnostic evidence files.
+* **`CLIENT`**: End customers. Restricted read-only access to view their registered devices and track real-time repair progress and diagnostic logs for their own work orders. Client accounts support optional passwords (for phone-only or social logins) and optional secondary phone numbers.
 
 ---
 
-## 🤝 Convención y Protocolo de Commits
+## 🤝 Conventional Commits & Git Protocol
 
-El desarrollo del proyecto respeta estrictamente la especificación **Conventional Commits** (usualmente mediante **Commitizen / `cz-git`**) con mensajes estructurados siempre en **inglés**:
+All project contributions and version control workflows strictly adhere to the **Conventional Commits** specification (managed via **Commitizen / `cz-git`**), requiring all commit metadata to be written in **English**:
 
-* `feat`: Nuevas características o funcionalidades de la API.
-* `fix`: Corrección de errores o bugs.
-* `docs`: Cambios exclusivos en documentación (`README.md`, Swagger, comentarios).
-* `style`: Formateo de código, linting, espacios (sin cambios en lógica).
-* `refactor`: Refactorización de código existente (sin agregar features ni corregir bugs).
-* `perf`: Mejoras de rendimiento o consultas de base de datos optimizadas.
-* `test`: Creación o corrección de pruebas unitarias/de integración.
-* `chore`: Mantenimiento de herramientas de compilación, `go.mod`, scripts o CI/CD.
+* `feat`: A new feature or functionality added to the API.
+* `fix`: A bug fix or patch resolving unexpected system behavior.
+* `docs`: Documentation changes exclusively (`README.md`, Swagger annotations, docstrings).
+* `style`: Code style, formatting, missing semicolons, or linting fixes (no logical changes).
+* `refactor`: Code refactoring that neither fixes a bug nor adds a feature.
+* `perf`: Performance improvements or database query optimizations.
+* `test`: Adding missing tests or correcting existing test suites.
+* `chore`: Routine maintenance of build tools, CI/CD pipelines, scripts, or dependency updates (`go.mod`).
 
 ---
 
