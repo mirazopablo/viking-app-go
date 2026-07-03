@@ -65,7 +65,7 @@ func (s *userServiceImpl) RegisterUser(req *models.RegisterDto) (*models.UserRes
 		return nil, errors.New("invalid role specified")
 	}
 
-	desc := strings.ToUpper(strings.TrimSpace(role.Descripcion))
+	desc := strings.ToUpper(strings.TrimSpace(role.Name))
 	isClientRole := desc == "CLIENTE" || desc == "CLIENT"
 
 	if !isClientRole && strings.TrimSpace(req.Password) == "" {

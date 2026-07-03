@@ -46,7 +46,7 @@ func (urc *UserRoleController) GetUserPermission(c *gin.Context) {
 		return
 	}
 
-	c.String(http.StatusOK, role.Descripcion)
+	c.String(http.StatusOK, role.Name)
 }
 
 // IsUserStaff godoc
@@ -77,7 +77,7 @@ func (urc *UserRoleController) IsUserStaff(c *gin.Context) {
 		return
 	}
 
-	desc := strings.ToUpper(strings.TrimSpace(role.Descripcion))
+	desc := strings.ToUpper(strings.TrimSpace(role.Name))
 	isStaff := desc == "ADMIN" || desc == "STAFF" || desc == "TECNICO"
 	c.JSON(http.StatusOK, isStaff)
 }

@@ -7,15 +7,14 @@ import (
 
 // Role represents the role entity in database.
 type Role struct {
-	ID          uuid.UUID `gorm:"type:uuid;primaryKey" json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
-	Descripcion string    `gorm:"type:varchar(100);not null;uniqueIndex" json:"descripcion" binding:"required,min=2,max=100" example:"ADMIN"`
+	ID   uuid.UUID `gorm:"type:uuid;primaryKey" json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	Name string    `gorm:"type:varchar(100);not null;uniqueIndex" json:"descripcion" binding:"required,min=2,max=100" example:"ADMIN"`
 }
 
 // RoleCreateRequest represents the request payload for creating or updating a role.
 type RoleCreateRequest struct {
-	Descripcion string `json:"descripcion" binding:"required,min=2,max=100" example:"ADMIN"`
+	Name string `json:"descripcion" binding:"required,min=2,max=100" example:"ADMIN"`
 }
-
 
 // TableName sets the table name for GORM.
 func (Role) TableName() string {

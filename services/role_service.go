@@ -49,7 +49,7 @@ func (s *roleServiceImpl) GetRoleByID(id string) (*models.Role, error) {
 // CreateRole validates and creates a new role.
 func (s *roleServiceImpl) CreateRole(req *models.RoleCreateRequest) (*models.Role, error) {
 	role := &models.Role{
-		Descripcion: req.Descripcion,
+		Name: req.Name,
 	}
 	if err := s.repo.Create(role); err != nil {
 		return nil, err
@@ -64,7 +64,7 @@ func (s *roleServiceImpl) UpdateRole(id string, req *models.RoleCreateRequest) (
 		return nil, err
 	}
 
-	existingRole.Descripcion = req.Descripcion
+	existingRole.Name = req.Name
 
 	err = s.repo.Update(existingRole)
 	if err != nil {
