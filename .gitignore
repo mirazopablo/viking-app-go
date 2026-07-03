@@ -1,0 +1,12 @@
+.env
+uploads/*
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+bin/
+dist/
+tmp/
+.gemini/
+.vscode/
