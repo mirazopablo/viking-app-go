@@ -43,7 +43,7 @@ func main() {
 
 	// 5. Start HTTP server
 	port := ":" + config.AppConfig.ServerPort
-	log.Printf("Viking-App Go Server starting on port %s", port)
+	log.Printf("App is running on port %s", port)
 	if err := r.Run(port); err != nil {
 		log.Fatalf("Server failed to start: %v", err)
 	}

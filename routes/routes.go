@@ -34,7 +34,14 @@ func CORSMiddleware() gin.HandlerFunc {
 
 // SetupRouter initializes Gin engine, middleware, controllers, and routes.
 func SetupRouter() *gin.Engine {
-	r := gin.Default()
+	// Set Gin to ReleaseMode to suppress debug warnings and route dumping in production
+	gin.SetMode(gin.ReleaseMode)
+
+	r := gin.New()
+
+	// Attach custom conditional logger and panic recovery middlewares
+	r.Use(middlewares.CustomLoggerMiddleware())
+	r.Use(middlewares.CustomRecoveryMiddleware())
 
 	// Enable CORS Middleware for Swagger UI and frontend applications
 	r.Use(CORSMiddleware())
