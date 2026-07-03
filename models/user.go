@@ -14,7 +14,7 @@ type User struct {
 	Dni                  int32          `gorm:"not null;uniqueIndex;" json:"dni" example:"30123456"`
 	Address              string         `gorm:"type:varchar(200);" json:"address" example:"Calle Valhalla 123"`
 	PhoneNumber          string         `gorm:"type:varchar(50);" json:"phoneNumber" example:"5491112345678"`
-	SecondaryPhoneNumber string         `gorm:"type:varchar(50);" json:"secondaryPhoneNumber" example:"5491187654321"`
+	SecondaryPhoneNumber *string        `gorm:"type:varchar(50);null;" json:"secondaryPhoneNumber,omitempty" example:"5491187654321"`
 	Email                string         `gorm:"type:varchar(150);not null;uniqueIndex;" json:"email" example:"admin@viking.com"`
 	Password             *string        `gorm:"type:varchar(255);null;" json:"-"` // Nullable password pointer for optional client login
 	UserRoles            []UserRole     `gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"userRoles,omitempty"`
@@ -37,7 +37,7 @@ type RegisterDto struct {
 	Dni                  int32     `json:"dni" binding:"required" example:"30123456"`
 	Address              string    `json:"address" binding:"required" example:"Calle Valhalla 123"`
 	PhoneNumber          string    `json:"phoneNumber" binding:"required" example:"5491112345678"`
-	SecondaryPhoneNumber string    `json:"secondaryPhoneNumber" example:"5491187654321"`
+	SecondaryPhoneNumber *string   `json:"secondaryPhoneNumber,omitempty" example:"5491187654321"`
 	Email                string    `json:"email" binding:"required,email" example:"admin@viking.com"`
 	Password             string    `json:"password" binding:"omitempty,min=6" example:"secret123"`
 	RoleID               uuid.UUID `json:"roleId" binding:"required" example:"123e4567-e89b-12d3-a456-426614174000"`
@@ -56,7 +56,7 @@ type UserResponseDto struct {
 	Dni                  int32     `json:"dni" example:"30123456"`
 	Address              string    `json:"address" example:"Calle Valhalla 123"`
 	PhoneNumber          string    `json:"phoneNumber" example:"5491112345678"`
-	SecondaryPhoneNumber string    `json:"secondaryPhoneNumber" example:"5491187654321"`
+	SecondaryPhoneNumber *string   `json:"secondaryPhoneNumber,omitempty" example:"5491187654321"`
 	Email                string    `json:"email" example:"admin@viking.com"`
 	RoleID               uuid.UUID `json:"roleId" example:"123e4567-e89b-12d3-a456-426614174000"`
 }
