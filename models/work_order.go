@@ -1,0 +1,85 @@
+package models
+
+import (
+	"errors"
+	"strings"
+	"time"
+
+	"github.com/google/uuid"
+	"gorm.io/gorm"
+)
+
+// Valid repair status values according to system rules and openapi.yaml
+const (
+	StatusReceived   = "RECEIVED"
+	StatusInQueue    = "IN_QUEUE"
+	StatusInProgress = "IN_PROGRESS"
+	StatusDone       = "DONE"
+	StatusWithdrawn  = "WITHDRAWN"
+)
+
+// WorkOrder represents a repair job or technical intervention in the workshop.
+type WorkOrder struct {
+	ID               string         `gorm:"type:uuid;primary_key;" json:"id"`
+	ClientID         string         `gorm:"type:uuid;not null;index" json:"clientId"`
+	Client           User           `gorm:"foreignKey:ClientID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT;" json:"-"`
+	DeviceID         string         `gorm:"type:uuid;not null;index" json:"deviceId"`
+	Device           Device         `gorm:"foreignKey:DeviceID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT;" json:"-"`
+	StaffID          *string        `gorm:"type:uuid;index" json:"staffId,omitempty"`
+	Staff            *User          `gorm:"foreignKey:StaffID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"-"`
+	IssueDescription string         `gorm:"type:text;not null" json:"issueDescription"`
+	RepairStatus     string         `gorm:"type:varchar(50);not null;index" json:"repairStatus"`
+	CreatedAt        time.Time      `json:"createdAt"`
+	UpdatedAt        time.Time      `json:"updatedAt"`
+	DeletedAt        gorm.DeletedAt `gorm:"index" json:"-"`
+}
+
+// BeforeCreate hooks into GORM to generate a UUID prior to database insertion.
+func (wo *WorkOrder) BeforeCreate(tx *gorm.DB) (err error) {
+	if wo.ID == "" {
+		wo.ID = uuid.New().String()
+	}
+	return
+}
+
+// WorkOrderCreateRequest defines the JSON contract for opening a new repair job.
+type WorkOrderCreateRequest struct {
+	ClientID         string `json:"clientId" binding:"required"`
+	DeviceID         string `json:"deviceId" binding:"required"`
+	IssueDescription string `json:"issueDescription" binding:"required,min=2,max=200"`
+	RepairStatus     string `json:"repairStatus" binding:"required"`
+}
+
+// WorkOrderStatusUpdateRequestDto defines the JSON contract for updating repair status.
+type WorkOrderStatusUpdateRequestDto struct {
+	RepairStatus string `json:"repairStatus" binding:"required"`
+}
+
+// WorkOrderResponseDto defines a flattened, rich representation of a work order for consumers.
+type WorkOrderResponseDto struct {
+	ID                 string `json:"id"`
+	ClientID           string `json:"clientId"`
+	ClientName         string `json:"clientName"`
+	ClientDni          int32  `json:"clientDni"`
+	DeviceID           string `json:"deviceId"`
+	DeviceBrand        string `json:"deviceBrand"`
+	DeviceModel        string `json:"deviceModel"`
+	DeviceSerialNumber string `json:"deviceSerialNumber"`
+	StaffID            string `json:"staffId,omitempty"`
+	StaffName          string `json:"staffName,omitempty"`
+	IssueDescription   string `json:"issueDescription"`
+	RepairStatus       string `json:"repairStatus"`
+	CreatedAt          string `json:"createdAt"`
+	UpdatedAt          string `json:"updatedAt"`
+}
+
+// ValidateRepairStatus checks if the provided string is a valid enum value.
+func ValidateRepairStatus(status string) error {
+	s := strings.ToUpper(strings.TrimSpace(status))
+	switch s {
+	case StatusReceived, StatusInQueue, StatusInProgress, StatusDone, StatusWithdrawn:
+		return nil
+	default:
+		return errors.New("invalid repairStatus: must be one of RECEIVED, IN_QUEUE, IN_PROGRESS, DONE, WITHDRAWN")
+	}
+}
