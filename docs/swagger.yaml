@@ -185,6 +185,35 @@ definitions:
     - issueDescription
     - repairStatus
     type: object
+  models.WorkOrderPublicDniQueryRequestDto:
+    properties:
+      clientDni:
+        type: integer
+      securityCode:
+        type: string
+    required:
+    - clientDni
+    - securityCode
+    type: object
+  models.WorkOrderPublicQueryRequestDto:
+    properties:
+      id:
+        type: string
+      securityCode:
+        type: string
+    required:
+    - id
+    - securityCode
+    type: object
+  models.WorkOrderPublicStatusResponseDto:
+    properties:
+      diagnosticPoints:
+        items:
+          $ref: '#/definitions/models.DiagnosticPointResponseDto'
+        type: array
+      workOrder:
+        $ref: '#/definitions/models.WorkOrderResponseDto'
+    type: object
   models.WorkOrderResponseDto:
     properties:
       clientDni:
@@ -210,6 +239,8 @@ definitions:
       issueDescription:
         type: string
       repairStatus:
+        type: string
+      securityCode:
         type: string
       staffId:
         type: string
@@ -574,7 +605,7 @@ paths:
       tags:
       - User Controller
   /api/user/update/{id}:
-    put:
+    patch:
       consumes:
       - application/json
       description: Actualiza un usuario existente
@@ -621,6 +652,30 @@ paths:
       security:
       - bearer-jwt: []
       summary: Eliminar Orden de Trabajo
+      tags:
+      - Work Order Controller
+  /api/work-order/regenerate-code/{orderId}:
+    patch:
+      description: Genera un nuevo código de seguridad inyectado en DTO y revoca el
+        anterior (solo hash en BD)
+      operationId: regenerateSecurityCode
+      parameters:
+      - description: Work Order UUID
+        format: uuid
+        in: path
+        name: orderId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.WorkOrderResponseDto'
+      security:
+      - bearer-jwt: []
+      summary: Regenerar Código de Seguridad de Orden de Trabajo
       tags:
       - Work Order Controller
   /api/work-order/save:
@@ -917,6 +972,78 @@ paths:
       summary: Validar Token JWT
       tags:
       - Auth
+  /public/work-order/status:
+    post:
+      consumes:
+      - application/json
+      description: Devuelve el estado, detalles y puntos de diagnóstico de una orden
+        de trabajo si el id y securityCode coinciden
+      operationId: getPublicStatus
+      parameters:
+      - description: Public Query Request
+        in: body
+        name: query
+        required: true
+        schema:
+          $ref: '#/definitions/models.WorkOrderPublicQueryRequestDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.WorkOrderPublicStatusResponseDto'
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Consulta Pública de Orden de Trabajo
+      tags:
+      - Work Order Controller
+  /public/work-order/status-by-dni:
+    post:
+      consumes:
+      - application/json
+      description: Devuelve el estado, detalles y puntos de diagnóstico de una orden
+        de trabajo si el DNI del cliente y securityCode coinciden
+      operationId: getPublicStatusByDni
+      parameters:
+      - description: Public DNI Query Request
+        in: body
+        name: query
+        required: true
+        schema:
+          $ref: '#/definitions/models.WorkOrderPublicDniQueryRequestDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.WorkOrderPublicStatusResponseDto'
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Consulta Pública de Orden de Trabajo por DNI
+      tags:
+      - Work Order Controller
 securityDefinitions:
   bearer-jwt:
     in: header

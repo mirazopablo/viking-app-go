@@ -177,3 +177,75 @@ func (woc *WorkOrderController) DeleteWorkOrder(c *gin.Context) {
 	}
 	c.Status(http.StatusOK)
 }
+
+// GetPublicStatus godoc
+// @Summary Consulta Pública de Orden de Trabajo
+// @Description Devuelve el estado, detalles y puntos de diagnóstico de una orden de trabajo si el id y securityCode coinciden
+// @Tags Work Order Controller
+// @ID getPublicStatus
+// @Accept json
+// @Produce json
+// @Param query body models.WorkOrderPublicQueryRequestDto true "Public Query Request"
+// @Success 200 {object} models.WorkOrderPublicStatusResponseDto "OK"
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 404 {object} map[string]string "Not Found"
+// @Router /public/work-order/status [post]
+func (woc *WorkOrderController) GetPublicStatus(c *gin.Context) {
+	var input models.WorkOrderPublicQueryRequestDto
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	result, err := woc.service.GetPublicWorkOrderStatus(input.ID, input.SecurityCode)
+	if err != nil {
+		if errors.Is(err, services.ErrWorkOrderNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Work order not found"})
+			return
+		}
+		if errors.Is(err, services.ErrInvalidSecurityCode) {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid security code"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
+}
+
+// GetPublicStatusByDni godoc
+// @Summary Consulta Pública de Orden de Trabajo por DNI
+// @Description Devuelve el estado, detalles y puntos de diagnóstico de una orden de trabajo si el DNI del cliente y securityCode coinciden
+// @Tags Work Order Controller
+// @ID getPublicStatusByDni
+// @Accept json
+// @Produce json
+// @Param query body models.WorkOrderPublicDniQueryRequestDto true "Public DNI Query Request"
+// @Success 200 {object} models.WorkOrderPublicStatusResponseDto "OK"
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 404 {object} map[string]string "Not Found"
+// @Router /public/work-order/status-by-dni [post]
+func (woc *WorkOrderController) GetPublicStatusByDni(c *gin.Context) {
+	var input models.WorkOrderPublicDniQueryRequestDto
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	result, err := woc.service.GetPublicWorkOrderStatusByDNI(input.ClientDni, input.SecurityCode)
+	if err != nil {
+		if errors.Is(err, services.ErrWorkOrderNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "No work orders found for the provided DNI"})
+			return
+		}
+		if errors.Is(err, services.ErrInvalidSecurityCode) {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid security code for the provided DNI"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
+}

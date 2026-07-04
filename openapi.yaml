@@ -104,7 +104,7 @@ paths:
         "200":
           description: OK
   /api/user/update/{id}:
-    put:
+    patch:
       tags:
         - User Controller
       summary: Actualizar Usuario
@@ -337,6 +337,27 @@ paths:
             "*/*":
               schema:
                 $ref: "#/components/schemas/WorkOrderResponseDto"
+  /api/work-order/regenerate-code/{orderId}:
+    patch:
+      tags:
+        - Work Order Controller
+      summary: Regenerar Código de Seguridad de Orden de Trabajo
+      description: Genera un nuevo código de seguridad inyectado en DTO y revoca el anterior (solo hash en BD)
+      operationId: regenerateSecurityCode
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                $ref: "#/components/schemas/WorkOrderResponseDto"
   /auth/validate:
     get:
       tags:
@@ -407,6 +428,54 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/WorkOrderResponseDto"
+  /public/work-order/status:
+    post:
+      tags:
+        - Work Order Controller
+      summary: Consulta Pública de Orden de Trabajo
+      description: Devuelve el estado, detalles y puntos de diagnóstico de una orden de trabajo si el id y securityCode coinciden (no requiere token Bearer)
+      operationId: getPublicStatus
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WorkOrderPublicQueryRequestDto"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkOrderPublicStatusResponseDto"
+        "401":
+          description: Unauthorized - Código de seguridad inválido
+        "404":
+          description: Not Found - Orden de trabajo no encontrada
+  /public/work-order/status-by-dni:
+    post:
+      tags:
+        - Work Order Controller
+      summary: Consulta Pública de Orden de Trabajo por DNI
+      description: Devuelve el estado, detalles y puntos de diagnóstico de una orden de trabajo si el DNI del cliente y securityCode coinciden (no requiere token Bearer)
+      operationId: getPublicStatusByDni
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WorkOrderPublicDniQueryRequestDto"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkOrderPublicStatusResponseDto"
+        "401":
+          description: Unauthorized - Código de seguridad inválido para el DNI dado
+        "404":
+          description: Not Found - No se encontraron órdenes para el DNI proporcionado
   /api/user/search:
     get:
       tags:
@@ -895,6 +964,9 @@ components:
         id:
           type: string
           format: uuid
+        securityCode:
+          type: string
+          description: Código de seguridad WOVIK-XXXXX (solo visible en creación o regeneración)
         clientId:
           type: string
           format: uuid
@@ -929,6 +1001,56 @@ components:
         updatedAt:
           type: string
           format: date-time
+    DiagnosticPointResponseDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        workOrderId:
+          type: string
+          format: uuid
+        clientId:
+          type: string
+          format: uuid
+        description:
+          type: string
+        imageUrl:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    WorkOrderPublicQueryRequestDto:
+      type: object
+      required:
+        - id
+        - securityCode
+      properties:
+        id:
+          type: string
+          format: uuid
+        securityCode:
+          type: string
+    WorkOrderPublicDniQueryRequestDto:
+      type: object
+      required:
+        - clientDni
+        - securityCode
+      properties:
+        clientDni:
+          type: integer
+          format: int32
+        securityCode:
+          type: string
+    WorkOrderPublicStatusResponseDto:
+      type: object
+      properties:
+        workOrder:
+          $ref: "#/components/schemas/WorkOrderResponseDto"
+        diagnosticPoints:
+          type: array
+          items:
+            $ref: "#/components/schemas/DiagnosticPointResponseDto"
   securitySchemes:
     bearer-jwt:
       type: http

@@ -67,7 +67,7 @@ func (uc *UserController) SaveUser(c *gin.Context) {
 // @Param user body models.RegisterDto true "User Update Request"
 // @Success 200 {object} models.UserResponseDto "OK"
 // @Security bearer-jwt
-// @Router /api/user/update/{id} [put]
+// @Router /api/user/update/{id} [patch]
 func (uc *UserController) UpdateUser(c *gin.Context) {
 	id := c.Param("id")
 	var input models.RegisterDto

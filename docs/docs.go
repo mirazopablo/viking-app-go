@@ -543,7 +543,7 @@ const docTemplate = `{
             }
         },
         "/api/user/update/{id}": {
-            "put": {
+            "patch": {
                 "security": [
                     {
                         "bearer-jwt": []
@@ -616,6 +616,42 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/work-order/regenerate-code/{orderId}": {
+            "patch": {
+                "security": [
+                    {
+                        "bearer-jwt": []
+                    }
+                ],
+                "description": "Genera un nuevo código de seguridad inyectado en DTO y revoca el anterior (solo hash en BD)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Work Order Controller"
+                ],
+                "summary": "Regenerar Código de Seguridad de Orden de Trabajo",
+                "operationId": "regenerateSecurityCode",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Work Order UUID",
+                        "name": "orderId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.WorkOrderResponseDto"
+                        }
                     }
                 }
             }
@@ -1070,6 +1106,112 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/public/work-order/status": {
+            "post": {
+                "description": "Devuelve el estado, detalles y puntos de diagnóstico de una orden de trabajo si el id y securityCode coinciden",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Work Order Controller"
+                ],
+                "summary": "Consulta Pública de Orden de Trabajo",
+                "operationId": "getPublicStatus",
+                "parameters": [
+                    {
+                        "description": "Public Query Request",
+                        "name": "query",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.WorkOrderPublicQueryRequestDto"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.WorkOrderPublicStatusResponseDto"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/public/work-order/status-by-dni": {
+            "post": {
+                "description": "Devuelve el estado, detalles y puntos de diagnóstico de una orden de trabajo si el DNI del cliente y securityCode coinciden",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Work Order Controller"
+                ],
+                "summary": "Consulta Pública de Orden de Trabajo por DNI",
+                "operationId": "getPublicStatusByDni",
+                "parameters": [
+                    {
+                        "description": "Public DNI Query Request",
+                        "name": "query",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.WorkOrderPublicDniQueryRequestDto"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.WorkOrderPublicStatusResponseDto"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -1334,6 +1476,50 @@ const docTemplate = `{
                 }
             }
         },
+        "models.WorkOrderPublicDniQueryRequestDto": {
+            "type": "object",
+            "required": [
+                "clientDni",
+                "securityCode"
+            ],
+            "properties": {
+                "clientDni": {
+                    "type": "integer"
+                },
+                "securityCode": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.WorkOrderPublicQueryRequestDto": {
+            "type": "object",
+            "required": [
+                "id",
+                "securityCode"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "securityCode": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.WorkOrderPublicStatusResponseDto": {
+            "type": "object",
+            "properties": {
+                "diagnosticPoints": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.DiagnosticPointResponseDto"
+                    }
+                },
+                "workOrder": {
+                    "$ref": "#/definitions/models.WorkOrderResponseDto"
+                }
+            }
+        },
         "models.WorkOrderResponseDto": {
             "type": "object",
             "properties": {
@@ -1371,6 +1557,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "repairStatus": {
+                    "type": "string"
+                },
+                "securityCode": {
                     "type": "string"
                 },
                 "staffId": {
