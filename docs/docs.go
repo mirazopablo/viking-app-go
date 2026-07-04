@@ -178,13 +178,13 @@ const docTemplate = `{
             }
         },
         "/api/device/update/{id}": {
-            "put": {
+            "patch": {
                 "security": [
                     {
                         "bearer-jwt": []
                     }
                 ],
-                "description": "Actualiza un dispositivo existente",
+                "description": "Actualiza un dispositivo existente de forma parcial o total",
                 "consumes": [
                     "application/json"
                 ],
@@ -194,7 +194,7 @@ const docTemplate = `{
                 "tags": [
                     "Device Controller"
                 ],
-                "summary": "Actualizar Dispositivo",
+                "summary": "Actualizar Dispositivo (Soporta PATCH parcial para reasignación de dueño)",
                 "operationId": "updateDevice",
                 "parameters": [
                     {
@@ -1131,13 +1131,6 @@ const docTemplate = `{
         },
         "models.DeviceUpdateRequestDto": {
             "type": "object",
-            "required": [
-                "brand",
-                "model",
-                "serialNumber",
-                "type",
-                "userId"
-            ],
             "properties": {
                 "brand": {
                     "type": "string"
@@ -1351,6 +1344,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "clientName": {
+                    "type": "string"
+                },
+                "clientPhone": {
                     "type": "string"
                 },
                 "createdAt": {

@@ -52,12 +52,6 @@ definitions:
         type: string
       userId:
         type: string
-    required:
-    - brand
-    - model
-    - serialNumber
-    - type
-    - userId
     type: object
   models.DiagnosticPointResponseDto:
     properties:
@@ -198,6 +192,8 @@ definitions:
       clientId:
         type: string
       clientName:
+        type: string
+      clientPhone:
         type: string
       createdAt:
         type: string
@@ -343,10 +339,10 @@ paths:
       tags:
       - Device Controller
   /api/device/update/{id}:
-    put:
+    patch:
       consumes:
       - application/json
-      description: Actualiza un dispositivo existente
+      description: Actualiza un dispositivo existente de forma parcial o total
       operationId: updateDevice
       parameters:
       - description: Device UUID
@@ -370,7 +366,8 @@ paths:
             $ref: '#/definitions/models.DeviceResponseDto'
       security:
       - bearer-jwt: []
-      summary: Actualizar Dispositivo
+      summary: Actualizar Dispositivo (Soporta PATCH parcial para reasignación de
+        dueño)
       tags:
       - Device Controller
   /api/diagnostic-points/add:
