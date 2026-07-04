@@ -116,7 +116,12 @@ func (r *userRepositoryImpl) UpdateWithRole(user *models.User, roleID uuid.UUID)
 	})
 }
 
-// Delete soft-deletes or deletes a user by ID.
+// Delete physically deletes a user and all their associated UserRoles within a transaction.
 func (r *userRepositoryImpl) Delete(id string) error {
-	return config.DB.Delete(&models.User{}, "id = ?", id).Error
+	return config.DB.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Unscoped().Where("user_id = ?", id).Delete(&models.UserRole{}).Error; err != nil {
+			return err
+		}
+		return tx.Unscoped().Delete(&models.User{}, "id = ?", id).Error
+	})
 }
