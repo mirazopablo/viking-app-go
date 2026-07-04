@@ -81,6 +81,24 @@ type WorkOrderResponseDto struct {
 	UpdatedAt          string `json:"updatedAt"`
 }
 
+// WorkOrderPublicQueryRequestDto defines the input payload for client public inquiries.
+type WorkOrderPublicQueryRequestDto struct {
+	ID           string `json:"id" binding:"required"`
+	SecurityCode string `json:"securityCode" binding:"required"`
+}
+
+// WorkOrderPublicDniQueryRequestDto defines the input payload for client public inquiries by DNI.
+type WorkOrderPublicDniQueryRequestDto struct {
+	ClientDni    int32  `json:"clientDni" binding:"required"`
+	SecurityCode string `json:"securityCode" binding:"required"`
+}
+
+// WorkOrderPublicStatusResponseDto aggregates the work order details and its diagnostic timeline.
+type WorkOrderPublicStatusResponseDto struct {
+	WorkOrder        WorkOrderResponseDto         `json:"workOrder"`
+	DiagnosticPoints []DiagnosticPointResponseDto `json:"diagnosticPoints"`
+}
+
 // ValidateRepairStatus checks if the provided string is a valid enum value.
 func ValidateRepairStatus(status string) error {
 	s := strings.ToUpper(strings.TrimSpace(status))

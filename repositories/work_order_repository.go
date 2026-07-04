@@ -16,6 +16,7 @@ type WorkOrderRepository interface {
 	FindByID(id string) (*models.WorkOrder, error)
 	FindAll() ([]models.WorkOrder, error)
 	Search(staffId string, clientDni int32, deviceSerialNumber string, query string) ([]models.WorkOrder, error)
+	FindByClientDNI(clientDni int32) ([]models.WorkOrder, error)
 	Update(wo *models.WorkOrder) (*models.WorkOrder, error)
 	Delete(id string) error
 }
@@ -103,4 +104,14 @@ func (r *workOrderRepositoryImpl) Delete(id string) error {
 		return fmt.Errorf("work order not found")
 	}
 	return nil
+}
+
+func (r *workOrderRepositoryImpl) FindByClientDNI(clientDni int32) ([]models.WorkOrder, error) {
+	var orders []models.WorkOrder
+	err := r.db.Preload("Client").Preload("Device").Preload("Staff").
+		Joins("LEFT JOIN users AS client_user ON client_user.id = work_orders.client_id").
+		Where("work_orders.client_dni_snapshot = ? OR client_user.dni = ?", clientDni, clientDni).
+		Order("work_orders.created_at DESC").
+		Find(&orders).Error
+	return orders, err
 }

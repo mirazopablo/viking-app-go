@@ -18,7 +18,8 @@ import (
 )
 
 var (
-	ErrWorkOrderNotFound = errors.New("work order not found")
+	ErrWorkOrderNotFound   = errors.New("work order not found")
+	ErrInvalidSecurityCode = errors.New("invalid security code")
 )
 
 // WorkOrderService defines business logic for managing repair jobs.
@@ -28,6 +29,8 @@ type WorkOrderService interface {
 	RegenerateSecurityCode(id string) (*models.WorkOrderResponseDto, error)
 	SearchWorkOrders(staffId string, clientDni int32, deviceSerialNumber string, query string) ([]models.WorkOrderResponseDto, error)
 	DeleteWorkOrder(id string) error
+	GetPublicWorkOrderStatus(id string, securityCode string) (*models.WorkOrderPublicStatusResponseDto, error)
+	GetPublicWorkOrderStatusByDNI(clientDni int32, securityCode string) (*models.WorkOrderPublicStatusResponseDto, error)
 }
 
 func generateSecurityCode() (string, string, error) {
@@ -48,14 +51,15 @@ func generateSecurityCode() (string, string, error) {
 }
 
 type workOrderServiceImpl struct {
-	repo       repositories.WorkOrderRepository
-	userRepo   repositories.UserRepository
-	deviceRepo repositories.DeviceRepository
+	repo                repositories.WorkOrderRepository
+	userRepo            repositories.UserRepository
+	deviceRepo          repositories.DeviceRepository
+	diagnosticPointRepo repositories.DiagnosticPointRepository
 }
 
 // NewWorkOrderService instantiates a new WorkOrderService.
-func NewWorkOrderService(repo repositories.WorkOrderRepository, userRepo repositories.UserRepository, deviceRepo repositories.DeviceRepository) WorkOrderService {
-	return &workOrderServiceImpl{repo: repo, userRepo: userRepo, deviceRepo: deviceRepo}
+func NewWorkOrderService(repo repositories.WorkOrderRepository, userRepo repositories.UserRepository, deviceRepo repositories.DeviceRepository, diagnosticPointRepo repositories.DiagnosticPointRepository) WorkOrderService {
+	return &workOrderServiceImpl{repo: repo, userRepo: userRepo, deviceRepo: deviceRepo, diagnosticPointRepo: diagnosticPointRepo}
 }
 
 func (s *workOrderServiceImpl) CreateWorkOrder(dto *models.WorkOrderCreateRequest, staffID string) (*models.WorkOrderResponseDto, error) {
@@ -243,4 +247,80 @@ func toWorkOrderResponseDto(wo *models.WorkOrder) *models.WorkOrderResponseDto {
 		}
 	}
 	return dto
+}
+
+func (s *workOrderServiceImpl) GetPublicWorkOrderStatus(id string, securityCode string) (*models.WorkOrderPublicStatusResponseDto, error) {
+	if strings.TrimSpace(id) == "" || strings.TrimSpace(securityCode) == "" {
+		return nil, ErrInvalidSecurityCode
+	}
+
+	wo, err := s.repo.FindByID(id)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrWorkOrderNotFound
+		}
+		return nil, err
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(wo.SecurityCodeHash), []byte(strings.TrimSpace(securityCode))); err != nil {
+		return nil, ErrInvalidSecurityCode
+	}
+
+	points, err := s.diagnosticPointRepo.FindByWorkOrderAndClient(wo.ID, "")
+	if err != nil {
+		return nil, err
+	}
+
+	dpDtos := make([]models.DiagnosticPointResponseDto, len(points))
+	for i, dp := range points {
+		dpDtos[i] = *toDiagnosticPointResponseDto(&dp)
+	}
+
+	return &models.WorkOrderPublicStatusResponseDto{
+		WorkOrder:        *toWorkOrderResponseDto(wo),
+		DiagnosticPoints: dpDtos,
+	}, nil
+}
+
+func (s *workOrderServiceImpl) GetPublicWorkOrderStatusByDNI(clientDni int32, securityCode string) (*models.WorkOrderPublicStatusResponseDto, error) {
+	if clientDni <= 0 || strings.TrimSpace(securityCode) == "" {
+		return nil, ErrInvalidSecurityCode
+	}
+
+	orders, err := s.repo.FindByClientDNI(clientDni)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(orders) == 0 {
+		return nil, ErrWorkOrderNotFound
+	}
+
+	var matchedOrder *models.WorkOrder
+	trimmedCode := strings.TrimSpace(securityCode)
+	for i := range orders {
+		if err := bcrypt.CompareHashAndPassword([]byte(orders[i].SecurityCodeHash), []byte(trimmedCode)); err == nil {
+			matchedOrder = &orders[i]
+			break
+		}
+	}
+
+	if matchedOrder == nil {
+		return nil, ErrInvalidSecurityCode
+	}
+
+	points, err := s.diagnosticPointRepo.FindByWorkOrderAndClient(matchedOrder.ID, "")
+	if err != nil {
+		return nil, err
+	}
+
+	dpDtos := make([]models.DiagnosticPointResponseDto, len(points))
+	for i, dp := range points {
+		dpDtos[i] = *toDiagnosticPointResponseDto(&dp)
+	}
+
+	return &models.WorkOrderPublicStatusResponseDto{
+		WorkOrder:        *toWorkOrderResponseDto(matchedOrder),
+		DiagnosticPoints: dpDtos,
+	}, nil
 }

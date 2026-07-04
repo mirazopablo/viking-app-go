@@ -58,7 +58,7 @@ func SetupRouter() *gin.Engine {
 	jwtService := services.NewJWTService()
 	userService := services.NewUserService(userRepo, roleRepo, jwtService)
 	deviceService := services.NewDeviceService(deviceRepo, userRepo)
-	workOrderService := services.NewWorkOrderService(workOrderRepo, userRepo, deviceRepo)
+	workOrderService := services.NewWorkOrderService(workOrderRepo, userRepo, deviceRepo, diagnosticPointRepo)
 	diagnosticPointService := services.NewDiagnosticPointService(diagnosticPointRepo, workOrderRepo, userRepo)
 
 	// Initialize Controllers
@@ -92,6 +92,12 @@ func SetupRouter() *gin.Engine {
 		// on a clean server, temporarily move the /signup or /roles routes here!
 	}
 
+	publicWorkOrder := r.Group("/public/work-order")
+	{
+		publicWorkOrder.POST("/status", workOrderCtrl.GetPublicStatus)
+		publicWorkOrder.POST("/status-by-dni", workOrderCtrl.GetPublicStatusByDni)
+	}
+
 	// =========================================================================
 	// PRIVATE ROUTES (Protected by Bearer JWT Middleware)
 	// =========================================================================
@@ -105,6 +111,7 @@ func SetupRouter() *gin.Engine {
 		userGroup := privateApi.Group("/user")
 		{
 			userGroup.POST("/save", userCtrl.SaveUser)
+			userGroup.PATCH("/update/:id", userCtrl.UpdateUser)
 			userGroup.PUT("/update/:id", userCtrl.UpdateUser)
 			userGroup.GET("/search", userCtrl.SearchUser)
 			userGroup.GET("/current", userCtrl.GetCurrentUser)
