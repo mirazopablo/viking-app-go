@@ -98,6 +98,30 @@ func (woc *WorkOrderController) UpdateWorkOrderStatus(c *gin.Context) {
 	c.JSON(http.StatusOK, updated)
 }
 
+// RegenerateSecurityCode godoc
+// @Summary Regenerar Código de Seguridad de Orden de Trabajo
+// @Description Genera un nuevo código de seguridad inyectado en DTO y revoca el anterior (solo hash en BD)
+// @Tags Work Order Controller
+// @ID regenerateSecurityCode
+// @Produce json
+// @Param orderId path string true "Work Order UUID" format(uuid)
+// @Success 200 {object} models.WorkOrderResponseDto "OK"
+// @Security bearer-jwt
+// @Router /api/work-order/regenerate-code/{orderId} [patch]
+func (woc *WorkOrderController) RegenerateSecurityCode(c *gin.Context) {
+	id := c.Param("orderId")
+	updated, err := woc.service.RegenerateSecurityCode(id)
+	if err != nil {
+		if errors.Is(err, services.ErrWorkOrderNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Work order not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, updated)
+}
+
 // SearchWorkOrder godoc
 // @Summary Buscar Órdenes de Trabajo
 // @Description Permite rastrear reparaciones por staffId, clientDni, deviceSerialNumber o término general

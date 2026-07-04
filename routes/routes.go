@@ -133,6 +133,7 @@ func SetupRouter() *gin.Engine {
 		{
 			workOrderGroup.POST("/save", workOrderCtrl.SaveWorkOrder)
 			workOrderGroup.PATCH("/update/:orderId", workOrderCtrl.UpdateWorkOrderStatus)
+			workOrderGroup.PATCH("/regenerate-code/:orderId", workOrderCtrl.RegenerateSecurityCode)
 			workOrderGroup.GET("/search", workOrderCtrl.SearchWorkOrder)
 			workOrderGroup.DELETE("/delete/:orderId", workOrderCtrl.DeleteWorkOrder)
 		}
