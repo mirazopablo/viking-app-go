@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/mirazopablo/viking-app-go/models"
 	"github.com/mirazopablo/viking-app-go/repositories"
 	"gorm.io/gorm"
@@ -39,21 +40,15 @@ func (s *workOrderServiceImpl) CreateWorkOrder(dto *models.WorkOrderCreateReques
 	}
 
 	// Verify client exists
-	_, err := s.userRepo.FindByID(dto.ClientID)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, ErrUserNotFound
-		}
-		return nil, err
+	client, err := s.userRepo.FindByID(dto.ClientID)
+	if err != nil || client == nil {
+		return nil, ErrUserNotFound
 	}
 
 	// Verify device exists
-	_, err = s.deviceRepo.FindByID(dto.DeviceID)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, ErrDeviceNotFound
-		}
-		return nil, err
+	device, err := s.deviceRepo.FindByID(dto.DeviceID)
+	if err != nil || device == nil {
+		return nil, ErrDeviceNotFound
 	}
 
 	var staffPtr *string
@@ -62,11 +57,17 @@ func (s *workOrderServiceImpl) CreateWorkOrder(dto *models.WorkOrderCreateReques
 	}
 
 	wo := &models.WorkOrder{
-		ClientID:         dto.ClientID,
-		DeviceID:         dto.DeviceID,
-		StaffID:          staffPtr,
-		IssueDescription: dto.IssueDescription,
-		RepairStatus:     strings.ToUpper(strings.TrimSpace(dto.RepairStatus)),
+		ClientID:             &dto.ClientID,
+		DeviceID:             &dto.DeviceID,
+		StaffID:              staffPtr,
+		ClientNameSnapshot:   client.Name,
+		ClientDniSnapshot:    client.Dni,
+		ClientPhoneSnapshot:  client.PhoneNumber,
+		DeviceBrandSnapshot:  device.Brand,
+		DeviceModelSnapshot:  device.Model,
+		DeviceSerialSnapshot: device.SerialNumber,
+		IssueDescription:     dto.IssueDescription,
+		RepairStatus:         strings.ToUpper(strings.TrimSpace(dto.RepairStatus)),
 	}
 
 	saved, err := s.repo.Save(wo)
@@ -122,15 +123,51 @@ func (s *workOrderServiceImpl) DeleteWorkOrder(id string) error {
 }
 
 func toWorkOrderResponseDto(wo *models.WorkOrder) *models.WorkOrderResponseDto {
+	clientIDStr := ""
+	if wo.ClientID != nil {
+		clientIDStr = *wo.ClientID
+	}
+	deviceIDStr := ""
+	if wo.DeviceID != nil {
+		deviceIDStr = *wo.DeviceID
+	}
+
+	clientName := wo.ClientNameSnapshot
+	if clientName == "" && wo.Client.ID != uuid.Nil {
+		clientName = wo.Client.Name
+	}
+	clientDni := wo.ClientDniSnapshot
+	if clientDni == 0 && wo.Client.ID != uuid.Nil {
+		clientDni = wo.Client.Dni
+	}
+	clientPhone := wo.ClientPhoneSnapshot
+	if clientPhone == "" && wo.Client.ID != uuid.Nil {
+		clientPhone = wo.Client.PhoneNumber
+	}
+
+	deviceBrand := wo.DeviceBrandSnapshot
+	if deviceBrand == "" && wo.Device.ID != "" {
+		deviceBrand = wo.Device.Brand
+	}
+	deviceModel := wo.DeviceModelSnapshot
+	if deviceModel == "" && wo.Device.ID != "" {
+		deviceModel = wo.Device.Model
+	}
+	deviceSerial := wo.DeviceSerialSnapshot
+	if deviceSerial == "" && wo.Device.ID != "" {
+		deviceSerial = wo.Device.SerialNumber
+	}
+
 	dto := &models.WorkOrderResponseDto{
 		ID:                 wo.ID,
-		ClientID:           wo.ClientID,
-		ClientName:         wo.Client.Name,
-		ClientDni:          wo.Client.Dni,
-		DeviceID:           wo.DeviceID,
-		DeviceBrand:        wo.Device.Brand,
-		DeviceModel:        wo.Device.Model,
-		DeviceSerialNumber: wo.Device.SerialNumber,
+		ClientID:           clientIDStr,
+		ClientName:         clientName,
+		ClientDni:          clientDni,
+		ClientPhone:        clientPhone,
+		DeviceID:           deviceIDStr,
+		DeviceBrand:        deviceBrand,
+		DeviceModel:        deviceModel,
+		DeviceSerialNumber: deviceSerial,
 		IssueDescription:   wo.IssueDescription,
 		RepairStatus:       wo.RepairStatus,
 		CreatedAt:          wo.CreatedAt.Format(time.RFC3339),

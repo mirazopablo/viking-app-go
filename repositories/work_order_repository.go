@@ -58,17 +58,17 @@ func (r *workOrderRepositoryImpl) FindAll() ([]models.WorkOrder, error) {
 func (r *workOrderRepositoryImpl) Search(staffId string, clientDni int32, deviceSerialNumber string, query string) ([]models.WorkOrder, error) {
 	var orders []models.WorkOrder
 	queryBuilder := r.db.Preload("Client").Preload("Device").Preload("Staff").
-		Joins("JOIN users AS client_user ON client_user.id = work_orders.client_id").
-		Joins("JOIN devices ON devices.id = work_orders.device_id")
+		Joins("LEFT JOIN users AS client_user ON client_user.id = work_orders.client_id").
+		Joins("LEFT JOIN devices ON devices.id = work_orders.device_id")
 
 	if staffId != "" {
 		queryBuilder = queryBuilder.Where("work_orders.staff_id = ?", staffId)
 	}
 	if clientDni != 0 {
-		queryBuilder = queryBuilder.Where("client_user.dni = ?", clientDni)
+		queryBuilder = queryBuilder.Where("work_orders.client_dni_snapshot = ? OR client_user.dni = ?", clientDni, clientDni)
 	}
 	if deviceSerialNumber != "" {
-		queryBuilder = queryBuilder.Where("devices.serial_number ILIKE ?", "%"+deviceSerialNumber+"%")
+		queryBuilder = queryBuilder.Where("work_orders.device_serial_snapshot ILIKE ? OR devices.serial_number ILIKE ?", "%"+deviceSerialNumber+"%", "%"+deviceSerialNumber+"%")
 	}
 	if query != "" {
 		lowerQ := strings.ToLower(strings.TrimSpace(query))
@@ -76,8 +76,8 @@ func (r *workOrderRepositoryImpl) Search(staffId string, clientDni int32, device
 		if lowerQ != "all" && !strings.HasPrefix(lowerQ, "by-") {
 			q := "%" + lowerQ + "%"
 			queryBuilder = queryBuilder.Where(
-				"LOWER(work_orders.issue_description) LIKE ? OR LOWER(devices.brand) LIKE ? OR LOWER(devices.model) LIKE ? OR LOWER(devices.serial_number) LIKE ? OR LOWER(client_user.name) LIKE ?",
-				q, q, q, q, q,
+				"LOWER(work_orders.issue_description) LIKE ? OR LOWER(work_orders.device_brand_snapshot) LIKE ? OR LOWER(devices.brand) LIKE ? OR LOWER(work_orders.device_model_snapshot) LIKE ? OR LOWER(devices.model) LIKE ? OR LOWER(work_orders.device_serial_snapshot) LIKE ? OR LOWER(devices.serial_number) LIKE ? OR LOWER(work_orders.client_name_snapshot) LIKE ? OR LOWER(client_user.name) LIKE ?",
+				q, q, q, q, q, q, q, q, q,
 			)
 		}
 	}

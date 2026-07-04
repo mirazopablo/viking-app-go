@@ -20,18 +20,24 @@ const (
 
 // WorkOrder represents a repair job or technical intervention in the workshop.
 type WorkOrder struct {
-	ID               string         `gorm:"type:uuid;primary_key;" json:"id"`
-	ClientID         string         `gorm:"type:uuid;not null;index" json:"clientId"`
-	Client           User           `gorm:"foreignKey:ClientID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT;" json:"-"`
-	DeviceID         string         `gorm:"type:uuid;not null;index" json:"deviceId"`
-	Device           Device         `gorm:"foreignKey:DeviceID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT;" json:"-"`
-	StaffID          *string        `gorm:"type:uuid;index" json:"staffId,omitempty"`
-	Staff            *User          `gorm:"foreignKey:StaffID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"-"`
-	IssueDescription string         `gorm:"type:text;not null" json:"issueDescription"`
-	RepairStatus     string         `gorm:"type:varchar(50);not null;index" json:"repairStatus"`
-	CreatedAt        time.Time      `json:"createdAt"`
-	UpdatedAt        time.Time      `json:"updatedAt"`
-	DeletedAt        gorm.DeletedAt `gorm:"index" json:"-"`
+	ID                   string         `gorm:"type:uuid;primary_key;" json:"id"`
+	ClientID             *string        `gorm:"type:uuid;index" json:"clientId,omitempty"`
+	Client               User           `gorm:"foreignKey:ClientID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"-"`
+	DeviceID             *string        `gorm:"type:uuid;index" json:"deviceId,omitempty"`
+	Device               Device         `gorm:"foreignKey:DeviceID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"-"`
+	ClientNameSnapshot   string         `gorm:"type:varchar(150);" json:"clientName"`
+	ClientDniSnapshot    int32          `json:"clientDni"`
+	ClientPhoneSnapshot  string         `gorm:"type:varchar(50);" json:"clientPhone"`
+	DeviceBrandSnapshot  string         `gorm:"type:varchar(100);" json:"deviceBrand"`
+	DeviceModelSnapshot  string         `gorm:"type:varchar(150);" json:"deviceModel"`
+	DeviceSerialSnapshot string         `gorm:"type:varchar(150);" json:"deviceSerialNumber"`
+	StaffID              *string        `gorm:"type:uuid;index" json:"staffId,omitempty"`
+	Staff                *User          `gorm:"foreignKey:StaffID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"-"`
+	IssueDescription     string         `gorm:"type:text;not null" json:"issueDescription"`
+	RepairStatus         string         `gorm:"type:varchar(50);not null;index" json:"repairStatus"`
+	CreatedAt            time.Time      `json:"createdAt"`
+	UpdatedAt            time.Time      `json:"updatedAt"`
+	DeletedAt            gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
 // BeforeCreate hooks into GORM to generate a UUID prior to database insertion.
@@ -61,6 +67,7 @@ type WorkOrderResponseDto struct {
 	ClientID           string `json:"clientId"`
 	ClientName         string `json:"clientName"`
 	ClientDni          int32  `json:"clientDni"`
+	ClientPhone        string `json:"clientPhone"`
 	DeviceID           string `json:"deviceId"`
 	DeviceBrand        string `json:"deviceBrand"`
 	DeviceModel        string `json:"deviceModel"`
