@@ -52,8 +52,8 @@ func (dc *DeviceController) RegisterDevice(c *gin.Context) {
 }
 
 // UpdateDevice godoc
-// @Summary Actualizar Dispositivo
-// @Description Actualiza un dispositivo existente
+// @Summary Actualizar Dispositivo (Soporta PATCH parcial para reasignación de dueño)
+// @Description Actualiza un dispositivo existente de forma parcial o total
 // @Tags Device Controller
 // @ID updateDevice
 // @Accept json
@@ -62,7 +62,7 @@ func (dc *DeviceController) RegisterDevice(c *gin.Context) {
 // @Param device body models.DeviceUpdateRequestDto true "Device Update Request"
 // @Success 200 {object} models.DeviceResponseDto "OK"
 // @Security bearer-jwt
-// @Router /api/device/update/{id} [put]
+// @Router /api/device/update/{id} [patch]
 func (dc *DeviceController) UpdateDevice(c *gin.Context) {
 	id := c.Param("id")
 	var input models.DeviceUpdateRequestDto

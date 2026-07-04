@@ -115,6 +115,7 @@ func SetupRouter() *gin.Engine {
 		deviceGroup := privateApi.Group("/device")
 		{
 			deviceGroup.POST("/save", deviceCtrl.RegisterDevice)
+			deviceGroup.PATCH("/update/:id", deviceCtrl.UpdateDevice)
 			deviceGroup.PUT("/update/:id", deviceCtrl.UpdateDevice)
 			deviceGroup.GET("/search", deviceCtrl.SearchDevice)
 			deviceGroup.DELETE("/delete/:id", deviceCtrl.DeleteDevice)

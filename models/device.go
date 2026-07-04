@@ -38,14 +38,14 @@ type DeviceCreateRequestDto struct {
 	UserID       string `json:"userId" binding:"required"`
 }
 
-// DeviceUpdateRequestDto defines the input structure for updating a device.
+// DeviceUpdateRequestDto defines the input structure for updating a device (supports partial PATCH updates).
 type DeviceUpdateRequestDto struct {
-	ID           string `json:"id"`
-	Type         string `json:"type" binding:"required"`
-	Brand        string `json:"brand" binding:"required"`
-	Model        string `json:"model" binding:"required"`
-	SerialNumber string `json:"serialNumber" binding:"required"`
-	UserID       string `json:"userId" binding:"required"`
+	ID           string `json:"id,omitempty"`
+	Type         string `json:"type,omitempty"`
+	Brand        string `json:"brand,omitempty"`
+	Model        string `json:"model,omitempty"`
+	SerialNumber string `json:"serialNumber,omitempty"`
+	UserID       string `json:"userId,omitempty"`
 }
 
 // DeviceResponseDto defines the output data structure for device queries.
