@@ -25,6 +25,7 @@ type WorkOrder struct {
 	Client               User           `gorm:"foreignKey:ClientID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"-"`
 	DeviceID             *string        `gorm:"type:uuid;index" json:"deviceId,omitempty"`
 	Device               Device         `gorm:"foreignKey:DeviceID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"-"`
+	SecurityCodeHash     string         `gorm:"type:varchar(255);column:security_code_hash;" json:"-"`
 	ClientNameSnapshot   string         `gorm:"type:varchar(150);" json:"clientName"`
 	ClientDniSnapshot    int32          `json:"clientDni"`
 	ClientPhoneSnapshot  string         `gorm:"type:varchar(50);" json:"clientPhone"`
@@ -35,9 +36,8 @@ type WorkOrder struct {
 	Staff                *User          `gorm:"foreignKey:StaffID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"-"`
 	IssueDescription     string         `gorm:"type:text;not null" json:"issueDescription"`
 	RepairStatus         string         `gorm:"type:varchar(50);not null;index" json:"repairStatus"`
-	CreatedAt            time.Time      `json:"createdAt"`
-	UpdatedAt            time.Time      `json:"updatedAt"`
-	DeletedAt            gorm.DeletedAt `gorm:"index" json:"-"`
+	CreatedAt            time.Time `json:"createdAt"`
+	UpdatedAt            time.Time `json:"updatedAt"`
 }
 
 // BeforeCreate hooks into GORM to generate a UUID prior to database insertion.
@@ -64,6 +64,7 @@ type WorkOrderStatusUpdateRequestDto struct {
 // WorkOrderResponseDto defines a flattened, rich representation of a work order for consumers.
 type WorkOrderResponseDto struct {
 	ID                 string `json:"id"`
+	SecurityCode       string `json:"securityCode,omitempty"`
 	ClientID           string `json:"clientId"`
 	ClientName         string `json:"clientName"`
 	ClientDni          int32  `json:"clientDni"`
