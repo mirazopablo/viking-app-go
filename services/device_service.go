@@ -46,7 +46,7 @@ func (s *deviceServiceImpl) RegisterDevice(dto *models.DeviceCreateRequestDto) (
 		Brand:        dto.Brand,
 		Model:        dto.Model,
 		SerialNumber: dto.SerialNumber,
-		UserID:       dto.UserID,
+		UserID:       &dto.UserID,
 	}
 
 	saved, err := s.repo.Save(device)
@@ -66,7 +66,7 @@ func (s *deviceServiceImpl) UpdateDevice(id string, dto *models.DeviceUpdateRequ
 		return nil, err
 	}
 
-	if dto.UserID != "" && dto.UserID != existing.UserID {
+	if dto.UserID != "" && (existing.UserID == nil || dto.UserID != *existing.UserID) {
 		_, err := s.userRepo.FindByID(dto.UserID)
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -74,7 +74,7 @@ func (s *deviceServiceImpl) UpdateDevice(id string, dto *models.DeviceUpdateRequ
 			}
 			return nil, err
 		}
-		existing.UserID = dto.UserID
+		existing.UserID = &dto.UserID
 	}
 
 	if dto.Type != "" {
@@ -120,13 +120,17 @@ func (s *deviceServiceImpl) DeleteDevice(id string) error {
 }
 
 func toDeviceResponseDto(d *models.Device) *models.DeviceResponseDto {
+	userIDStr := ""
+	if d.UserID != nil {
+		userIDStr = *d.UserID
+	}
 	return &models.DeviceResponseDto{
 		ID:           d.ID,
 		Type:         d.Type,
 		Brand:        d.Brand,
 		Model:        d.Model,
 		SerialNumber: d.SerialNumber,
-		UserID:       d.UserID,
+		UserID:       userIDStr,
 		UserName:     d.User.Name,
 		UserDni:      d.User.Dni,
 	}

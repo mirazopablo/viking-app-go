@@ -60,7 +60,7 @@ func (r *diagnosticPointRepositoryImpl) FindByWorkOrderAndClient(workOrderID, cl
 }
 
 func (r *diagnosticPointRepositoryImpl) Delete(id string) error {
-	result := r.db.Unscoped().Delete(&models.DiagnosticPoint{}, "id = ?", id)
+	result := r.db.Delete(&models.DiagnosticPoint{}, "id = ?", id)
 	if result.Error != nil {
 		return result.Error
 	}

@@ -62,10 +62,15 @@ func (s *diagnosticPointServiceImpl) AddDiagnosticPoint(id, workOrderID, clientI
 		}
 	}
 
+	var clientIDPtr *string
+	if clientID != "" {
+		clientIDPtr = &clientID
+	}
+
 	dp := &models.DiagnosticPoint{
 		ID:          id,
 		WorkOrderID: workOrderID,
-		ClientID:    clientID,
+		ClientID:    clientIDPtr,
 		Description: strings.TrimSpace(description),
 		ImageURL:    imageURL,
 	}
@@ -113,7 +118,9 @@ func (s *diagnosticPointServiceImpl) DeleteDiagnosticPoint(id string) error {
 		relPath = strings.TrimPrefix(relPath, "/")
 		if !strings.Contains(relPath, "..") {
 			filePath := filepath.Join(config.AppConfig.UploadDir, relPath)
-			_ = os.Remove(filePath)
+			if err := os.Remove(filePath); err != nil && !os.IsNotExist(err) {
+				// Non-fatal: ignore missing file errors to maintain DB transaction integrity
+			}
 		}
 	}
 
@@ -121,10 +128,14 @@ func (s *diagnosticPointServiceImpl) DeleteDiagnosticPoint(id string) error {
 }
 
 func toDiagnosticPointResponseDto(dp *models.DiagnosticPoint) *models.DiagnosticPointResponseDto {
+	clientIDStr := ""
+	if dp.ClientID != nil {
+		clientIDStr = *dp.ClientID
+	}
 	return &models.DiagnosticPointResponseDto{
 		ID:          dp.ID,
 		WorkOrderID: dp.WorkOrderID,
-		ClientID:    dp.ClientID,
+		ClientID:    clientIDStr,
 		Description: dp.Description,
 		ImageURL:    dp.ImageURL,
 		CreatedAt:   dp.CreatedAt.Format(time.RFC3339),
