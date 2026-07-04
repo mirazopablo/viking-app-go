@@ -232,13 +232,25 @@ go run main.go
 ```
 The API server will initialize on `http://localhost:8080` and automatically execute GORM schema migrations (`AutoMigrate`) for all domain models.
 
+### 6. Production Deployment (Docker Compose & Traefik)
+The production environment is orchestrated using **Docker Compose** with a lightweight multi-stage Alpine Linux container (`viking-api:latest`) running behind a **Traefik v3** Reverse Proxy:
+* **SSL/TLS Termination:** Automated Let's Encrypt SSL certificates via DuckDNS DNS challenge (`https://viking-app.duckdns.org`).
+* **Isolated Networking:** Connected to PostgreSQL via custom bridge network (`mired2`) without exposing database ports to the host.
+* **Persistent Volumes:** Diagnostic evidence files are safely persisted in Docker named volumes (`viking_uploads_prod`).
+
+To build and run in production:
+```bash
+docker compose up -d --build
+```
+
 ---
 
 ## 📚 API Documentation (Swagger UI & OpenAPI)
 
 The project features real-time interactive REST API documentation powered by **Swagger UI**. You can explore available endpoints, inspect request/response payloads, and execute live REST calls directly from your web browser:
 
-> 🌐 **Interactive Swagger UI:** `http://localhost:8080/swagger/index.html`  
+> 🌐 **Production Swagger UI (HTTPS):** `https://viking-app.duckdns.org/swagger/index.html`  
+> 💻 **Local Dev Swagger UI:** `http://localhost:8080/swagger/index.html`  
 > 📄 **OpenAPI YAML Contract:** Available locally at [openapi.yaml](file:///mnt/GitHub/viking-app-go/openapi.yaml) or [Viking_app_documentation.md](file:///mnt/GitHub/viking-app-go/Viking_app_documentation.md)
 
 ---

@@ -14,8 +14,10 @@ info:
     email: mirazopablo@gmail.com
   version: "1.0"
 servers:
-  - url: http://0.0.0.0:8080
-    description: Server URL
+  - url: https://viking-app.duckdns.org
+    description: Servidor de Producción (HTTPS vía Traefik & DuckDNS)
+  - url: http://localhost:8080
+    description: Servidor de Desarrollo Local (HTTP)
 security:
   - bearer-jwt: []
 tags:
@@ -129,11 +131,11 @@ paths:
               schema:
                 $ref: "#/components/schemas/UserResponseDto"
   /api/device/update/{id}:
-    put:
+    patch:
       tags:
         - Device Controller
-      summary: Actualizar Dispositivo
-      description: Actualiza un dispositivo existente
+      summary: Actualizar Dispositivo (Soporta reasignación parcial PATCH)
+      description: Actualiza un dispositivo existente de forma parcial o total
       operationId: updateDevice
       parameters:
         - name: id
@@ -241,7 +243,7 @@ paths:
           content:
             "*/*":
               schema:
-                type: object
+                $ref: "#/components/schemas/WorkOrderResponseDto"
   /api/user/save:
     post:
       tags:
@@ -334,7 +336,7 @@ paths:
           content:
             "*/*":
               schema:
-                type: object
+                $ref: "#/components/schemas/WorkOrderResponseDto"
   /auth/validate:
     get:
       tags:
@@ -402,7 +404,9 @@ paths:
           content:
             "*/*":
               schema:
-                type: object
+                type: array
+                items:
+                  $ref: "#/components/schemas/WorkOrderResponseDto"
   /api/user/search:
     get:
       tags:
@@ -505,6 +509,27 @@ paths:
             type: string
             format: uuid
         - name: clientId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                type: object
+  /api/diagnostic-points/delete/{id}:
+    delete:
+      tags:
+        - DiagnosticPoint
+      summary: Eliminar punto de diagnóstico
+      description: Elimina un punto de diagnóstico existente por su ID
+      operationId: deleteDiagnosticPoint
+      parameters:
+        - name: id
           in: path
           required: true
           schema:
@@ -746,7 +771,6 @@ components:
         - dni
         - email
         - name
-        - password
         - phoneNumber
         - roleId
       type: object
@@ -865,6 +889,46 @@ components:
       properties:
         repairStatus:
           type: string
+    WorkOrderResponseDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        clientId:
+          type: string
+          format: uuid
+        clientName:
+          type: string
+        clientDni:
+          type: integer
+          format: int32
+        clientPhone:
+          type: string
+        deviceId:
+          type: string
+          format: uuid
+        deviceBrand:
+          type: string
+        deviceModel:
+          type: string
+        deviceSerialNumber:
+          type: string
+        staffId:
+          type: string
+          format: uuid
+        staffName:
+          type: string
+        issueDescription:
+          type: string
+        repairStatus:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
   securitySchemes:
     bearer-jwt:
       type: http
