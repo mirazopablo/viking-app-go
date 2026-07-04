@@ -49,7 +49,9 @@ func (s *diagnosticPointServiceImpl) AddDiagnosticPoint(id, workOrderID, clientI
 	}
 
 	if clientID == "" {
-		clientID = wo.ClientID
+		if wo.ClientID != nil {
+			clientID = *wo.ClientID
+		}
 	} else {
 		_, err = s.userRepo.FindByID(clientID)
 		if err != nil {
