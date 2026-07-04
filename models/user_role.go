@@ -14,9 +14,8 @@ type UserRole struct {
 	RoleID    uuid.UUID      `gorm:"type:uuid;not null;uniqueIndex:idx_user_role;" json:"roleId" example:"123e4567-e89b-12d3-a456-426614174000"`
 	User      User           `gorm:"foreignKey:UserID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"-"`
 	Role      Role           `gorm:"foreignKey:RoleID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT;" json:"role,omitempty"`
-	CreatedAt time.Time      `json:"createdAt,omitempty"`
-	UpdatedAt time.Time      `json:"updatedAt,omitempty"`
-	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
+	CreatedAt time.Time `json:"createdAt,omitempty"`
+	UpdatedAt time.Time `json:"updatedAt,omitempty"`
 }
 
 // TableName sets the explicit table name for GORM.

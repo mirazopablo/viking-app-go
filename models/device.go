@@ -12,13 +12,12 @@ type Device struct {
 	ID           string         `gorm:"type:uuid;primary_key;" json:"id"`
 	Type         string         `gorm:"type:varchar(100);not null" json:"type"`
 	Brand        string         `gorm:"type:varchar(100);not null" json:"brand"`
-	Model        string         `gorm:"type:varchar(150);not null" json:"model"`
-	SerialNumber string         `gorm:"type:varchar(150);uniqueIndex;not null" json:"serialNumber"`
-	UserID       string         `gorm:"type:uuid;not null;index" json:"userId"`
-	User         User           `gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT;" json:"-"`
-	CreatedAt    time.Time      `json:"createdAt"`
-	UpdatedAt    time.Time      `json:"updatedAt"`
-	DeletedAt    gorm.DeletedAt `gorm:"index" json:"-"`
+	Model        string    `gorm:"type:varchar(150);not null" json:"model"`
+	SerialNumber string    `gorm:"type:varchar(150);uniqueIndex;not null" json:"serialNumber"`
+	UserID       *string   `gorm:"type:uuid;index" json:"userId,omitempty"`
+	User         User      `gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"-"`
+	CreatedAt    time.Time `json:"createdAt"`
+	UpdatedAt    time.Time `json:"updatedAt"`
 }
 
 // BeforeCreate will set a UUID rather than numeric ID.

@@ -18,9 +18,8 @@ type User struct {
 	Email                string         `gorm:"type:varchar(150);not null;uniqueIndex;" json:"email" example:"admin@viking.com"`
 	Password             *string        `gorm:"type:varchar(255);null;" json:"-"` // Nullable password pointer for optional client login
 	UserRoles            []UserRole     `gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"userRoles,omitempty"`
-	CreatedAt            time.Time      `json:"createdAt,omitempty"`
-	UpdatedAt            time.Time      `json:"updatedAt,omitempty"`
-	DeletedAt            gorm.DeletedAt `gorm:"index" json:"-"`
+	CreatedAt            time.Time  `json:"createdAt,omitempty"`
+	UpdatedAt            time.Time  `json:"updatedAt,omitempty"`
 }
 
 // BeforeCreate hooks into GORM to generate UUID before insertion if nil.
