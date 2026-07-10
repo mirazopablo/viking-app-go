@@ -35,6 +35,7 @@ type WorkOrder struct {
 	StaffID              *string        `gorm:"type:uuid;index" json:"staffId,omitempty"`
 	Staff                *User          `gorm:"foreignKey:StaffID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"-"`
 	IssueDescription     string         `gorm:"type:text;not null" json:"issueDescription"`
+	Notes                string         `gorm:"type:text;" json:"notes,omitempty"`
 	RepairStatus         string         `gorm:"type:varchar(50);not null;index" json:"repairStatus"`
 	CreatedAt            time.Time `json:"createdAt"`
 	UpdatedAt            time.Time `json:"updatedAt"`
@@ -53,6 +54,7 @@ type WorkOrderCreateRequest struct {
 	ClientID         string `json:"clientId" binding:"required"`
 	DeviceID         string `json:"deviceId" binding:"required"`
 	IssueDescription string `json:"issueDescription" binding:"required,min=2,max=200"`
+	Notes            string `json:"notes"`
 	RepairStatus     string `json:"repairStatus" binding:"required"`
 }
 
@@ -76,6 +78,7 @@ type WorkOrderResponseDto struct {
 	StaffID            string `json:"staffId,omitempty"`
 	StaffName          string `json:"staffName,omitempty"`
 	IssueDescription   string `json:"issueDescription"`
+	Notes              string `json:"notes,omitempty"`
 	RepairStatus       string `json:"repairStatus"`
 	CreatedAt          string `json:"createdAt"`
 	UpdatedAt          string `json:"updatedAt"`

@@ -9,12 +9,15 @@ import (
 
 // Device represents the hardware equipment registered to a client in database.
 type Device struct {
-	ID           string         `gorm:"type:uuid;primary_key;" json:"id"`
-	Type         string         `gorm:"type:varchar(100);not null" json:"type"`
-	Brand        string         `gorm:"type:varchar(100);not null" json:"brand"`
+	ID           string    `gorm:"type:uuid;primary_key;" json:"id"`
+	Type         string    `gorm:"type:varchar(100);not null" json:"type"`
+	Brand        string    `gorm:"type:varchar(100);not null" json:"brand"`
 	Model        string    `gorm:"type:varchar(150);not null" json:"model"`
 	SerialNumber string    `gorm:"type:varchar(150);uniqueIndex;not null" json:"serialNumber"`
 	UserID       *string   `gorm:"type:uuid;index" json:"userId,omitempty"`
+	UserName     string    `gorm:"type:varchar(150);" json:"userName"`
+	UserDni      int32     `gorm:"type:integer;" json:"userDni"`
+	UserPhone    string    `gorm:"type:varchar(50);" json:"userPhone"`
 	User         User      `gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"-"`
 	CreatedAt    time.Time `json:"createdAt"`
 	UpdatedAt    time.Time `json:"updatedAt"`
@@ -57,4 +60,5 @@ type DeviceResponseDto struct {
 	UserID       string `json:"userId"`
 	UserName     string `json:"userName"`
 	UserDni      int32  `json:"userDni"`
+	UserPhone    string `json:"userPhone"`
 }
