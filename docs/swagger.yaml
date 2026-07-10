@@ -37,6 +37,8 @@ definitions:
         type: string
       userName:
         type: string
+      userPhone:
+        type: string
     type: object
   models.DeviceUpdateRequestDto:
     properties:
@@ -177,6 +179,8 @@ definitions:
         maxLength: 200
         minLength: 2
         type: string
+      notes:
+        type: string
       repairStatus:
         type: string
     required:
@@ -237,6 +241,8 @@ definitions:
       id:
         type: string
       issueDescription:
+        type: string
+      notes:
         type: string
       repairStatus:
         type: string
@@ -346,12 +352,15 @@ paths:
         in: query
         name: brand
         type: string
-      - description: User DNI
-        format: int32
+      - description: User DNI (búsqueda parcial incremental)
         in: query
         name: userDni
-        type: integer
-      - description: General Search Term
+        type: string
+      - description: User Name (búsqueda parcial incremental)
+        in: query
+        name: userName
+        type: string
+      - description: Selector de campo o término general
         in: query
         name: query
         type: string
@@ -592,13 +601,35 @@ paths:
         in: query
         name: id
         type: string
+      - description: User DNI (búsqueda parcial incremental)
+        in: query
+        name: dni
+        type: string
+      - description: User Name
+        in: query
+        name: name
+        type: string
+      - description: User Email
+        in: query
+        name: email
+        type: string
+      - description: User Phone
+        in: query
+        name: phone
+        type: string
+      - description: Selector de campo o término general
+        in: query
+        name: query
+        type: string
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.UserResponseDto'
+            items:
+              $ref: '#/definitions/models.UserResponseDto'
+            type: array
       security:
       - bearer-jwt: []
       summary: Buscar Usuario
@@ -715,16 +746,15 @@ paths:
         in: query
         name: staffId
         type: string
-      - description: Client DNI
-        format: int32
+      - description: Client DNI (búsqueda parcial incremental)
         in: query
         name: clientDni
-        type: integer
+        type: string
       - description: Device Serial Number
         in: query
         name: deviceSerialNumber
         type: string
-      - description: General Search Term
+      - description: Selector de campo o término general
         in: query
         name: query
         type: string

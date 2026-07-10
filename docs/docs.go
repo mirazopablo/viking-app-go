@@ -151,15 +151,20 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
-                        "type": "integer",
-                        "format": "int32",
-                        "description": "User DNI",
+                        "type": "string",
+                        "description": "User DNI (búsqueda parcial incremental)",
                         "name": "userDni",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "General Search Term",
+                        "description": "User Name (búsqueda parcial incremental)",
+                        "name": "userName",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Selector de campo o término general",
                         "name": "query",
                         "in": "query"
                     }
@@ -530,13 +535,46 @@ const docTemplate = `{
                         "description": "User UUID",
                         "name": "id",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "User DNI (búsqueda parcial incremental)",
+                        "name": "dni",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "User Name",
+                        "name": "name",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "User Email",
+                        "name": "email",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "User Phone",
+                        "name": "phone",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Selector de campo o término general",
+                        "name": "query",
+                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.UserResponseDto"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.UserResponseDto"
+                            }
                         }
                     }
                 }
@@ -721,9 +759,8 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
-                        "type": "integer",
-                        "format": "int32",
-                        "description": "Client DNI",
+                        "type": "string",
+                        "description": "Client DNI (búsqueda parcial incremental)",
                         "name": "clientDni",
                         "in": "query"
                     },
@@ -735,7 +772,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "General Search Term",
+                        "description": "Selector de campo o término general",
                         "name": "query",
                         "in": "query"
                     }
@@ -1268,6 +1305,9 @@ const docTemplate = `{
                 },
                 "userName": {
                     "type": "string"
+                },
+                "userPhone": {
+                    "type": "string"
                 }
             }
         },
@@ -1471,6 +1511,9 @@ const docTemplate = `{
                     "maxLength": 200,
                     "minLength": 2
                 },
+                "notes": {
+                    "type": "string"
+                },
                 "repairStatus": {
                     "type": "string"
                 }
@@ -1554,6 +1597,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "issueDescription": {
+                    "type": "string"
+                },
+                "notes": {
                     "type": "string"
                 },
                 "repairStatus": {
