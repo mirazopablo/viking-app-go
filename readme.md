@@ -66,6 +66,9 @@ erDiagram
         string model
         string type
         uuid user_id FK
+        string user_name
+        integer user_dni
+        string user_phone
         timestamp created_at
         timestamp updated_at
         timestamp deleted_at
@@ -73,10 +76,17 @@ erDiagram
     WORK_ORDERS {
         uuid id PK
         string issue_description
+        string notes
         string repair_status
         uuid client_id FK
         uuid device_id FK
         uuid staff_id FK
+        string client_name_snapshot
+        integer client_dni_snapshot
+        string client_phone_snapshot
+        string device_brand_snapshot
+        string device_model_snapshot
+        string device_serial_snapshot
         timestamp created_at
         timestamp updated_at
         timestamp deleted_at
@@ -252,6 +262,12 @@ The project features real-time interactive REST API documentation powered by **S
 > 🌐 **Production Swagger UI (HTTPS):** `https://viking-app.duckdns.org/swagger/index.html`  
 > 💻 **Local Dev Swagger UI:** `http://localhost:8080/swagger/index.html`  
 > 📄 **OpenAPI YAML Contract:** Available locally at [openapi.yaml](file:///mnt/GitHub/viking-app-go/openapi.yaml) or [Viking_app_documentation.md](file:///mnt/GitHub/viking-app-go/Viking_app_documentation.md)
+
+### ⚡ Normalized Live Typeahead Search (`GET /api/*/search`)
+The API implements a standardized query-builder engine across `Device`, `User`, and `WorkOrder` entities supporting real-time incremental typeahead filtering (from 2 characters):
+* **Mode Selectors (`query=fieldName`):** Allows frontend clients to target specific attributes (`query=userDni`, `query=userName`, `query=by-dni`, `query=all`) while combining incremental filters cleanly.
+* **String-Casted Numeric Matching:** Numerical identifiers such as client DNI are dynamically cast for partial matching (`CAST(dni AS TEXT) ILIKE '%query%'`), allowing fast incremental customer lookups.
+* **Public Status Tracking:** Unauthenticated customers can query real-time repair progress via `POST /public/work-order/status` and `POST /public/work-order/status-by-dni`.
 
 ---
 
