@@ -15,7 +15,7 @@ type WorkOrderRepository interface {
 	Save(wo *models.WorkOrder) (*models.WorkOrder, error)
 	FindByID(id string) (*models.WorkOrder, error)
 	FindAll() ([]models.WorkOrder, error)
-	Search(staffId string, clientDni int32, deviceSerialNumber string, query string) ([]models.WorkOrder, error)
+	Search(staffId string, clientDni string, deviceSerialNumber string, query string) ([]models.WorkOrder, error)
 	FindByClientDNI(clientDni int32) ([]models.WorkOrder, error)
 	Update(wo *models.WorkOrder) (*models.WorkOrder, error)
 	Delete(id string) error
@@ -56,7 +56,7 @@ func (r *workOrderRepositoryImpl) FindAll() ([]models.WorkOrder, error) {
 	return orders, err
 }
 
-func (r *workOrderRepositoryImpl) Search(staffId string, clientDni int32, deviceSerialNumber string, query string) ([]models.WorkOrder, error) {
+func (r *workOrderRepositoryImpl) Search(staffId string, clientDni string, deviceSerialNumber string, query string) ([]models.WorkOrder, error) {
 	var orders []models.WorkOrder
 	queryBuilder := r.db.Preload("Client").Preload("Device").Preload("Staff").
 		Joins("LEFT JOIN users AS client_user ON client_user.id = work_orders.client_id").
@@ -65,20 +65,20 @@ func (r *workOrderRepositoryImpl) Search(staffId string, clientDni int32, device
 	if staffId != "" {
 		queryBuilder = queryBuilder.Where("work_orders.staff_id = ?", staffId)
 	}
-	if clientDni != 0 {
-		queryBuilder = queryBuilder.Where("work_orders.client_dni_snapshot = ? OR client_user.dni = ?", clientDni, clientDni)
+	if clientDni != "" {
+		queryBuilder = queryBuilder.Where("CAST(work_orders.client_dni_snapshot AS TEXT) ILIKE ? OR CAST(client_user.dni AS TEXT) ILIKE ?", "%"+clientDni+"%", "%"+clientDni+"%")
 	}
 	if deviceSerialNumber != "" {
 		queryBuilder = queryBuilder.Where("work_orders.device_serial_snapshot ILIKE ? OR devices.serial_number ILIKE ?", "%"+deviceSerialNumber+"%", "%"+deviceSerialNumber+"%")
 	}
 	if query != "" {
 		lowerQ := strings.ToLower(strings.TrimSpace(query))
-		// Ignore control mode strings from frontend (e.g. "all", "by-client", "by-device", "by-status", "by-id")
-		if lowerQ != "all" && !strings.HasPrefix(lowerQ, "by-") {
+		// Ignore control mode strings / field selectors from frontend
+		if lowerQ != "all" && !strings.HasPrefix(lowerQ, "by-") && lowerQ != "clientdni" && lowerQ != "deviceserialnumber" && lowerQ != "staffid" {
 			q := "%" + lowerQ + "%"
 			queryBuilder = queryBuilder.Where(
-				"LOWER(work_orders.issue_description) LIKE ? OR LOWER(work_orders.device_brand_snapshot) LIKE ? OR LOWER(devices.brand) LIKE ? OR LOWER(work_orders.device_model_snapshot) LIKE ? OR LOWER(devices.model) LIKE ? OR LOWER(work_orders.device_serial_snapshot) LIKE ? OR LOWER(devices.serial_number) LIKE ? OR LOWER(work_orders.client_name_snapshot) LIKE ? OR LOWER(client_user.name) LIKE ?",
-				q, q, q, q, q, q, q, q, q,
+				"LOWER(work_orders.issue_description) LIKE ? OR LOWER(work_orders.notes) LIKE ? OR LOWER(work_orders.device_brand_snapshot) LIKE ? OR LOWER(devices.brand) LIKE ? OR LOWER(work_orders.device_model_snapshot) LIKE ? OR LOWER(devices.model) LIKE ? OR LOWER(work_orders.device_serial_snapshot) LIKE ? OR LOWER(devices.serial_number) LIKE ? OR LOWER(work_orders.client_name_snapshot) LIKE ? OR LOWER(client_user.name) LIKE ? OR CAST(work_orders.client_dni_snapshot AS TEXT) LIKE ? OR CAST(client_user.dni AS TEXT) LIKE ?",
+				q, q, q, q, q, q, q, q, q, q, q, q,
 			)
 		}
 	}

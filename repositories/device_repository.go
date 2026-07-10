@@ -15,7 +15,7 @@ type DeviceRepository interface {
 	Save(device *models.Device) (*models.Device, error)
 	FindByID(id string) (*models.Device, error)
 	FindAll() ([]models.Device, error)
-	Search(id, serialNumber, brand string, userDni int32, query string) ([]models.Device, error)
+	Search(id, serialNumber, brand, userDni, userName, query string) ([]models.Device, error)
 	Update(device *models.Device) (*models.Device, error)
 	Delete(id string) error
 }
@@ -56,9 +56,9 @@ func (r *deviceRepositoryImpl) FindAll() ([]models.Device, error) {
 	return devices, err
 }
 
-func (r *deviceRepositoryImpl) Search(id, serialNumber, brand string, userDni int32, query string) ([]models.Device, error) {
+func (r *deviceRepositoryImpl) Search(id, serialNumber, brand, userDni, userName, query string) ([]models.Device, error) {
 	var devices []models.Device
-	queryBuilder := r.db.Preload("User").Joins("JOIN users ON users.id = devices.user_id")
+	queryBuilder := r.db.Preload("User").Joins("LEFT JOIN users ON users.id = devices.user_id")
 
 	if id != "" {
 		queryBuilder = queryBuilder.Where("devices.id = ?", id)
@@ -69,17 +69,20 @@ func (r *deviceRepositoryImpl) Search(id, serialNumber, brand string, userDni in
 	if brand != "" {
 		queryBuilder = queryBuilder.Where("devices.brand ILIKE ?", "%"+brand+"%")
 	}
-	if userDni != 0 {
-		queryBuilder = queryBuilder.Where("users.dni = ?", userDni)
+	if userDni != "" {
+		queryBuilder = queryBuilder.Where("CAST(users.dni AS TEXT) ILIKE ? OR CAST(devices.user_dni AS TEXT) ILIKE ?", "%"+userDni+"%", "%"+userDni+"%")
+	}
+	if userName != "" {
+		queryBuilder = queryBuilder.Where("devices.user_name ILIKE ? OR users.name ILIKE ?", "%"+userName+"%", "%"+userName+"%")
 	}
 	if query != "" {
 		lowerQ := strings.ToLower(strings.TrimSpace(query))
-		// Ignore control mode strings from frontend (e.g. "all", "by-brand", "by-serial", "by-dni", "by-id")
-		if lowerQ != "all" && !strings.HasPrefix(lowerQ, "by-") {
+		// Ignore control mode strings / field selectors from frontend (e.g. "all", "by-brand", "by-serial", "by-dni", "by-id", "userdni", "username", "brand", "serialnumber")
+		if lowerQ != "all" && !strings.HasPrefix(lowerQ, "by-") && lowerQ != "userdni" && lowerQ != "username" && lowerQ != "brand" && lowerQ != "serialnumber" {
 			q := "%" + lowerQ + "%"
 			queryBuilder = queryBuilder.Where(
-				"LOWER(devices.brand) LIKE ? OR LOWER(devices.model) LIKE ? OR LOWER(devices.serial_number) LIKE ? OR LOWER(users.name) LIKE ?",
-				q, q, q, q,
+				"LOWER(devices.brand) LIKE ? OR LOWER(devices.model) LIKE ? OR LOWER(devices.serial_number) LIKE ? OR LOWER(devices.user_name) LIKE ? OR LOWER(users.name) LIKE ? OR CAST(users.dni AS TEXT) LIKE ? OR CAST(devices.user_dni AS TEXT) LIKE ?",
+				q, q, q, q, q, q, q,
 			)
 		}
 	}

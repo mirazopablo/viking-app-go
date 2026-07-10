@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/mirazopablo/viking-app-go/config"
@@ -16,6 +17,7 @@ type UserRepository interface {
 	FindByID(id string) (*models.User, error)
 	FindByEmail(email string) (*models.User, error)
 	FindAll() ([]models.User, error)
+	Search(id, dni, name, email, phone, query string) ([]models.User, error)
 	Update(user *models.User) error
 	UpdateWithRole(user *models.User, roleID uuid.UUID) error
 	Delete(id string) error
@@ -83,6 +85,41 @@ func (r *userRepositoryImpl) FindByEmail(email string) (*models.User, error) {
 func (r *userRepositoryImpl) FindAll() ([]models.User, error) {
 	var users []models.User
 	err := config.DB.Preload("UserRoles.Role").Find(&users).Error
+	return users, err
+}
+
+// Search retrieves users filtered by partial matching or general query.
+func (r *userRepositoryImpl) Search(id, dni, name, email, phone, query string) ([]models.User, error) {
+	var users []models.User
+	queryBuilder := config.DB.Preload("UserRoles.Role")
+
+	if id != "" {
+		queryBuilder = queryBuilder.Where("id = ?", id)
+	}
+	if dni != "" {
+		queryBuilder = queryBuilder.Where("CAST(dni AS TEXT) ILIKE ?", "%"+dni+"%")
+	}
+	if name != "" {
+		queryBuilder = queryBuilder.Where("name ILIKE ?", "%"+name+"%")
+	}
+	if email != "" {
+		queryBuilder = queryBuilder.Where("email ILIKE ?", "%"+email+"%")
+	}
+	if phone != "" {
+		queryBuilder = queryBuilder.Where("phone_number ILIKE ?", "%"+phone+"%")
+	}
+	if query != "" {
+		lowerQ := strings.ToLower(strings.TrimSpace(query))
+		if lowerQ != "all" && !strings.HasPrefix(lowerQ, "by-") && lowerQ != "dni" && lowerQ != "name" && lowerQ != "email" && lowerQ != "phone" {
+			q := "%" + lowerQ + "%"
+			queryBuilder = queryBuilder.Where(
+				"LOWER(name) LIKE ? OR LOWER(email) LIKE ? OR LOWER(phone_number) LIKE ? OR CAST(dni AS TEXT) LIKE ?",
+				q, q, q, q,
+			)
+		}
+	}
+
+	err := queryBuilder.Find(&users).Error
 	return users, err
 }
 
