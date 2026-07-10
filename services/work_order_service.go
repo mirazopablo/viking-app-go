@@ -27,7 +27,7 @@ type WorkOrderService interface {
 	CreateWorkOrder(dto *models.WorkOrderCreateRequest, staffID string) (*models.WorkOrderResponseDto, error)
 	UpdateWorkOrderStatus(id string, dto *models.WorkOrderStatusUpdateRequestDto) (*models.WorkOrderResponseDto, error)
 	RegenerateSecurityCode(id string) (*models.WorkOrderResponseDto, error)
-	SearchWorkOrders(staffId string, clientDni int32, deviceSerialNumber string, query string) ([]models.WorkOrderResponseDto, error)
+	SearchWorkOrders(staffId string, clientDni string, deviceSerialNumber string, query string) ([]models.WorkOrderResponseDto, error)
 	DeleteWorkOrder(id string) error
 	GetPublicWorkOrderStatus(id string, securityCode string) (*models.WorkOrderPublicStatusResponseDto, error)
 	GetPublicWorkOrderStatusByDNI(clientDni int32, securityCode string) (*models.WorkOrderPublicStatusResponseDto, error)
@@ -101,6 +101,7 @@ func (s *workOrderServiceImpl) CreateWorkOrder(dto *models.WorkOrderCreateReques
 		DeviceModelSnapshot:  device.Model,
 		DeviceSerialSnapshot: device.SerialNumber,
 		IssueDescription:     dto.IssueDescription,
+		Notes:                dto.Notes,
 		RepairStatus:         strings.ToUpper(strings.TrimSpace(dto.RepairStatus)),
 	}
 
@@ -137,7 +138,7 @@ func (s *workOrderServiceImpl) UpdateWorkOrderStatus(id string, dto *models.Work
 	return toWorkOrderResponseDto(updated), nil
 }
 
-func (s *workOrderServiceImpl) SearchWorkOrders(staffId string, clientDni int32, deviceSerialNumber string, query string) ([]models.WorkOrderResponseDto, error) {
+func (s *workOrderServiceImpl) SearchWorkOrders(staffId string, clientDni string, deviceSerialNumber string, query string) ([]models.WorkOrderResponseDto, error) {
 	orders, err := s.repo.Search(staffId, clientDni, deviceSerialNumber, query)
 	if err != nil {
 		return nil, err
@@ -236,6 +237,7 @@ func toWorkOrderResponseDto(wo *models.WorkOrder) *models.WorkOrderResponseDto {
 		DeviceModel:        deviceModel,
 		DeviceSerialNumber: deviceSerial,
 		IssueDescription:   wo.IssueDescription,
+		Notes:              wo.Notes,
 		RepairStatus:       wo.RepairStatus,
 		CreatedAt:          wo.CreatedAt.Format(time.RFC3339),
 		UpdatedAt:          wo.UpdatedAt.Format(time.RFC3339),

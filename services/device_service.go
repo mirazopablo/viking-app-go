@@ -17,27 +17,24 @@ var (
 type DeviceService interface {
 	RegisterDevice(dto *models.DeviceCreateRequestDto) (*models.DeviceResponseDto, error)
 	UpdateDevice(id string, dto *models.DeviceUpdateRequestDto) (*models.DeviceResponseDto, error)
-	SearchDevices(id, serialNumber, brand string, userDni int32, query string) ([]models.DeviceResponseDto, error)
+	SearchDevices(id, serialNumber, brand, userDni, userName, query string) ([]models.DeviceResponseDto, error)
 	DeleteDevice(id string) error
 }
 
 type deviceServiceImpl struct {
-	repo     repositories.DeviceRepository
-	userRepo repositories.UserRepository
+	repo    repositories.DeviceRepository
+	userSvc UserService
 }
 
 // NewDeviceService instantiates a new DeviceService.
-func NewDeviceService(repo repositories.DeviceRepository, userRepo repositories.UserRepository) DeviceService {
-	return &deviceServiceImpl{repo: repo, userRepo: userRepo}
+func NewDeviceService(repo repositories.DeviceRepository, userSvc UserService) DeviceService {
+	return &deviceServiceImpl{repo: repo, userSvc: userSvc}
 }
 
 func (s *deviceServiceImpl) RegisterDevice(dto *models.DeviceCreateRequestDto) (*models.DeviceResponseDto, error) {
-	// Verify user exists
-	_, err := s.userRepo.FindByID(dto.UserID)
+	// Verify user exists and fetch snapshot data via UserService
+	user, err := s.userSvc.GetUserByID(dto.UserID)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, ErrUserNotFound
-		}
 		return nil, err
 	}
 
@@ -47,6 +44,9 @@ func (s *deviceServiceImpl) RegisterDevice(dto *models.DeviceCreateRequestDto) (
 		Model:        dto.Model,
 		SerialNumber: dto.SerialNumber,
 		UserID:       &dto.UserID,
+		UserName:     user.Name,
+		UserDni:      user.Dni,
+		UserPhone:    user.PhoneNumber,
 	}
 
 	saved, err := s.repo.Save(device)
@@ -67,14 +67,14 @@ func (s *deviceServiceImpl) UpdateDevice(id string, dto *models.DeviceUpdateRequ
 	}
 
 	if dto.UserID != "" && (existing.UserID == nil || dto.UserID != *existing.UserID) {
-		_, err := s.userRepo.FindByID(dto.UserID)
+		user, err := s.userSvc.GetUserByID(dto.UserID)
 		if err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return nil, ErrUserNotFound
-			}
 			return nil, err
 		}
 		existing.UserID = &dto.UserID
+		existing.UserName = user.Name
+		existing.UserDni = user.Dni
+		existing.UserPhone = user.PhoneNumber
 	}
 
 	if dto.Type != "" {
@@ -98,8 +98,8 @@ func (s *deviceServiceImpl) UpdateDevice(id string, dto *models.DeviceUpdateRequ
 	return toDeviceResponseDto(updated), nil
 }
 
-func (s *deviceServiceImpl) SearchDevices(id, serialNumber, brand string, userDni int32, query string) ([]models.DeviceResponseDto, error) {
-	devices, err := s.repo.Search(id, serialNumber, brand, userDni, query)
+func (s *deviceServiceImpl) SearchDevices(id, serialNumber, brand, userDni, userName, query string) ([]models.DeviceResponseDto, error) {
+	devices, err := s.repo.Search(id, serialNumber, brand, userDni, userName, query)
 	if err != nil {
 		return nil, err
 	}
@@ -124,6 +124,20 @@ func toDeviceResponseDto(d *models.Device) *models.DeviceResponseDto {
 	if d.UserID != nil {
 		userIDStr = *d.UserID
 	}
+
+	userName := d.UserName
+	if userName == "" && d.User.Name != "" {
+		userName = d.User.Name
+	}
+	userDni := d.UserDni
+	if userDni == 0 && d.User.Dni != 0 {
+		userDni = d.User.Dni
+	}
+	userPhone := d.UserPhone
+	if userPhone == "" && d.User.PhoneNumber != "" {
+		userPhone = d.User.PhoneNumber
+	}
+
 	return &models.DeviceResponseDto{
 		ID:           d.ID,
 		Type:         d.Type,
@@ -131,7 +145,8 @@ func toDeviceResponseDto(d *models.Device) *models.DeviceResponseDto {
 		Model:        d.Model,
 		SerialNumber: d.SerialNumber,
 		UserID:       userIDStr,
-		UserName:     d.User.Name,
-		UserDni:      d.User.Dni,
+		UserName:     userName,
+		UserDni:      userDni,
+		UserPhone:    userPhone,
 	}
 }

@@ -27,6 +27,7 @@ type UserService interface {
 	LoginUser(req *models.LoginUserDto) (string, error)
 	ValidateTokenString(tokenString string) bool
 	GetAllUsers() ([]models.UserResponseDto, error)
+	SearchUsers(id, dni, name, email, phone, query string) ([]models.UserResponseDto, error)
 	GetUserByID(id string) (*models.UserResponseDto, error)
 	UpdateUser(id string, req *models.RegisterDto) (*models.UserResponseDto, error)
 	DeleteUser(id string) error
@@ -131,6 +132,19 @@ func (s *userServiceImpl) ValidateTokenString(tokenString string) bool {
 // GetAllUsers retrieves all users converted to safe response DTOs.
 func (s *userServiceImpl) GetAllUsers() ([]models.UserResponseDto, error) {
 	users, err := s.userRepo.FindAll()
+	if err != nil {
+		return nil, err
+	}
+
+	var res []models.UserResponseDto
+	for _, u := range users {
+		res = append(res, *u.ToResponseDto())
+	}
+	return res, nil
+}
+
+func (s *userServiceImpl) SearchUsers(id, dni, name, email, phone, query string) ([]models.UserResponseDto, error) {
+	users, err := s.userRepo.Search(id, dni, name, email, phone, query)
 	if err != nil {
 		return nil, err
 	}
