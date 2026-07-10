@@ -57,7 +57,7 @@ func SetupRouter() *gin.Engine {
 	roleService := services.NewRoleService(roleRepo)
 	jwtService := services.NewJWTService()
 	userService := services.NewUserService(userRepo, roleRepo, jwtService)
-	deviceService := services.NewDeviceService(deviceRepo, userRepo)
+	deviceService := services.NewDeviceService(deviceRepo, userService)
 	workOrderService := services.NewWorkOrderService(workOrderRepo, userRepo, deviceRepo, diagnosticPointRepo)
 	diagnosticPointService := services.NewDiagnosticPointService(diagnosticPointRepo, workOrderRepo, userRepo)
 

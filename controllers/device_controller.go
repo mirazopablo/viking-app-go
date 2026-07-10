@@ -3,7 +3,6 @@ package controllers
 import (
 	"errors"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/mirazopablo/viking-app-go/models"
@@ -97,8 +96,9 @@ func (dc *DeviceController) UpdateDevice(c *gin.Context) {
 // @Param id query string false "Device UUID" format(uuid)
 // @Param serialNumber query string false "Serial Number"
 // @Param brand query string false "Brand"
-// @Param userDni query integer false "User DNI" format(int32)
-// @Param query query string false "General Search Term"
+// @Param userDni query string false "User DNI (búsqueda parcial incremental)"
+// @Param userName query string false "User Name (búsqueda parcial incremental)"
+// @Param query query string false "Selector de campo o término general"
 // @Success 200 {array} models.DeviceResponseDto "OK"
 // @Security bearer-jwt
 // @Router /api/device/search [get]
@@ -106,16 +106,11 @@ func (dc *DeviceController) SearchDevice(c *gin.Context) {
 	id := c.Query("id")
 	serialNumber := c.Query("serialNumber")
 	brand := c.Query("brand")
+	userDni := c.Query("userDni")
+	userName := c.Query("userName")
 	queryStr := c.Query("query")
 
-	var userDni int32
-	if dniStr := c.Query("userDni"); dniStr != "" {
-		if val, err := strconv.Atoi(dniStr); err == nil {
-			userDni = int32(val)
-		}
-	}
-
-	devices, err := dc.service.SearchDevices(id, serialNumber, brand, userDni, queryStr)
+	devices, err := dc.service.SearchDevices(id, serialNumber, brand, userDni, userName, queryStr)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

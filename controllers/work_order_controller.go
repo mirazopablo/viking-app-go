@@ -3,7 +3,6 @@ package controllers
 import (
 	"errors"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -129,23 +128,17 @@ func (woc *WorkOrderController) RegenerateSecurityCode(c *gin.Context) {
 // @ID searchWorkOrder
 // @Produce json
 // @Param staffId query string false "Staff UUID" format(uuid)
-// @Param clientDni query integer false "Client DNI" format(int32)
+// @Param clientDni query string false "Client DNI (búsqueda parcial incremental)"
 // @Param deviceSerialNumber query string false "Device Serial Number"
-// @Param query query string false "General Search Term"
+// @Param query query string false "Selector de campo o término general"
 // @Success 200 {array} models.WorkOrderResponseDto "OK"
 // @Security bearer-jwt
 // @Router /api/work-order/search [get]
 func (woc *WorkOrderController) SearchWorkOrder(c *gin.Context) {
 	staffId := c.Query("staffId")
 	deviceSerialNumber := c.Query("deviceSerialNumber")
+	clientDni := c.Query("clientDni")
 	queryStr := c.Query("query")
-
-	var clientDni int32
-	if dniStr := c.Query("clientDni"); dniStr != "" {
-		if val, err := strconv.Atoi(dniStr); err == nil {
-			clientDni = int32(val)
-		}
-	}
 
 	orders, err := woc.service.SearchWorkOrders(staffId, clientDni, deviceSerialNumber, queryStr)
 	if err != nil {

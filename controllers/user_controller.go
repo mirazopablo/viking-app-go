@@ -96,26 +96,23 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
 // @ID searchUser
 // @Produce json
 // @Param id query string false "User UUID" format(uuid)
-// @Success 200 {object} models.UserResponseDto "OK"
+// @Param dni query string false "User DNI (búsqueda parcial incremental)"
+// @Param name query string false "User Name"
+// @Param email query string false "User Email"
+// @Param phone query string false "User Phone"
+// @Param query query string false "Selector de campo o término general"
+// @Success 200 {array} models.UserResponseDto "OK"
 // @Security bearer-jwt
 // @Router /api/user/search [get]
 func (uc *UserController) SearchUser(c *gin.Context) {
 	id := c.Query("id")
-	if id != "" {
-		user, err := uc.service.GetUserByID(id)
-		if err != nil {
-			if errors.Is(err, services.ErrUserNotFound) {
-				c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
-				return
-			}
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-		c.JSON(http.StatusOK, user)
-		return
-	}
+	dni := c.Query("dni")
+	name := c.Query("name")
+	email := c.Query("email")
+	phone := c.Query("phone")
+	query := c.Query("query")
 
-	users, err := uc.service.GetAllUsers()
+	users, err := uc.service.SearchUsers(id, dni, name, email, phone, query)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
