@@ -3,9 +3,11 @@ package services
 import (
 	"errors"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/mirazopablo/viking-app-go/config"
 )
 
 var (
@@ -27,25 +29,45 @@ type JWTService interface {
 }
 
 type jwtServiceImpl struct {
-	secretKey []byte
+	secretKey      []byte
+	expirationTime time.Duration
 }
 
 // NewJWTService instantiates a new JWTService.
 func NewJWTService() JWTService {
-	secret := os.Getenv("JWT_SECRET")
+	secret := ""
+	if config.AppConfig != nil {
+		secret = config.AppConfig.JWTSecret
+	}
+	if secret == "" {
+		secret = os.Getenv("JWT_SECRET")
+	}
 	if secret == "" {
 		secret = "super-secret-viking-key-change-in-prod"
 	}
-	return &jwtServiceImpl{secretKey: []byte(secret)}
+
+	expirationHours := 4
+	if config.AppConfig != nil && config.AppConfig.JWTExpirationHours > 0 {
+		expirationHours = config.AppConfig.JWTExpirationHours
+	} else if envHours := os.Getenv("JWT_EXPIRATION_HOURS"); envHours != "" {
+		if parsed, err := strconv.Atoi(envHours); err == nil && parsed > 0 {
+			expirationHours = parsed
+		}
+	}
+
+	return &jwtServiceImpl{
+		secretKey:      []byte(secret),
+		expirationTime: time.Duration(expirationHours) * time.Hour,
+	}
 }
 
-// GenerateToken creates a signed JWT string valid for 24 hours.
+// GenerateToken creates a signed JWT string valid for the configured expiration duration.
 func (s *jwtServiceImpl) GenerateToken(userID string, roleID string) (string, error) {
 	claims := JWTClaims{
 		UserID: userID,
 		RoleID: roleID,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(s.expirationTime)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			Issuer:    "viking-app-go",
 		},
