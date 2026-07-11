@@ -26,8 +26,9 @@ var (
 type WorkOrderService interface {
 	CreateWorkOrder(dto *models.WorkOrderCreateRequest, staffID string) (*models.WorkOrderResponseDto, error)
 	UpdateWorkOrderStatus(id string, dto *models.WorkOrderStatusUpdateRequestDto) (*models.WorkOrderResponseDto, error)
-	RegenerateSecurityCode(id string) (*models.WorkOrderResponseDto, error)
-	SearchWorkOrders(staffId string, clientDni string, deviceSerialNumber string, query string) ([]models.WorkOrderResponseDto, error)
+	GetWorkOrderByID(id string) (*models.WorkOrderResponseDto, error)
+	RegenerateSecurityCode(id string) (*models.SecurityCodeResponseDto, error)
+	SearchWorkOrders(staffId string, clientDni string, deviceSerialNumber string, query string) ([]models.WorkOrderSummaryDto, error)
 	DeleteWorkOrder(id string) error
 	GetPublicWorkOrderStatus(id string, securityCode string) (*models.WorkOrderPublicStatusResponseDto, error)
 	GetPublicWorkOrderStatusByDNI(clientDni int32, securityCode string) (*models.WorkOrderPublicStatusResponseDto, error)
@@ -138,17 +139,28 @@ func (s *workOrderServiceImpl) UpdateWorkOrderStatus(id string, dto *models.Work
 	return toWorkOrderResponseDto(updated), nil
 }
 
-func (s *workOrderServiceImpl) SearchWorkOrders(staffId string, clientDni string, deviceSerialNumber string, query string) ([]models.WorkOrderResponseDto, error) {
+func (s *workOrderServiceImpl) SearchWorkOrders(staffId string, clientDni string, deviceSerialNumber string, query string) ([]models.WorkOrderSummaryDto, error) {
 	orders, err := s.repo.Search(staffId, clientDni, deviceSerialNumber, query)
 	if err != nil {
 		return nil, err
 	}
 
-	res := make([]models.WorkOrderResponseDto, len(orders))
+	res := make([]models.WorkOrderSummaryDto, len(orders))
 	for i, wo := range orders {
-		res[i] = *toWorkOrderResponseDto(&wo)
+		res[i] = *toWorkOrderSummaryDto(&wo)
 	}
 	return res, nil
+}
+
+func (s *workOrderServiceImpl) GetWorkOrderByID(id string) (*models.WorkOrderResponseDto, error) {
+	wo, err := s.repo.FindByID(id)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrWorkOrderNotFound
+		}
+		return nil, err
+	}
+	return toWorkOrderResponseDto(wo), nil
 }
 
 func (s *workOrderServiceImpl) DeleteWorkOrder(id string) error {
@@ -165,7 +177,7 @@ func (s *workOrderServiceImpl) DeleteWorkOrder(id string) error {
 	return err
 }
 
-func (s *workOrderServiceImpl) RegenerateSecurityCode(id string) (*models.WorkOrderResponseDto, error) {
+func (s *workOrderServiceImpl) RegenerateSecurityCode(id string) (*models.SecurityCodeResponseDto, error) {
 	wo, err := s.repo.FindByID(id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -185,9 +197,7 @@ func (s *workOrderServiceImpl) RegenerateSecurityCode(id string) (*models.WorkOr
 		return nil, err
 	}
 
-	res := toWorkOrderResponseDto(updated)
-	res.SecurityCode = plainCode
-	return res, nil
+	return toSecurityCodeResponseDto(updated, plainCode), nil
 }
 
 func toWorkOrderResponseDto(wo *models.WorkOrder) *models.WorkOrderResponseDto {
@@ -249,6 +259,55 @@ func toWorkOrderResponseDto(wo *models.WorkOrder) *models.WorkOrderResponseDto {
 		}
 	}
 	return dto
+}
+
+func toSecurityCodeResponseDto(wo *models.WorkOrder, plainCode string) *models.SecurityCodeResponseDto {
+	clientName := wo.ClientNameSnapshot
+	if clientName == "" && wo.Client.ID != uuid.Nil {
+		clientName = wo.Client.Name
+	}
+	return &models.SecurityCodeResponseDto{
+		ID:           wo.ID,
+		SecurityCode: plainCode,
+		ClientName:   clientName,
+	}
+}
+
+func toWorkOrderSummaryDto(wo *models.WorkOrder) *models.WorkOrderSummaryDto {
+	clientIDStr := ""
+	if wo.ClientID != nil {
+		clientIDStr = *wo.ClientID
+	}
+	deviceIDStr := ""
+	if wo.DeviceID != nil {
+		deviceIDStr = *wo.DeviceID
+	}
+
+	clientName := wo.ClientNameSnapshot
+	if clientName == "" && wo.Client.ID != uuid.Nil {
+		clientName = wo.Client.Name
+	}
+
+	deviceBrand := wo.DeviceBrandSnapshot
+	if deviceBrand == "" && wo.Device.ID != "" {
+		deviceBrand = wo.Device.Brand
+	}
+	deviceModel := wo.DeviceModelSnapshot
+	if deviceModel == "" && wo.Device.ID != "" {
+		deviceModel = wo.Device.Model
+	}
+
+	return &models.WorkOrderSummaryDto{
+		ID:               wo.ID,
+		ClientID:         clientIDStr,
+		ClientName:       clientName,
+		DeviceID:         deviceIDStr,
+		DeviceBrand:      deviceBrand,
+		DeviceModel:      deviceModel,
+		IssueDescription: wo.IssueDescription,
+		RepairStatus:     wo.RepairStatus,
+		CreatedAt:        wo.CreatedAt.Format(time.RFC3339),
+	}
 }
 
 func (s *workOrderServiceImpl) GetPublicWorkOrderStatus(id string, securityCode string) (*models.WorkOrderPublicStatusResponseDto, error) {

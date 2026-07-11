@@ -84,6 +84,28 @@ type WorkOrderResponseDto struct {
 	UpdatedAt          string `json:"updatedAt"`
 }
 
+// SecurityCodeResponseDto defines a lightweight projection containing only
+// the required fields for tracking code confirmation displays.
+type SecurityCodeResponseDto struct {
+	ID           string `json:"id"`
+	SecurityCode string `json:"securityCode"`
+	ClientName   string `json:"clientName"`
+}
+
+// WorkOrderSummaryDto defines a concise projection of a work order for lists and triage boards.
+type WorkOrderSummaryDto struct {
+	ID               string `json:"id"`
+	SecurityCode     string `json:"securityCode,omitempty"`
+	ClientID         string `json:"clientId"`
+	ClientName       string `json:"clientName"`
+	DeviceID         string `json:"deviceId"`
+	DeviceBrand      string `json:"deviceBrand"`
+	DeviceModel      string `json:"deviceModel"`
+	IssueDescription string `json:"issueDescription"`
+	RepairStatus     string `json:"repairStatus"`
+	CreatedAt        string `json:"createdAt"`
+}
+
 // WorkOrderPublicQueryRequestDto defines the input payload for client public inquiries.
 type WorkOrderPublicQueryRequestDto struct {
 	ID           string `json:"id" binding:"required"`

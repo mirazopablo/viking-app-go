@@ -114,6 +114,7 @@ func SetupRouter() *gin.Engine {
 			userGroup.PATCH("/update/:id", userCtrl.UpdateUser)
 			userGroup.PUT("/update/:id", userCtrl.UpdateUser)
 			userGroup.GET("/search", userCtrl.SearchUser)
+			userGroup.GET("/autocomplete", userCtrl.AutocompleteUser)
 			userGroup.GET("/current", userCtrl.GetCurrentUser)
 			userGroup.DELETE("/delete/:id", userCtrl.DeleteUser)
 		}
@@ -142,6 +143,7 @@ func SetupRouter() *gin.Engine {
 			workOrderGroup.PATCH("/update/:orderId", workOrderCtrl.UpdateWorkOrderStatus)
 			workOrderGroup.PATCH("/regenerate-code/:orderId", workOrderCtrl.RegenerateSecurityCode)
 			workOrderGroup.GET("/search", workOrderCtrl.SearchWorkOrder)
+			workOrderGroup.GET("/:orderId", workOrderCtrl.GetWorkOrderByID)
 			workOrderGroup.DELETE("/delete/:orderId", workOrderCtrl.DeleteWorkOrder)
 		}
 
@@ -150,6 +152,7 @@ func SetupRouter() *gin.Engine {
 		{
 			diagnosticPointGroup.POST("/add", diagnosticPointCtrl.AddDiagnosticPoint)
 			diagnosticPointGroup.GET("/by-work-order/:workOrderId/client/:clientId", diagnosticPointCtrl.GetDiagnosticPointsByWorkOrderAndClient)
+			diagnosticPointGroup.GET("/by-work-order/:workOrderId", diagnosticPointCtrl.GetDiagnosticPointsByWorkOrder)
 			diagnosticPointGroup.DELETE("/delete/:id", diagnosticPointCtrl.DeleteDiagnosticPoint)
 		}
 	}
