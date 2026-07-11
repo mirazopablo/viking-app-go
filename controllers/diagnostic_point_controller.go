@@ -149,6 +149,28 @@ func (dpc *DiagnosticPointController) GetDiagnosticPointsByWorkOrderAndClient(c 
 	c.JSON(http.StatusOK, points)
 }
 
+// GetDiagnosticPointsByWorkOrder godoc
+// @Summary Obtener puntos de diagnóstico por ID de orden de trabajo
+// @Description Obtiene una lista de puntos de diagnóstico por ID de orden de trabajo sin acoplamiento a clientId
+// @Tags DiagnosticPoint
+// @ID getDiagnosticPointsByWorkOrder
+// @Produce json
+// @Param workOrderId path string true "Work Order UUID" format(uuid)
+// @Success 200 {array} models.DiagnosticPointResponseDto "OK"
+// @Security bearer-jwt
+// @Router /api/diagnostic-points/by-work-order/{workOrderId} [get]
+func (dpc *DiagnosticPointController) GetDiagnosticPointsByWorkOrder(c *gin.Context) {
+	workOrderID := c.Param("workOrderId")
+
+	points, err := dpc.service.GetByWorkOrderAndClient(workOrderID, "")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, points)
+}
+
 // DeleteDiagnosticPoint godoc
 // @Summary Eliminar Punto de Diagnóstico
 // @Description Borra una evidencia multimedia por UUID

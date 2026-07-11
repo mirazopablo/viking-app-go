@@ -81,3 +81,21 @@ func (u *User) ToResponseDto() *UserResponseDto {
 		RoleID:               u.GetPrimaryRoleID(),
 	}
 }
+
+// UserAutocompleteDto represents a lightweight projection for autocomplete selectors.
+type UserAutocompleteDto struct {
+	ID          uuid.UUID `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	Name        string    `json:"name" example:"Viking Admin"`
+	Dni         int32     `json:"dni" example:"30123456"`
+	PhoneNumber string    `json:"phoneNumber,omitempty" example:"5491112345678"`
+}
+
+// ToAutocompleteDto converts User model to safe UserAutocompleteDto projection.
+func (u *User) ToAutocompleteDto() *UserAutocompleteDto {
+	return &UserAutocompleteDto{
+		ID:          u.ID,
+		Name:        u.Name,
+		Dni:         u.Dni,
+		PhoneNumber: u.PhoneNumber,
+	}
+}

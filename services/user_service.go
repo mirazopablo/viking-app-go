@@ -28,6 +28,7 @@ type UserService interface {
 	ValidateTokenString(tokenString string) bool
 	GetAllUsers() ([]models.UserResponseDto, error)
 	SearchUsers(id, dni, name, email, phone, query string) ([]models.UserResponseDto, error)
+	AutocompleteUsers(query string) ([]models.UserAutocompleteDto, error)
 	GetUserByID(id string) (*models.UserResponseDto, error)
 	UpdateUser(id string, req *models.RegisterDto) (*models.UserResponseDto, error)
 	DeleteUser(id string) error
@@ -152,6 +153,20 @@ func (s *userServiceImpl) SearchUsers(id, dni, name, email, phone, query string)
 	var res []models.UserResponseDto
 	for _, u := range users {
 		res = append(res, *u.ToResponseDto())
+	}
+	return res, nil
+}
+
+// AutocompleteUsers returns a lightweight projection of users for selectors without sensitive PII.
+func (s *userServiceImpl) AutocompleteUsers(query string) ([]models.UserAutocompleteDto, error) {
+	users, err := s.userRepo.Search("", "", "", "", "", query)
+	if err != nil {
+		return nil, err
+	}
+
+	var res []models.UserAutocompleteDto
+	for _, u := range users {
+		res = append(res, *u.ToAutocompleteDto())
 	}
 	return res, nil
 }

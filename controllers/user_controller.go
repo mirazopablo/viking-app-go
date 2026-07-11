@@ -120,6 +120,26 @@ func (uc *UserController) SearchUser(c *gin.Context) {
 	c.JSON(http.StatusOK, users)
 }
 
+// AutocompleteUser godoc
+// @Summary Autocompletado Rápido de Usuario / Cliente
+// @Description Devuelve una proyección ligera de usuarios para selectores sin exponer PII sensible
+// @Tags User Controller
+// @ID autocompleteUser
+// @Produce json
+// @Param query query string false "Término de búsqueda (nombre, DNI o teléfono)"
+// @Success 200 {array} models.UserAutocompleteDto "OK"
+// @Security bearer-jwt
+// @Router /api/user/autocomplete [get]
+func (uc *UserController) AutocompleteUser(c *gin.Context) {
+	query := c.Query("query")
+	users, err := uc.service.AutocompleteUsers(query)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, users)
+}
+
 // GetCurrentUser godoc
 // @Summary Obtener Usuario Actual
 // @Description Obtiene la información del usuario autenticado vía JWT en cabecera Authorization
