@@ -9,10 +9,7 @@ const docTemplate = `{
     "info": {
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
-        "contact": {
-            "name": "mirazopablo",
-            "email": "mirazopablo@gmail.com"
-        },
+        "contact": {},
         "version": "{{.Version}}"
     },
     "host": "{{.Host}}",
@@ -287,6 +284,45 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/diagnostic-points/by-work-order/{workOrderId}": {
+            "get": {
+                "security": [
+                    {
+                        "bearer-jwt": []
+                    }
+                ],
+                "description": "Obtiene una lista de puntos de diagnóstico por ID de orden de trabajo sin acoplamiento a clientId",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "DiagnosticPoint"
+                ],
+                "summary": "Obtener puntos de diagnóstico por ID de orden de trabajo",
+                "operationId": "getDiagnosticPointsByWorkOrder",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Work Order UUID",
+                        "name": "workOrderId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.DiagnosticPointResponseDto"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/diagnostic-points/by-work-order/{workOrderId}/client/{clientId}": {
             "get": {
                 "security": [
@@ -411,6 +447,43 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/user/autocomplete": {
+            "get": {
+                "security": [
+                    {
+                        "bearer-jwt": []
+                    }
+                ],
+                "description": "Devuelve una proyección ligera de usuarios para selectores sin exponer PII sensible",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User Controller"
+                ],
+                "summary": "Autocompletado Rápido de Usuario / Cliente",
+                "operationId": "autocompleteUser",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Término de búsqueda (nombre, DNI o teléfono)",
+                        "name": "query",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.UserAutocompleteDto"
+                            }
                         }
                     }
                 }
@@ -688,7 +761,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.WorkOrderResponseDto"
+                            "$ref": "#/definitions/models.SecurityCodeResponseDto"
                         }
                     }
                 }
@@ -783,7 +856,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/models.WorkOrderResponseDto"
+                                "$ref": "#/definitions/models.WorkOrderSummaryDto"
                             }
                         }
                     }
@@ -826,6 +899,42 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/models.WorkOrderStatusUpdateRequestDto"
                         }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.WorkOrderResponseDto"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/work-order/{orderId}": {
+            "get": {
+                "security": [
+                    {
+                        "bearer-jwt": []
+                    }
+                ],
+                "description": "Retorna el detalle completo de una orden de trabajo individual por su UUID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Work Order Controller"
+                ],
+                "summary": "Obtener Orden de Trabajo por ID",
+                "operationId": "getWorkOrderById",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Work Order UUID",
+                        "name": "orderId",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -1454,6 +1563,41 @@ const docTemplate = `{
                 }
             }
         },
+        "models.SecurityCodeResponseDto": {
+            "type": "object",
+            "properties": {
+                "clientName": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "securityCode": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.UserAutocompleteDto": {
+            "type": "object",
+            "properties": {
+                "dni": {
+                    "type": "integer",
+                    "example": 30123456
+                },
+                "id": {
+                    "type": "string",
+                    "example": "123e4567-e89b-12d3-a456-426614174000"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Viking Admin"
+                },
+                "phoneNumber": {
+                    "type": "string",
+                    "example": "5491112345678"
+                }
+            }
+        },
         "models.UserResponseDto": {
             "type": "object",
             "properties": {
@@ -1629,25 +1773,53 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
-        }
-    },
-    "securityDefinitions": {
-        "bearer-jwt": {
-            "type": "apiKey",
-            "name": "Authorization",
-            "in": "header"
+        },
+        "models.WorkOrderSummaryDto": {
+            "type": "object",
+            "properties": {
+                "clientId": {
+                    "type": "string"
+                },
+                "clientName": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "deviceBrand": {
+                    "type": "string"
+                },
+                "deviceId": {
+                    "type": "string"
+                },
+                "deviceModel": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "issueDescription": {
+                    "type": "string"
+                },
+                "repairStatus": {
+                    "type": "string"
+                },
+                "securityCode": {
+                    "type": "string"
+                }
+            }
         }
     }
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "1.0",
-	Host:             "0.0.0.0:8080",
-	BasePath:         "/",
+	Version:          "",
+	Host:             "",
+	BasePath:         "",
 	Schemes:          []string{},
-	Title:            "Viking-App ApiREST",
-	Description:      "Documentación de mi API Rest\n\nPara autenticarte:\n1. Usa el endpoint /auth/login para obtener el token\n2. Copia el token devuelto\n3. Click en el botón 'Authorize' (🔓) arriba\n4. Pega el token en el campo 'Value' (incluye 'Bearer ')",
+	Title:            "",
+	Description:      "",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

@@ -1,4 +1,3 @@
-basePath: /
 definitions:
   models.DeviceCreateRequestDto:
     properties:
@@ -142,6 +141,30 @@ definitions:
     required:
     - descripcion
     type: object
+  models.SecurityCodeResponseDto:
+    properties:
+      clientName:
+        type: string
+      id:
+        type: string
+      securityCode:
+        type: string
+    type: object
+  models.UserAutocompleteDto:
+    properties:
+      dni:
+        example: 30123456
+        type: integer
+      id:
+        example: 123e4567-e89b-12d3-a456-426614174000
+        type: string
+      name:
+        example: Viking Admin
+        type: string
+      phoneNumber:
+        example: "5491112345678"
+        type: string
+    type: object
   models.UserResponseDto:
     properties:
       address:
@@ -262,17 +285,31 @@ definitions:
     required:
     - repairStatus
     type: object
-host: 0.0.0.0:8080
+  models.WorkOrderSummaryDto:
+    properties:
+      clientId:
+        type: string
+      clientName:
+        type: string
+      createdAt:
+        type: string
+      deviceBrand:
+        type: string
+      deviceId:
+        type: string
+      deviceModel:
+        type: string
+      id:
+        type: string
+      issueDescription:
+        type: string
+      repairStatus:
+        type: string
+      securityCode:
+        type: string
+    type: object
 info:
-  contact:
-    email: mirazopablo@gmail.com
-    name: mirazopablo
-  description: "Documentación de mi API Rest\n\nPara autenticarte:\n1. Usa el endpoint
-    /auth/login para obtener el token\n2. Copia el token devuelto\n3. Click en el
-    botón 'Authorize' (\U0001F513) arriba\n4. Pega el token en el campo 'Value' (incluye
-    'Bearer ')"
-  title: Viking-App ApiREST
-  version: "1.0"
+  contact: {}
 paths:
   /api/:
     get:
@@ -447,6 +484,32 @@ paths:
       summary: Agregar punto de diagnóstico
       tags:
       - DiagnosticPoint
+  /api/diagnostic-points/by-work-order/{workOrderId}:
+    get:
+      description: Obtiene una lista de puntos de diagnóstico por ID de orden de trabajo
+        sin acoplamiento a clientId
+      operationId: getDiagnosticPointsByWorkOrder
+      parameters:
+      - description: Work Order UUID
+        format: uuid
+        in: path
+        name: workOrderId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.DiagnosticPointResponseDto'
+            type: array
+      security:
+      - bearer-jwt: []
+      summary: Obtener puntos de diagnóstico por ID de orden de trabajo
+      tags:
+      - DiagnosticPoint
   /api/diagnostic-points/by-work-order/{workOrderId}/client/{clientId}:
     get:
       description: Obtiene una lista de puntos de diagnóstico por ID de orden de trabajo
@@ -530,6 +593,30 @@ paths:
       summary: Verificar si el usuario es admin
       tags:
       - User Role Controller
+  /api/user/autocomplete:
+    get:
+      description: Devuelve una proyección ligera de usuarios para selectores sin
+        exponer PII sensible
+      operationId: autocompleteUser
+      parameters:
+      - description: Término de búsqueda (nombre, DNI o teléfono)
+        in: query
+        name: query
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.UserAutocompleteDto'
+            type: array
+      security:
+      - bearer-jwt: []
+      summary: Autocompletado Rápido de Usuario / Cliente
+      tags:
+      - User Controller
   /api/user/current:
     get:
       description: Obtiene la información del usuario autenticado vía JWT en cabecera
@@ -666,6 +753,30 @@ paths:
       summary: Actualizar Usuario
       tags:
       - User Controller
+  /api/work-order/{orderId}:
+    get:
+      description: Retorna el detalle completo de una orden de trabajo individual
+        por su UUID
+      operationId: getWorkOrderById
+      parameters:
+      - description: Work Order UUID
+        format: uuid
+        in: path
+        name: orderId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.WorkOrderResponseDto'
+      security:
+      - bearer-jwt: []
+      summary: Obtener Orden de Trabajo por ID
+      tags:
+      - Work Order Controller
   /api/work-order/delete/{orderId}:
     delete:
       description: Borra o cancela una orden de trabajo por UUID
@@ -703,7 +814,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.WorkOrderResponseDto'
+            $ref: '#/definitions/models.SecurityCodeResponseDto'
       security:
       - bearer-jwt: []
       summary: Regenerar Código de Seguridad de Orden de Trabajo
@@ -765,7 +876,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/models.WorkOrderResponseDto'
+              $ref: '#/definitions/models.WorkOrderSummaryDto'
             type: array
       security:
       - bearer-jwt: []
@@ -1074,9 +1185,4 @@ paths:
       summary: Consulta Pública de Orden de Trabajo por DNI
       tags:
       - Work Order Controller
-securityDefinitions:
-  bearer-jwt:
-    in: header
-    name: Authorization
-    type: apiKey
 swagger: "2.0"
