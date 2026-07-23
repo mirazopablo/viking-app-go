@@ -10,3 +10,5 @@ dist/
 tmp/
 .gemini/
 .vscode/
+to_do.md
+notifications.md

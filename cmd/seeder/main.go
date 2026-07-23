@@ -86,7 +86,7 @@ func main() {
 
 	// 3. Ensure database schema is migrated before seeding
 	log.Println("Verifying database schema via AutoMigrate...")
-	err := config.DB.AutoMigrate(&models.Role{}, &models.User{}, &models.UserRole{}, &models.Device{}, &models.WorkOrder{}, &models.DiagnosticPoint{})
+	err := config.DB.AutoMigrate(&models.Role{}, &models.User{}, &models.UserRole{}, &models.Device{}, &models.WorkOrder{}, &models.DiagnosticPoint{}, &models.PushSubscription{}, &models.NotificationHistory{})
 	if err != nil {
 		log.Fatalf("Database auto-migration failed during seeding: %v", err)
 	}

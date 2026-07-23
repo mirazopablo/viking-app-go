@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -33,6 +34,14 @@ func ConnectDatabase() {
 	})
 	if err != nil {
 		log.Fatalf("Failed to connect to PostgreSQL database: %v", err)
+	}
+
+	// Setup connection pool
+	sqlDB, err := db.DB()
+	if err == nil {
+		sqlDB.SetMaxIdleConns(10)
+		sqlDB.SetMaxOpenConns(100)
+		sqlDB.SetConnMaxLifetime(time.Hour)
 	}
 
 	log.Println("DB Connected!")

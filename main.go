@@ -2,6 +2,8 @@ package main
 
 import (
 	"log"
+	"net/http"
+	"time"
 
 	"github.com/mirazopablo/viking-app-go/config"
 	"github.com/mirazopablo/viking-app-go/models"
@@ -31,8 +33,8 @@ func main() {
 	// 2. Connect to PostgreSQL database
 	config.ConnectDatabase()
 
-	// 3. Perform database auto-migration for Stage 1, 2, 4, 5 & 7 models
-	err := config.DB.AutoMigrate(&models.Role{}, &models.User{}, &models.UserRole{}, &models.Device{}, &models.WorkOrder{}, &models.DiagnosticPoint{})
+	// 3. Perform database auto-migration for models including PushSubscription & NotificationHistory
+	err := config.DB.AutoMigrate(&models.Role{}, &models.User{}, &models.UserRole{}, &models.Device{}, &models.WorkOrder{}, &models.DiagnosticPoint{}, &models.PushSubscription{}, &models.NotificationHistory{})
 	if err != nil {
 		log.Fatalf("Database auto-migration failed: %v", err)
 	}
@@ -44,7 +46,16 @@ func main() {
 	// 5. Start HTTP server
 	port := ":" + config.AppConfig.ServerPort
 	log.Printf("App is running on port %s", port)
-	if err := r.Run(port); err != nil {
+	
+	srv := &http.Server{
+		Addr:         port,
+		Handler:      r,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 15 * time.Second,
+		IdleTimeout:  120 * time.Second,
+	}
+
+	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("Server failed to start: %v", err)
 	}
 }

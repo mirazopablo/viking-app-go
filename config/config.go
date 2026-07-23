@@ -10,16 +10,19 @@ import (
 
 // Config holds all environmental variables for the application.
 type Config struct {
-	ServerPort         string
-	DBHost             string
-	DBPort             string
-	DBUser             string
-	DBPassword         string
-	DBName             string
-	DBSSLMode          string
-	UploadDir          string
-	JWTSecret          string
-	JWTExpirationHours int
+	ServerPort           string
+	DBHost               string
+	DBPort               string
+	DBUser               string
+	DBPassword           string
+	DBName               string
+	DBSSLMode            string
+	UploadDir            string
+	JWTSecret            string
+	JWTExpirationHours   int
+	VAPIDPublicKey       string
+	VAPIDPrivateKey      string
+	VAPIDSubscriberEmail string
 }
 
 // AppConfig is the global configuration instance.
@@ -33,16 +36,19 @@ func LoadConfig() {
 	}
 
 	AppConfig = &Config{
-		ServerPort:         getEnv("SERVER_PORT", "8080"),
-		DBHost:             getEnv("DB_HOST", "localhost"),
-		DBPort:             getEnv("DB_PORT", "5432"),
-		DBUser:             getEnv("DB_USER", "postgres"),
-		DBPassword:         getEnv("DB_PASSWORD", "postgres"),
-		DBName:             getEnv("DB_NAME", "viking_db"),
-		DBSSLMode:          getEnv("DB_SSLMODE", "disable"),
-		UploadDir:          getEnv("UPLOAD_DIR", "./uploads"),
-		JWTSecret:          getEnv("JWT_SECRET", "super-secret-viking-key"),
-		JWTExpirationHours: getEnvAsInt("JWT_EXPIRATION_HOURS", 4),
+		ServerPort:           getEnv("SERVER_PORT", "8080"),
+		DBHost:               getEnv("DB_HOST", "localhost"),
+		DBPort:               getEnv("DB_PORT", "5432"),
+		DBUser:               getEnv("DB_USER", "postgres"),
+		DBPassword:           getEnv("DB_PASSWORD", "postgres"),
+		DBName:               getEnv("DB_NAME", "viking_db"),
+		DBSSLMode:            getEnv("DB_SSLMODE", "disable"),
+		UploadDir:            getEnv("UPLOAD_DIR", "./uploads"),
+		JWTSecret:            getEnv("JWT_SECRET", "super-secret-viking-key"),
+		JWTExpirationHours:   getEnvAsInt("JWT_EXPIRATION_HOURS", 4),
+		VAPIDPublicKey:       getEnv("VAPID_PUBLIC_KEY", ""),
+		VAPIDPrivateKey:      getEnv("VAPID_PRIVATE_KEY", ""),
+		VAPIDSubscriberEmail: getEnv("VAPID_SUBSCRIBER_EMAIL", "mailto:admin@viking-app.zondasolutions.com"),
 	}
 
 	// Ensure upload directory exists
