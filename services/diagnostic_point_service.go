@@ -25,14 +25,15 @@ type DiagnosticPointService interface {
 }
 
 type diagnosticPointServiceImpl struct {
-	repo          repositories.DiagnosticPointRepository
-	workOrderRepo repositories.WorkOrderRepository
-	userRepo      repositories.UserRepository
+	repo                repositories.DiagnosticPointRepository
+	workOrderRepo       repositories.WorkOrderRepository
+	userRepo            repositories.UserRepository
+	notificationService NotificationService
 }
 
 // NewDiagnosticPointService instantiates a new DiagnosticPointService.
-func NewDiagnosticPointService(repo repositories.DiagnosticPointRepository, workOrderRepo repositories.WorkOrderRepository, userRepo repositories.UserRepository) DiagnosticPointService {
-	return &diagnosticPointServiceImpl{repo: repo, workOrderRepo: workOrderRepo, userRepo: userRepo}
+func NewDiagnosticPointService(repo repositories.DiagnosticPointRepository, workOrderRepo repositories.WorkOrderRepository, userRepo repositories.UserRepository, notificationService NotificationService) DiagnosticPointService {
+	return &diagnosticPointServiceImpl{repo: repo, workOrderRepo: workOrderRepo, userRepo: userRepo, notificationService: notificationService}
 }
 
 func (s *diagnosticPointServiceImpl) AddDiagnosticPoint(id, workOrderID, clientID, description, imageURL string) (*models.DiagnosticPointResponseDto, error) {
@@ -78,6 +79,10 @@ func (s *diagnosticPointServiceImpl) AddDiagnosticPoint(id, workOrderID, clientI
 	saved, err := s.repo.Save(dp)
 	if err != nil {
 		return nil, err
+	}
+
+	if s.notificationService != nil {
+		s.notificationService.NotifyDiagnosticPointAdded(saved, wo)
 	}
 
 	return toDiagnosticPointResponseDto(saved), nil

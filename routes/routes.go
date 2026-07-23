@@ -15,19 +15,32 @@ import (
 	_ "github.com/mirazopablo/viking-app-go/docs"
 )
 
-// CORSMiddleware configures CORS headers and handles preflight OPTIONS requests.
+// CORSMiddleware configures CORS headers dynamically and handles preflight OPTIONS requests.
 func CORSMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		// Capture the Origin header sent by the browser
+		origin := c.Request.Header.Get("Origin")
+		if origin != "" {
+			// Reflect the exact client origin to comply with W3C CORS specification
+			// when Access-Control-Allow-Credentials is set to true.
+			// Note: In strict production environments, validate 'origin' against a whitelist slice.
+			c.Writer.Header().Set("Access-Control-Allow-Origin", origin)
+		} else {
+			// Fallback for non-browser clients (e.g., curl, Postman, server-to-server)
+			c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		}
 		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
 		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
 		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE, PATCH")
-
-		if c.Request.Method == "OPTIONS" {
+		// Handle Private Network Access (PNA) preflight from modern Chromium-based browsers
+		if c.Request.Header.Get("Access-Control-Request-Private-Network") == "true" {
+			c.Writer.Header().Set("Access-Control-Allow-Private-Network", "true")
+		}
+		// Intercept and terminate OPTIONS preflight requests immediately with 204 No Content
+		if c.Request.Method == http.MethodOptions {
 			c.AbortWithStatus(http.StatusNoContent)
 			return
 		}
-
 		c.Next()
 	}
 }
@@ -52,14 +65,17 @@ func SetupRouter() *gin.Engine {
 	deviceRepo := repositories.NewDeviceRepository()
 	workOrderRepo := repositories.NewWorkOrderRepository()
 	diagnosticPointRepo := repositories.NewDiagnosticPointRepository()
+	pushSubscriptionRepo := repositories.NewPushSubscriptionRepository()
+	notificationHistoryRepo := repositories.NewNotificationHistoryRepository()
 
 	// Initialize Services
 	roleService := services.NewRoleService(roleRepo)
 	jwtService := services.NewJWTService()
 	userService := services.NewUserService(userRepo, roleRepo, jwtService)
 	deviceService := services.NewDeviceService(deviceRepo, userService)
-	workOrderService := services.NewWorkOrderService(workOrderRepo, userRepo, deviceRepo, diagnosticPointRepo)
-	diagnosticPointService := services.NewDiagnosticPointService(diagnosticPointRepo, workOrderRepo, userRepo)
+	notificationService := services.NewNotificationService(pushSubscriptionRepo, notificationHistoryRepo, workOrderRepo)
+	workOrderService := services.NewWorkOrderService(workOrderRepo, userRepo, deviceRepo, diagnosticPointRepo, notificationService)
+	diagnosticPointService := services.NewDiagnosticPointService(diagnosticPointRepo, workOrderRepo, userRepo, notificationService)
 
 	// Initialize Controllers
 	homeCtrl := controllers.NewHomeController()
@@ -71,6 +87,7 @@ func SetupRouter() *gin.Engine {
 	userRoleCtrl := controllers.NewUserRoleController(roleService)
 	workOrderCtrl := controllers.NewWorkOrderController(workOrderService)
 	diagnosticPointCtrl := controllers.NewDiagnosticPointController(diagnosticPointService)
+	notificationCtrl := controllers.NewNotificationController(notificationService)
 
 	// Swagger UI Route (Always Public)
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
@@ -96,6 +113,14 @@ func SetupRouter() *gin.Engine {
 	{
 		publicWorkOrder.POST("/status", workOrderCtrl.GetPublicStatus)
 		publicWorkOrder.POST("/status-by-dni", workOrderCtrl.GetPublicStatusByDni)
+	}
+
+	publicNotifications := r.Group("/public/notifications")
+	{
+		publicNotifications.POST("/subscribe", notificationCtrl.Subscribe)
+		publicNotifications.POST("/unsubscribe", notificationCtrl.Unsubscribe)
+		publicNotifications.GET("/history", notificationCtrl.GetHistory)
+		publicNotifications.POST("/mark-read", notificationCtrl.MarkAsRead)
 	}
 
 	// =========================================================================

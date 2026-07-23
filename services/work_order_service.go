@@ -56,11 +56,12 @@ type workOrderServiceImpl struct {
 	userRepo            repositories.UserRepository
 	deviceRepo          repositories.DeviceRepository
 	diagnosticPointRepo repositories.DiagnosticPointRepository
+	notificationService NotificationService
 }
 
 // NewWorkOrderService instantiates a new WorkOrderService.
-func NewWorkOrderService(repo repositories.WorkOrderRepository, userRepo repositories.UserRepository, deviceRepo repositories.DeviceRepository, diagnosticPointRepo repositories.DiagnosticPointRepository) WorkOrderService {
-	return &workOrderServiceImpl{repo: repo, userRepo: userRepo, deviceRepo: deviceRepo, diagnosticPointRepo: diagnosticPointRepo}
+func NewWorkOrderService(repo repositories.WorkOrderRepository, userRepo repositories.UserRepository, deviceRepo repositories.DeviceRepository, diagnosticPointRepo repositories.DiagnosticPointRepository, notificationService NotificationService) WorkOrderService {
+	return &workOrderServiceImpl{repo: repo, userRepo: userRepo, deviceRepo: deviceRepo, diagnosticPointRepo: diagnosticPointRepo, notificationService: notificationService}
 }
 
 func (s *workOrderServiceImpl) CreateWorkOrder(dto *models.WorkOrderCreateRequest, staffID string) (*models.WorkOrderResponseDto, error) {
@@ -129,11 +130,18 @@ func (s *workOrderServiceImpl) UpdateWorkOrderStatus(id string, dto *models.Work
 		return nil, err
 	}
 
-	existing.RepairStatus = strings.ToUpper(strings.TrimSpace(dto.RepairStatus))
+	oldStatus := existing.RepairStatus
+	newStatus := strings.ToUpper(strings.TrimSpace(dto.RepairStatus))
+	existing.RepairStatus = newStatus
 
 	updated, err := s.repo.Update(existing)
 	if err != nil {
 		return nil, err
+	}
+
+	// Trigger async web push notification and save record in history if status actually changed
+	if s.notificationService != nil && !strings.EqualFold(oldStatus, newStatus) {
+		s.notificationService.NotifyOrderStatusChanged(updated, oldStatus, newStatus)
 	}
 
 	return toWorkOrderResponseDto(updated), nil
@@ -337,8 +345,11 @@ func (s *workOrderServiceImpl) GetPublicWorkOrderStatus(id string, securityCode 
 		dpDtos[i] = *toDiagnosticPointResponseDto(&dp)
 	}
 
+	woDto := toWorkOrderResponseDto(wo)
+	woDto.SecurityCode = strings.TrimSpace(securityCode)
+
 	return &models.WorkOrderPublicStatusResponseDto{
-		WorkOrder:        *toWorkOrderResponseDto(wo),
+		WorkOrder:        *woDto,
 		DiagnosticPoints: dpDtos,
 	}, nil
 }
@@ -380,8 +391,11 @@ func (s *workOrderServiceImpl) GetPublicWorkOrderStatusByDNI(clientDni int32, se
 		dpDtos[i] = *toDiagnosticPointResponseDto(&dp)
 	}
 
+	woDto := toWorkOrderResponseDto(matchedOrder)
+	woDto.SecurityCode = trimmedCode
+
 	return &models.WorkOrderPublicStatusResponseDto{
-		WorkOrder:        *toWorkOrderResponseDto(matchedOrder),
+		WorkOrder:        *woDto,
 		DiagnosticPoints: dpDtos,
 	}, nil
 }
