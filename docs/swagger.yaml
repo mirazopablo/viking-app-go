@@ -1,3 +1,4 @@
+basePath: /
 definitions:
   models.DeviceCreateRequestDto:
     properties:
@@ -80,6 +81,75 @@ definitions:
     required:
     - email
     - password
+    type: object
+  models.NotificationHistoryResponseDto:
+    properties:
+      body:
+        type: string
+      createdAt:
+        type: string
+      id:
+        type: string
+      isRead:
+        type: boolean
+      targetUrl:
+        type: string
+      title:
+        type: string
+      type:
+        type: string
+    type: object
+  models.PushSubscription:
+    properties:
+      auth:
+        type: string
+      createdAt:
+        type: string
+      endpoint:
+        type: string
+      id:
+        type: string
+      p256dh:
+        type: string
+      updatedAt:
+        type: string
+      userAgent:
+        type: string
+      workOrderId:
+        type: string
+    type: object
+  models.PushSubscriptionCreateRequestDto:
+    properties:
+      endpoint:
+        type: string
+      keys:
+        properties:
+          auth:
+            type: string
+          p256dh:
+            type: string
+        required:
+        - auth
+        - p256dh
+        type: object
+      securityCode:
+        type: string
+      userAgent:
+        type: string
+      workOrderId:
+        type: string
+    required:
+    - endpoint
+    - keys
+    - securityCode
+    - workOrderId
+    type: object
+  models.PushSubscriptionUnsubscribeRequestDto:
+    properties:
+      endpoint:
+        type: string
+    required:
+    - endpoint
     type: object
   models.RegisterDto:
     properties:
@@ -308,8 +378,17 @@ definitions:
       securityCode:
         type: string
     type: object
+host: 0.0.0.0:8080
 info:
-  contact: {}
+  contact:
+    email: mirazopablo@gmail.com
+    name: mirazopablo
+  description: "Documentación de mi API Rest\n\nPara autenticarte:\n1. Usa el endpoint
+    /auth/login para obtener el token\n2. Copia el token devuelto\n3. Click en el
+    botón 'Authorize' (\U0001F513) arriba\n4. Pega el token en el campo 'Value' (incluye
+    'Bearer ')"
+  title: Viking-App ApiREST
+  version: "1.0"
 paths:
   /api/:
     get:
@@ -1113,6 +1192,151 @@ paths:
       summary: Validar Token JWT
       tags:
       - Auth
+  /public/notifications/history:
+    get:
+      description: Permite la sincronización matutina (pull sync) al encender el servidor
+        y actualiza la campanita interna
+      operationId: getNotificationHistory
+      parameters:
+      - description: Work Order UUID
+        format: uuid
+        in: query
+        name: workOrderId
+        required: true
+        type: string
+      - description: Security Code
+        in: query
+        name: securityCode
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.NotificationHistoryResponseDto'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Obtener Historial de Notificaciones por Orden de Trabajo
+      tags:
+      - Notification Controller
+  /public/notifications/mark-read:
+    post:
+      consumes:
+      - application/json
+      description: Actualiza el estado de las alertas en la base de datos a leídas
+        para el contador de la campanita
+      operationId: markNotificationHistoryAsRead
+      parameters:
+      - description: Work Order UUID
+        format: uuid
+        in: query
+        name: workOrderId
+        required: true
+        type: string
+      - description: Security Code
+        in: query
+        name: securityCode
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Marcar Todas las Notificaciones de una Orden como Leídas
+      tags:
+      - Notification Controller
+  /public/notifications/subscribe:
+    post:
+      consumes:
+      - application/json
+      description: Registra el endpoint y claves de cifrado del navegador para alertas
+        en tiempo real de una orden
+      operationId: subscribePushNotification
+      parameters:
+      - description: Push Subscription Request
+        in: body
+        name: subscription
+        required: true
+        schema:
+          $ref: '#/definitions/models.PushSubscriptionCreateRequestDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.PushSubscription'
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Suscribir Navegador a Notificaciones WebPush
+      tags:
+      - Notification Controller
+  /public/notifications/unsubscribe:
+    post:
+      consumes:
+      - application/json
+      description: Revoca o elimina la suscripción WebPush utilizando la URL del endpoint
+      operationId: unsubscribePushNotification
+      parameters:
+      - description: Unsubscribe Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.PushSubscriptionUnsubscribeRequestDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Desuscribir Navegador de Notificaciones WebPush
+      tags:
+      - Notification Controller
   /public/work-order/status:
     post:
       consumes:
@@ -1185,4 +1409,9 @@ paths:
       summary: Consulta Pública de Orden de Trabajo por DNI
       tags:
       - Work Order Controller
+securityDefinitions:
+  bearer-jwt:
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"
