@@ -34,6 +34,7 @@ func AuthMiddleware(jwtSvc services.JWTService) gin.HandlerFunc {
 		// Store user identity in context for downstream controllers
 		c.Set("userID", claims.UserID)
 		c.Set("roleID", claims.RoleID)
+		c.Set("roleName", claims.RoleName)
 
 		c.Next()
 	}

@@ -1,6 +1,7 @@
 package models
 
 import (
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -18,8 +19,8 @@ type User struct {
 	Email                string         `gorm:"type:varchar(150);not null;uniqueIndex;" json:"email" example:"admin@viking.com"`
 	Password             *string        `gorm:"type:varchar(255);null;" json:"-"` // Nullable password pointer for optional client login
 	UserRoles            []UserRole     `gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"userRoles,omitempty"`
-	CreatedAt            time.Time  `json:"createdAt,omitempty"`
-	UpdatedAt            time.Time  `json:"updatedAt,omitempty"`
+	CreatedAt            time.Time      `json:"createdAt,omitempty"`
+	UpdatedAt            time.Time      `json:"updatedAt,omitempty"`
 }
 
 // BeforeCreate hooks into GORM to generate UUID before insertion if nil.
@@ -58,6 +59,15 @@ type UserResponseDto struct {
 	SecondaryPhoneNumber *string   `json:"secondaryPhoneNumber,omitempty" example:"5491187654321"`
 	Email                string    `json:"email" example:"admin@viking.com"`
 	RoleID               uuid.UUID `json:"roleId" example:"123e4567-e89b-12d3-a456-426614174000"`
+	RoleName             string    `json:"roleName" example:"ADMIN"`
+	IsStaff              bool      `json:"isStaff" example:"true"`
+}
+
+// LoginResponseDto represents the complete response for a successful login request.
+type LoginResponseDto struct {
+	Token string           `json:"token" example:"eyJhbGciOiJIUzI1Ni..."`
+	Type  string           `json:"type" example:"Bearer"`
+	User  *UserResponseDto `json:"user"`
 }
 
 // GetPrimaryRoleID returns the first role ID assigned to the user from the intermediate relationship, or Nil if none exists.
@@ -66,6 +76,20 @@ func (u *User) GetPrimaryRoleID() uuid.UUID {
 		return u.UserRoles[0].RoleID
 	}
 	return uuid.Nil
+}
+
+// GetPrimaryRoleName returns the name of the primary role assigned to the user, or empty string.
+func (u *User) GetPrimaryRoleName() string {
+	if len(u.UserRoles) > 0 && u.UserRoles[0].Role.Name != "" {
+		return u.UserRoles[0].Role.Name
+	}
+	return ""
+}
+
+// IsStaff evaluates whether the user holds an administrative or staff role.
+func (u *User) IsStaff() bool {
+	roleName := strings.ToUpper(strings.TrimSpace(u.GetPrimaryRoleName()))
+	return roleName != "CLIENTE" && roleName != "CLIENT" && roleName != ""
 }
 
 // ToResponseDto converts User model to safe UserResponseDto.
@@ -79,6 +103,8 @@ func (u *User) ToResponseDto() *UserResponseDto {
 		SecondaryPhoneNumber: u.SecondaryPhoneNumber,
 		Email:                u.Email,
 		RoleID:               u.GetPrimaryRoleID(),
+		RoleName:             u.GetPrimaryRoleName(),
+		IsStaff:              u.IsStaff(),
 	}
 }
 

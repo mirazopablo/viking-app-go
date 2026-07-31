@@ -57,13 +57,13 @@ func (ac *AuthController) RegisterUser(c *gin.Context) {
 
 // AuthenticateUser godoc
 // @Summary Iniciar Sesión
-// @Description Autentica a un usuario y retorna su token JWT
+// @Description Autentica a un usuario y retorna su token JWT junto con la información de perfil y rol
 // @Tags Auth
 // @ID authenticateUser
 // @Accept json
 // @Produce json
 // @Param creds body models.LoginUserDto true "Login Credentials"
-// @Success 200 {object} map[string]string "OK"
+// @Success 200 {object} models.LoginResponseDto "OK"
 // @Router /auth/login [post]
 func (ac *AuthController) AuthenticateUser(c *gin.Context) {
 	var input models.LoginUserDto
@@ -72,7 +72,7 @@ func (ac *AuthController) AuthenticateUser(c *gin.Context) {
 		return
 	}
 
-	token, err := ac.service.LoginUser(&input)
+	resp, err := ac.service.LoginUser(&input)
 	if err != nil {
 		if errors.Is(err, services.ErrInvalidCreds) {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
@@ -82,10 +82,7 @@ func (ac *AuthController) AuthenticateUser(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"token": token,
-		"type":  "Bearer",
-	})
+	c.JSON(http.StatusOK, resp)
 }
 
 // ValidateToken godoc

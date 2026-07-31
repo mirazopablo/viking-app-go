@@ -24,7 +24,7 @@ var (
 // UserService defines user management and authentication logic.
 type UserService interface {
 	RegisterUser(req *models.RegisterDto) (*models.UserResponseDto, error)
-	LoginUser(req *models.LoginUserDto) (string, error)
+	LoginUser(req *models.LoginUserDto) (*models.LoginResponseDto, error)
 	ValidateTokenString(tokenString string) bool
 	GetAllUsers() ([]models.UserResponseDto, error)
 	SearchUsers(id, dni, name, email, phone, query string) ([]models.UserResponseDto, error)
@@ -101,27 +101,38 @@ func (s *userServiceImpl) RegisterUser(req *models.RegisterDto) (*models.UserRes
 	return user.ToResponseDto(), nil
 }
 
-// LoginUser verifies credentials and returns a signed JWT token.
-func (s *userServiceImpl) LoginUser(req *models.LoginUserDto) (string, error) {
+// LoginUser verifies credentials and returns a signed JWT token along with user profile.
+func (s *userServiceImpl) LoginUser(req *models.LoginUserDto) (*models.LoginResponseDto, error) {
 	user, err := s.userRepo.FindByEmail(req.Email)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	if user == nil || user.Password == nil || strings.TrimSpace(*user.Password) == "" {
-		return "", ErrInvalidCreds
+		return nil, ErrInvalidCreds
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(*user.Password), []byte(req.Password))
 	if err != nil {
-		return "", ErrInvalidCreds
+		return nil, ErrInvalidCreds
 	}
 
 	primaryRoleID := user.GetPrimaryRoleID()
 	if primaryRoleID == uuid.Nil {
-		return "", ErrInvalidCreds
+		return nil, ErrInvalidCreds
 	}
 
-	return s.jwtSvc.GenerateToken(user.ID.String(), primaryRoleID.String())
+	primaryRoleName := user.GetPrimaryRoleName()
+
+	token, err := s.jwtSvc.GenerateToken(user.ID.String(), primaryRoleID.String(), primaryRoleName)
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.LoginResponseDto{
+		Token: token,
+		Type:  "Bearer",
+		User:  user.ToResponseDto(),
+	}, nil
 }
 
 // ValidateTokenString checks if a token string is valid and unexpired.

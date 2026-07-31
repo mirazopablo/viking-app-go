@@ -17,14 +17,15 @@ var (
 
 // JWTClaims defines custom claims embedded in our JWT token.
 type JWTClaims struct {
-	UserID string `json:"userId"`
-	RoleID string `json:"roleId"`
+	UserID   string `json:"userId"`
+	RoleID   string `json:"roleId"`
+	RoleName string `json:"roleName"`
 	jwt.RegisteredClaims
 }
 
 // JWTService defines operations for creating and verifying JWT tokens.
 type JWTService interface {
-	GenerateToken(userID string, roleID string) (string, error)
+	GenerateToken(userID string, roleID string, roleName string) (string, error)
 	ValidateToken(tokenString string) (*JWTClaims, error)
 }
 
@@ -62,10 +63,11 @@ func NewJWTService() JWTService {
 }
 
 // GenerateToken creates a signed JWT string valid for the configured expiration duration.
-func (s *jwtServiceImpl) GenerateToken(userID string, roleID string) (string, error) {
+func (s *jwtServiceImpl) GenerateToken(userID string, roleID string, roleName string) (string, error) {
 	claims := JWTClaims{
-		UserID: userID,
-		RoleID: roleID,
+		UserID:   userID,
+		RoleID:   roleID,
+		RoleName: roleName,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(s.expirationTime)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
