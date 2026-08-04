@@ -78,6 +78,39 @@ func (bc *BudgetController) GetBudgetByWorkOrder(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
+// GetPublicBudgetByWorkOrder godoc
+// @Summary Obtener presupuesto público por ID de Orden de Trabajo
+// @Description Obtiene la estructura desprotegida y sanitizada de un presupuesto para clientes en la vista pública /status
+// @Tags Budget
+// @ID getPublicBudgetByWorkOrder
+// @Produce json
+// @Param workOrderId path string true "Work Order UUID" format(uuid)
+// @Param securityCode query string false "Security Code (WOVIK-XXXXX)"
+// @Success 200 {object} models.BudgetResponseDto "OK"
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 404 {object} map[string]string "Not Found"
+// @Router /public/work-order/budget/{workOrderId} [get]
+func (bc *BudgetController) GetPublicBudgetByWorkOrder(c *gin.Context) {
+	workOrderID := c.Param("workOrderId")
+	securityCode := c.Query("securityCode")
+
+	res, err := bc.service.GetBudgetByWorkOrder(workOrderID, true, securityCode)
+	if err != nil {
+		if errors.Is(err, services.ErrBudgetNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Budget not found for the specified work order"})
+			return
+		}
+		if errors.Is(err, services.ErrInvalidSecurityCode) {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid security code"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, res)
+}
+
 // UpdateBudgetStatus godoc
 // @Summary Actualizar estado del presupuesto
 // @Description Permite actualizar el estado del presupuesto (DRAFT, SENT, APPROVED, REJECTED)
@@ -110,4 +143,30 @@ func (bc *BudgetController) UpdateBudgetStatus(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, res)
+}
+
+// DeleteBudget godoc
+// @Summary Eliminar presupuesto (Hard Delete)
+// @Description Elimina físicamente un presupuesto de la base de datos por su UUID
+// @Tags Budget
+// @ID deleteBudget
+// @Produce json
+// @Param id path string true "Budget UUID" format(uuid)
+// @Success 200 {object} map[string]string "OK"
+// @Failure 404 {object} map[string]string "Not Found"
+// @Security bearer-jwt
+// @Router /api/budget/delete/{id} [delete]
+func (bc *BudgetController) DeleteBudget(c *gin.Context) {
+	id := c.Param("id")
+
+	if err := bc.service.DeleteBudget(id); err != nil {
+		if errors.Is(err, services.ErrBudgetNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Budget not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Budget deleted successfully"})
 }

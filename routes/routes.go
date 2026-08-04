@@ -116,6 +116,7 @@ func SetupRouter() *gin.Engine {
 	{
 		publicWorkOrder.POST("/status", workOrderCtrl.GetPublicStatus)
 		publicWorkOrder.POST("/status-by-dni", workOrderCtrl.GetPublicStatusByDni)
+		publicWorkOrder.GET("/budget/:workOrderId", budgetCtrl.GetPublicBudgetByWorkOrder)
 	}
 
 	publicNotifications := r.Group("/public/notifications")
@@ -190,6 +191,8 @@ func SetupRouter() *gin.Engine {
 			budgetGroup.POST("/save", budgetCtrl.SaveBudget)
 			budgetGroup.GET("/by-work-order/:workOrderId", budgetCtrl.GetBudgetByWorkOrder)
 			budgetGroup.PATCH("/update-status/:id", budgetCtrl.UpdateBudgetStatus)
+			budgetGroup.DELETE("/delete/:id", budgetCtrl.DeleteBudget)
+			budgetGroup.DELETE("/:id", budgetCtrl.DeleteBudget)
 		}
 	}
 

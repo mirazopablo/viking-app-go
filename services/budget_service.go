@@ -9,6 +9,7 @@ import (
 
 	"github.com/mirazopablo/viking-app-go/models"
 	"github.com/mirazopablo/viking-app-go/repositories"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
@@ -19,8 +20,9 @@ var (
 // BudgetService defines business logic for managing dynamic budgets.
 type BudgetService interface {
 	SaveBudget(dto *models.BudgetSaveDto) (*models.BudgetResponseDto, error)
-	GetBudgetByWorkOrder(workOrderID string, isPublic bool) (*models.BudgetResponseDto, error)
+	GetBudgetByWorkOrder(workOrderID string, isPublic bool, securityCode ...string) (*models.BudgetResponseDto, error)
 	UpdateBudgetStatus(id string, status string) (*models.BudgetResponseDto, error)
+	DeleteBudget(id string) error
 }
 
 type budgetServiceImpl struct {
@@ -210,9 +212,23 @@ func (s *budgetServiceImpl) SaveBudget(dto *models.BudgetSaveDto) (*models.Budge
 	return toBudgetResponseDto(savedBudget, totalsDto, false), nil
 }
 
-func (s *budgetServiceImpl) GetBudgetByWorkOrder(workOrderID string, isPublic bool) (*models.BudgetResponseDto, error) {
+func (s *budgetServiceImpl) GetBudgetByWorkOrder(workOrderID string, isPublic bool, securityCode ...string) (*models.BudgetResponseDto, error) {
 	if strings.TrimSpace(workOrderID) == "" {
 		return nil, errors.New("workOrderId is required")
+	}
+
+	if isPublic && len(securityCode) > 0 && strings.TrimSpace(securityCode[0]) != "" {
+		secCode := strings.TrimSpace(securityCode[0])
+		wo, err := s.workOrderRepo.FindByID(workOrderID)
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return nil, ErrBudgetNotFound
+			}
+			return nil, err
+		}
+		if err := bcrypt.CompareHashAndPassword([]byte(wo.SecurityCodeHash), []byte(secCode)); err != nil {
+			return nil, ErrInvalidSecurityCode
+		}
 	}
 
 	budget, err := s.repo.FindByWorkOrderID(workOrderID)
@@ -243,6 +259,22 @@ func (s *budgetServiceImpl) UpdateBudgetStatus(id string, status string) (*model
 
 	totals := extractTotalsFromBudget(budget)
 	return toBudgetResponseDto(budget, totals, false), nil
+}
+
+func (s *budgetServiceImpl) DeleteBudget(id string) error {
+	if strings.TrimSpace(id) == "" {
+		return errors.New("id is required")
+	}
+
+	err := s.repo.Delete(id)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return ErrBudgetNotFound
+		}
+		return err
+	}
+
+	return nil
 }
 
 func extractTotalsFromBudget(budget *models.Budget) models.BudgetTotalsDto {

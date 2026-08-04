@@ -120,9 +120,9 @@ type BudgetTotalsDto struct {
 	ItemsSubtotal         float64 `json:"itemsSubtotal"`
 	LaborTotal            float64 `json:"laborTotal"`
 	GrandTotal            float64 `json:"grandTotal"`
-	TotalSparePartsCost   float64 `json:"totalSparePartsCost"`
-	TotalSparePartsProfit float64 `json:"totalSparePartsProfit"`
-	TotalEstimatedProfit  float64 `json:"totalEstimatedProfit"`
+	TotalSparePartsCost   float64 `json:"totalSparePartsCost,omitempty"`
+	TotalSparePartsProfit float64 `json:"totalSparePartsProfit,omitempty"`
+	TotalEstimatedProfit  float64 `json:"totalEstimatedProfit,omitempty"`
 }
 
 // BudgetStatusUpdateDto defines payload for updating budget status.
