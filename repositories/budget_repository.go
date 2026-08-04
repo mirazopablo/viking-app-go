@@ -2,7 +2,6 @@ package repositories
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/mirazopablo/viking-app-go/config"
 	"github.com/mirazopablo/viking-app-go/models"
@@ -82,12 +81,12 @@ func (r *budgetRepositoryImpl) UpdateStatus(id string, status string) (*models.B
 }
 
 func (r *budgetRepositoryImpl) Delete(id string) error {
-	result := r.db.Delete(&models.Budget{}, "id = ?", id)
+	result := r.db.Unscoped().Delete(&models.Budget{}, "id = ?", id)
 	if result.Error != nil {
 		return result.Error
 	}
 	if result.RowsAffected == 0 {
-		return fmt.Errorf("budget not found")
+		return gorm.ErrRecordNotFound
 	}
 	return nil
 }
