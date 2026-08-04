@@ -44,6 +44,136 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/budget/by-work-order/{workOrderId}": {
+            "get": {
+                "security": [
+                    {
+                        "bearer-jwt": []
+                    }
+                ],
+                "description": "Obtiene la estructura del presupuesto para su renderizado Web en tiempo real",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Budget"
+                ],
+                "summary": "Obtener presupuesto por ID de Orden de Trabajo",
+                "operationId": "getBudgetByWorkOrder",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Work Order UUID",
+                        "name": "workOrderId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Is Public Request",
+                        "name": "public",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.BudgetResponseDto"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/budget/save": {
+            "post": {
+                "security": [
+                    {
+                        "bearer-jwt": []
+                    }
+                ],
+                "description": "Almacena o actualiza la estructura JSON de un presupuesto y registra auditoría en diagnostic_points",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Budget"
+                ],
+                "summary": "Guardar o actualizar presupuesto",
+                "operationId": "saveBudget",
+                "parameters": [
+                    {
+                        "description": "Budget payload",
+                        "name": "budget",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.BudgetSaveDto"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.BudgetResponseDto"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/budget/update-status/{id}": {
+            "patch": {
+                "security": [
+                    {
+                        "bearer-jwt": []
+                    }
+                ],
+                "description": "Permite actualizar el estado del presupuesto (DRAFT, SENT, APPROVED, REJECTED)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Budget"
+                ],
+                "summary": "Actualizar estado del presupuesto",
+                "operationId": "updateBudgetStatus",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Budget UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Status payload",
+                        "name": "status",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.BudgetStatusUpdateDto"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.BudgetResponseDto"
+                        }
+                    }
+                }
+            }
+        },
         "/api/device/delete/{id}": {
             "delete": {
                 "security": [
@@ -952,7 +1082,7 @@ const docTemplate = `{
         },
         "/auth/login": {
             "post": {
-                "description": "Autentica a un usuario y retorna su token JWT",
+                "description": "Autentica a un usuario y retorna su token JWT junto con la información de perfil y rol",
                 "consumes": [
                     "application/json"
                 ],
@@ -979,10 +1109,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/models.LoginResponseDto"
                         }
                     }
                 }
@@ -1576,6 +1703,192 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "models.BudgetItemSaveDto": {
+            "type": "object",
+            "properties": {
+                "costPrice": {
+                    "type": "number"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "profitAmount": {
+                    "type": "number"
+                },
+                "profitMarginPercentage": {
+                    "type": "number"
+                },
+                "quantity": {
+                    "type": "number"
+                },
+                "rowType": {
+                    "type": "string"
+                },
+                "unitPrice": {
+                    "type": "number"
+                }
+            }
+        },
+        "models.BudgetLaborSaveDto": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.BudgetResponseDto": {
+            "type": "object",
+            "properties": {
+                "budgetData": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "mode": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "totals": {
+                    "$ref": "#/definitions/models.BudgetTotalsDto"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "workOrderId": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.BudgetSaveDto": {
+            "type": "object",
+            "required": [
+                "mode",
+                "title",
+                "workOrderId"
+            ],
+            "properties": {
+                "blocks": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "clientAddress": {
+                    "type": "string"
+                },
+                "clientDni": {},
+                "clientEmail": {
+                    "type": "string"
+                },
+                "clientName": {
+                    "type": "string"
+                },
+                "clientPhoneNumber": {
+                    "type": "string"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "deviceModel": {
+                    "type": "string"
+                },
+                "deviceSerialNumber": {
+                    "type": "string"
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.BudgetItemSaveDto"
+                    }
+                },
+                "labors": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.BudgetLaborSaveDto"
+                    }
+                },
+                "mode": {
+                    "type": "string"
+                },
+                "notes": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "taxPercentage": {
+                    "type": "number"
+                },
+                "termsAndConditions": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "workOrderId": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.BudgetStatusUpdateDto": {
+            "type": "object",
+            "required": [
+                "status"
+            ],
+            "properties": {
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.BudgetTotalsDto": {
+            "type": "object",
+            "properties": {
+                "grandTotal": {
+                    "type": "number"
+                },
+                "itemsSubtotal": {
+                    "type": "number"
+                },
+                "laborTotal": {
+                    "type": "number"
+                },
+                "totalEstimatedProfit": {
+                    "type": "number"
+                },
+                "totalSparePartsCost": {
+                    "type": "number"
+                },
+                "totalSparePartsProfit": {
+                    "type": "number"
+                }
+            }
+        },
         "models.DeviceCreateRequestDto": {
             "type": "object",
             "required": [
@@ -1670,6 +1983,9 @@ const docTemplate = `{
                 "description": {
                     "type": "string"
                 },
+                "entryType": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "string"
                 },
@@ -1678,6 +1994,22 @@ const docTemplate = `{
                 },
                 "workOrderId": {
                     "type": "string"
+                }
+            }
+        },
+        "models.LoginResponseDto": {
+            "type": "object",
+            "properties": {
+                "token": {
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1Ni..."
+                },
+                "type": {
+                    "type": "string",
+                    "example": "Bearer"
+                },
+                "user": {
+                    "$ref": "#/definitions/models.UserResponseDto"
                 }
             }
         },
@@ -1936,6 +2268,10 @@ const docTemplate = `{
                     "type": "string",
                     "example": "123e4567-e89b-12d3-a456-426614174000"
                 },
+                "isStaff": {
+                    "type": "boolean",
+                    "example": true
+                },
                 "name": {
                     "type": "string",
                     "example": "Viking Admin"
@@ -1947,6 +2283,10 @@ const docTemplate = `{
                 "roleId": {
                     "type": "string",
                     "example": "123e4567-e89b-12d3-a456-426614174000"
+                },
+                "roleName": {
+                    "type": "string",
+                    "example": "ADMIN"
                 },
                 "secondaryPhoneNumber": {
                     "type": "string",

@@ -1,5 +1,128 @@
 basePath: /
 definitions:
+  models.BudgetItemSaveDto:
+    properties:
+      costPrice:
+        type: number
+      description:
+        type: string
+      id:
+        type: string
+      profitAmount:
+        type: number
+      profitMarginPercentage:
+        type: number
+      quantity:
+        type: number
+      rowType:
+        type: string
+      unitPrice:
+        type: number
+    type: object
+  models.BudgetLaborSaveDto:
+    properties:
+      amount:
+        type: number
+      description:
+        type: string
+      id:
+        type: string
+    type: object
+  models.BudgetResponseDto:
+    properties:
+      budgetData:
+        items:
+          type: integer
+        type: array
+      createdAt:
+        type: string
+      currency:
+        type: string
+      id:
+        type: string
+      mode:
+        type: string
+      status:
+        type: string
+      title:
+        type: string
+      totals:
+        $ref: '#/definitions/models.BudgetTotalsDto'
+      updatedAt:
+        type: string
+      workOrderId:
+        type: string
+    type: object
+  models.BudgetSaveDto:
+    properties:
+      blocks:
+        items:
+          type: integer
+        type: array
+      clientAddress:
+        type: string
+      clientDni: {}
+      clientEmail:
+        type: string
+      clientName:
+        type: string
+      clientPhoneNumber:
+        type: string
+      currency:
+        type: string
+      deviceModel:
+        type: string
+      deviceSerialNumber:
+        type: string
+      items:
+        items:
+          $ref: '#/definitions/models.BudgetItemSaveDto'
+        type: array
+      labors:
+        items:
+          $ref: '#/definitions/models.BudgetLaborSaveDto'
+        type: array
+      mode:
+        type: string
+      notes:
+        type: string
+      status:
+        type: string
+      taxPercentage:
+        type: number
+      termsAndConditions:
+        type: string
+      title:
+        type: string
+      workOrderId:
+        type: string
+    required:
+    - mode
+    - title
+    - workOrderId
+    type: object
+  models.BudgetStatusUpdateDto:
+    properties:
+      status:
+        type: string
+    required:
+    - status
+    type: object
+  models.BudgetTotalsDto:
+    properties:
+      grandTotal:
+        type: number
+      itemsSubtotal:
+        type: number
+      laborTotal:
+        type: number
+      totalEstimatedProfit:
+        type: number
+      totalSparePartsCost:
+        type: number
+      totalSparePartsProfit:
+        type: number
+    type: object
   models.DeviceCreateRequestDto:
     properties:
       brand:
@@ -63,12 +186,25 @@ definitions:
         type: string
       description:
         type: string
+      entryType:
+        type: string
       id:
         type: string
       imageUrl:
         type: string
       workOrderId:
         type: string
+    type: object
+  models.LoginResponseDto:
+    properties:
+      token:
+        example: eyJhbGciOiJIUzI1Ni...
+        type: string
+      type:
+        example: Bearer
+        type: string
+      user:
+        $ref: '#/definitions/models.UserResponseDto'
     type: object
   models.LoginUserDto:
     properties:
@@ -249,6 +385,9 @@ definitions:
       id:
         example: 123e4567-e89b-12d3-a456-426614174000
         type: string
+      isStaff:
+        example: true
+        type: boolean
       name:
         example: Viking Admin
         type: string
@@ -257,6 +396,9 @@ definitions:
         type: string
       roleId:
         example: 123e4567-e89b-12d3-a456-426614174000
+        type: string
+      roleName:
+        example: ADMIN
         type: string
       secondaryPhoneNumber:
         example: "5491187654321"
@@ -406,6 +548,92 @@ paths:
       summary: Saludo
       tags:
       - Home Controller
+  /api/budget/by-work-order/{workOrderId}:
+    get:
+      description: Obtiene la estructura del presupuesto para su renderizado Web en
+        tiempo real
+      operationId: getBudgetByWorkOrder
+      parameters:
+      - description: Work Order UUID
+        format: uuid
+        in: path
+        name: workOrderId
+        required: true
+        type: string
+      - description: Is Public Request
+        in: query
+        name: public
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.BudgetResponseDto'
+      security:
+      - bearer-jwt: []
+      summary: Obtener presupuesto por ID de Orden de Trabajo
+      tags:
+      - Budget
+  /api/budget/save:
+    post:
+      consumes:
+      - application/json
+      description: Almacena o actualiza la estructura JSON de un presupuesto y registra
+        auditoría en diagnostic_points
+      operationId: saveBudget
+      parameters:
+      - description: Budget payload
+        in: body
+        name: budget
+        required: true
+        schema:
+          $ref: '#/definitions/models.BudgetSaveDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.BudgetResponseDto'
+      security:
+      - bearer-jwt: []
+      summary: Guardar o actualizar presupuesto
+      tags:
+      - Budget
+  /api/budget/update-status/{id}:
+    patch:
+      consumes:
+      - application/json
+      description: Permite actualizar el estado del presupuesto (DRAFT, SENT, APPROVED,
+        REJECTED)
+      operationId: updateBudgetStatus
+      parameters:
+      - description: Budget UUID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Status payload
+        in: body
+        name: status
+        required: true
+        schema:
+          $ref: '#/definitions/models.BudgetStatusUpdateDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.BudgetResponseDto'
+      security:
+      - bearer-jwt: []
+      summary: Actualizar estado del presupuesto
+      tags:
+      - Budget
   /api/device/delete/{id}:
     delete:
       description: Elimina un dispositivo de la base de datos
@@ -998,7 +1226,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Autentica a un usuario y retorna su token JWT
+      description: Autentica a un usuario y retorna su token JWT junto con la información
+        de perfil y rol
       operationId: authenticateUser
       parameters:
       - description: Login Credentials
@@ -1013,9 +1242,7 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/models.LoginResponseDto'
       summary: Iniciar Sesión
       tags:
       - Auth
