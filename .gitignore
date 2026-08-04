@@ -16,4 +16,4 @@ tmp/
 # Exceptuar el README
 !README.md
 !readme.md
-.txt
+*.txt
