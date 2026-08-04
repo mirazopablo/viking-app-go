@@ -86,6 +86,54 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/budget/delete/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "bearer-jwt": []
+                    }
+                ],
+                "description": "Elimina físicamente un presupuesto de la base de datos por su UUID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Budget"
+                ],
+                "summary": "Eliminar presupuesto (Hard Delete)",
+                "operationId": "deleteBudget",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Budget UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/budget/save": {
             "post": {
                 "security": [
@@ -1585,6 +1633,61 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/public/work-order/budget/{workOrderId}": {
+            "get": {
+                "description": "Obtiene la estructura desprotegida y sanitizada de un presupuesto para clientes en la vista pública /status",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Budget"
+                ],
+                "summary": "Obtener presupuesto público por ID de Orden de Trabajo",
+                "operationId": "getPublicBudgetByWorkOrder",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Work Order UUID",
+                        "name": "workOrderId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Security Code (WOVIK-XXXXX)",
+                        "name": "securityCode",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.BudgetResponseDto"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {

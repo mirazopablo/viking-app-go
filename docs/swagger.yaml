@@ -576,6 +576,37 @@ paths:
       summary: Obtener presupuesto por ID de Orden de Trabajo
       tags:
       - Budget
+  /api/budget/delete/{id}:
+    delete:
+      description: Elimina físicamente un presupuesto de la base de datos por su UUID
+      operationId: deleteBudget
+      parameters:
+      - description: Budget UUID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - bearer-jwt: []
+      summary: Eliminar presupuesto (Hard Delete)
+      tags:
+      - Budget
   /api/budget/save:
     post:
       consumes:
@@ -1564,6 +1595,44 @@ paths:
       summary: Desuscribir Navegador de Notificaciones WebPush
       tags:
       - Notification Controller
+  /public/work-order/budget/{workOrderId}:
+    get:
+      description: Obtiene la estructura desprotegida y sanitizada de un presupuesto
+        para clientes en la vista pública /status
+      operationId: getPublicBudgetByWorkOrder
+      parameters:
+      - description: Work Order UUID
+        format: uuid
+        in: path
+        name: workOrderId
+        required: true
+        type: string
+      - description: Security Code (WOVIK-XXXXX)
+        in: query
+        name: securityCode
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.BudgetResponseDto'
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Obtener presupuesto público por ID de Orden de Trabajo
+      tags:
+      - Budget
   /public/work-order/status:
     post:
       consumes:
