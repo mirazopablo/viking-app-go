@@ -67,6 +67,7 @@ func SetupRouter() *gin.Engine {
 	diagnosticPointRepo := repositories.NewDiagnosticPointRepository()
 	pushSubscriptionRepo := repositories.NewPushSubscriptionRepository()
 	notificationHistoryRepo := repositories.NewNotificationHistoryRepository()
+	budgetRepo := repositories.NewBudgetRepository()
 
 	// Initialize Services
 	roleService := services.NewRoleService(roleRepo)
@@ -76,6 +77,7 @@ func SetupRouter() *gin.Engine {
 	notificationService := services.NewNotificationService(pushSubscriptionRepo, notificationHistoryRepo, workOrderRepo)
 	workOrderService := services.NewWorkOrderService(workOrderRepo, userRepo, deviceRepo, diagnosticPointRepo, notificationService)
 	diagnosticPointService := services.NewDiagnosticPointService(diagnosticPointRepo, workOrderRepo, userRepo, notificationService)
+	budgetService := services.NewBudgetService(budgetRepo, workOrderRepo, diagnosticPointRepo, notificationService)
 
 	// Initialize Controllers
 	homeCtrl := controllers.NewHomeController()
@@ -88,6 +90,7 @@ func SetupRouter() *gin.Engine {
 	workOrderCtrl := controllers.NewWorkOrderController(workOrderService)
 	diagnosticPointCtrl := controllers.NewDiagnosticPointController(diagnosticPointService)
 	notificationCtrl := controllers.NewNotificationController(notificationService)
+	budgetCtrl := controllers.NewBudgetController(budgetService)
 
 	// Swagger UI Route (Always Public)
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
@@ -179,6 +182,14 @@ func SetupRouter() *gin.Engine {
 			diagnosticPointGroup.GET("/by-work-order/:workOrderId/client/:clientId", diagnosticPointCtrl.GetDiagnosticPointsByWorkOrderAndClient)
 			diagnosticPointGroup.GET("/by-work-order/:workOrderId", diagnosticPointCtrl.GetDiagnosticPointsByWorkOrder)
 			diagnosticPointGroup.DELETE("/delete/:id", diagnosticPointCtrl.DeleteDiagnosticPoint)
+		}
+
+		// Budget Controller Endpoints
+		budgetGroup := privateApi.Group("/budget")
+		{
+			budgetGroup.POST("/save", budgetCtrl.SaveBudget)
+			budgetGroup.GET("/by-work-order/:workOrderId", budgetCtrl.GetBudgetByWorkOrder)
+			budgetGroup.PATCH("/update-status/:id", budgetCtrl.UpdateBudgetStatus)
 		}
 	}
 

@@ -86,7 +86,7 @@ func main() {
 
 	// 3. Ensure database schema is migrated before seeding
 	log.Println("Verifying database schema via AutoMigrate...")
-	err := config.DB.AutoMigrate(&models.Role{}, &models.User{}, &models.UserRole{}, &models.Device{}, &models.WorkOrder{}, &models.DiagnosticPoint{}, &models.PushSubscription{}, &models.NotificationHistory{})
+	err := config.DB.AutoMigrate(&models.Role{}, &models.User{}, &models.UserRole{}, &models.Device{}, &models.WorkOrder{}, &models.DiagnosticPoint{}, &models.PushSubscription{}, &models.NotificationHistory{}, &models.Budget{})
 	if err != nil {
 		log.Fatalf("Database auto-migration failed during seeding: %v", err)
 	}
@@ -173,7 +173,12 @@ func main() {
 
 	if existingAdmin != nil {
 		log.Printf("[EXISTING] Admin account already registered: %s | ID: %s", existingAdmin.Email, existingAdmin.ID)
-		log.Println("--- Seeding completed without overriding existing user data ---")
+		clientRoleID, ok := rolesMap["CLIENT"]
+		if !ok {
+			log.Fatal("Critical Error: CLIENT role ID not found in roles map")
+		}
+		seedTestData(clientRoleID, existingAdmin.ID.String())
+		log.Println("--- Seeding completed successfully! ---")
 		return
 	}
 
@@ -210,5 +215,238 @@ func main() {
 	}
 
 	log.Printf("[SUCCESS] Created Admin user: %s | ID: %s | Assigned Role ID: %s", adminUser.Email, adminUser.ID, adminRoleID)
+
+	// 7. Seed test data (clients, devices, work orders)
+	clientRoleID, ok := rolesMap["CLIENT"]
+	if !ok {
+		log.Fatal("Critical Error: CLIENT role ID not found in roles map")
+	}
+	seedTestData(clientRoleID, adminUser.ID.String())
+
 	log.Println("--- Seeding completed successfully! ---")
+}
+
+// seedTestData inserts sample clients, devices, and work orders for testing purposes.
+func seedTestData(clientRoleID uuid.UUID, adminUserID string) {
+	log.Println("\n--- Seeding Test Data (Clients, Devices & Work Orders) ---")
+
+	userRepo := repositories.NewUserRepository()
+	deviceRepo := repositories.NewDeviceRepository()
+	workOrderRepo := repositories.NewWorkOrderRepository()
+
+	// 1. Seed Sample Clients
+	type clientSeed struct {
+		Name    string
+		Dni     int32
+		Address string
+		Phone   string
+		Email   string
+	}
+
+	clientsSeedData := []clientSeed{
+		{
+			Name:    "Juan Pérez",
+			Dni:     35123456,
+			Address: "Av. Siempre Viva 742, Córdoba",
+			Phone:   "5493514567890",
+			Email:   "cliente1@ejemplo.com",
+		},
+		{
+			Name:    "Maria Gomez",
+			Dni:     38987654,
+			Address: "Calle Falsa 123, Rosario",
+			Phone:   "5493415678901",
+			Email:   "cliente2@ejemplo.com",
+		},
+	}
+
+	clientUsers := make(map[string]*models.User)
+
+	for _, cs := range clientsSeedData {
+		existing, err := userRepo.FindByEmail(cs.Email)
+		if err != nil {
+			log.Fatalf("Error checking client user %s: %v", cs.Email, err)
+		}
+
+		if existing != nil {
+			log.Printf("[EXISTING] Client user found: %s | ID: %s", existing.Email, existing.ID)
+			clientUsers[cs.Email] = existing
+		} else {
+			newUser := &models.User{
+				Name:        cs.Name,
+				Dni:         cs.Dni,
+				Address:     cs.Address,
+				PhoneNumber: cs.Phone,
+				Email:       cs.Email,
+			}
+			if err := userRepo.CreateWithRole(newUser, clientRoleID); err != nil {
+				log.Fatalf("Failed to create client user %s: %v", cs.Email, err)
+			}
+			log.Printf("[NEW] Created Client user: %s (%s) | ID: %s", newUser.Name, newUser.Email, newUser.ID)
+			clientUsers[cs.Email] = newUser
+		}
+	}
+
+	// 2. Seed Sample Devices (Equipos)
+	// Client 1 has 2 devices (Dell XPS Notebook, Samsung Galaxy S21)
+	// Client 2 has 1 device (Custom PC Gamer)
+	type deviceSeed struct {
+		ClientEmail  string
+		Type         string
+		Brand        string
+		Model        string
+		SerialNumber string
+	}
+
+	devicesSeedData := []deviceSeed{
+		{
+			ClientEmail:  "cliente1@ejemplo.com",
+			Type:         "Notebook",
+			Brand:        "Dell",
+			Model:        "XPS 15 9520",
+			SerialNumber: "DELL-XPS-9520-001",
+		},
+		{
+			ClientEmail:  "cliente1@ejemplo.com",
+			Type:         "Smartphone",
+			Brand:        "Samsung",
+			Model:        "Galaxy S21",
+			SerialNumber: "SAMSUNG-S21-9988",
+		},
+		{
+			ClientEmail:  "cliente2@ejemplo.com",
+			Type:         "PC de Escritorio",
+			Brand:        "Custom PC",
+			Model:        "Ryzen 7 / RTX 3080",
+			SerialNumber: "CUSTOM-PC-2024-X",
+		},
+	}
+
+	seededDevices := make(map[string]*models.Device)
+
+	for _, ds := range devicesSeedData {
+		clientOwner, ok := clientUsers[ds.ClientEmail]
+		if !ok {
+			log.Fatalf("Owner client %s not found for device %s", ds.ClientEmail, ds.SerialNumber)
+		}
+
+		var existingDevice models.Device
+		err := config.DB.Where("serial_number = ?", ds.SerialNumber).First(&existingDevice).Error
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			userIDStr := clientOwner.ID.String()
+			newDevice := &models.Device{
+				Type:         ds.Type,
+				Brand:        ds.Brand,
+				Model:        ds.Model,
+				SerialNumber: ds.SerialNumber,
+				UserID:       &userIDStr,
+				UserName:     clientOwner.Name,
+				UserDni:      clientOwner.Dni,
+				UserPhone:    clientOwner.PhoneNumber,
+			}
+			saved, err := deviceRepo.Save(newDevice)
+			if err != nil {
+				log.Fatalf("Failed to create device %s: %v", ds.SerialNumber, err)
+			}
+			log.Printf("[NEW] Created Device: %s %s (SN: %s) | Owner: %s | ID: %s", saved.Brand, saved.Model, saved.SerialNumber, clientOwner.Name, saved.ID)
+			seededDevices[ds.SerialNumber] = saved
+		} else if err != nil {
+			log.Fatalf("Error querying device %s: %v", ds.SerialNumber, err)
+		} else {
+			log.Printf("[EXISTING] Device found: %s %s (SN: %s) | ID: %s", existingDevice.Brand, existingDevice.Model, existingDevice.SerialNumber, existingDevice.ID)
+			seededDevices[ds.SerialNumber] = &existingDevice
+		}
+	}
+
+	// 3. Seed Sample Work Orders (Ordenes de Trabajo)
+	type workOrderSeed struct {
+		DeviceSerial     string
+		IssueDescription string
+		Notes            string
+		RepairStatus     string
+		PlainCode        string
+	}
+
+	workOrdersSeedData := []workOrderSeed{
+		{
+			DeviceSerial:     "DELL-XPS-9520-001",
+			IssueDescription: "No enciende tras derrame ligero de líquido sobre el teclado.",
+			Notes:            "Revisión de placa madre y limpieza ultrasónica recomendada.",
+			RepairStatus:     models.StatusInProgress,
+			PlainCode:        "WOVIK-NOTE1",
+		},
+		{
+			DeviceSerial:     "SAMSUNG-S21-9988",
+			IssueDescription: "Pantalla astillada y puerto de carga con falso contacto.",
+			Notes:            "Presupuesto enviado al cliente por WhatsApp.",
+			RepairStatus:     models.StatusReceived,
+			PlainCode:        "WOVIK-S21XX",
+		},
+		{
+			DeviceSerial:     "CUSTOM-PC-2024-X",
+			IssueDescription: "Mantenimiento preventivo, cambio de pasta térmica y limpieza de polvo.",
+			Notes:            "Finalizado con éxito. Pruebas de stress de CPU/GPU pasadas.",
+			RepairStatus:     models.StatusDone,
+			PlainCode:        "WOVIK-PCGAM",
+		},
+	}
+
+	for _, wos := range workOrdersSeedData {
+		targetDevice, ok := seededDevices[wos.DeviceSerial]
+		if !ok {
+			log.Fatalf("Target device %s not found for work order", wos.DeviceSerial)
+		}
+
+		var existingWO models.WorkOrder
+		err := config.DB.Where("device_id = ? AND issue_description = ?", targetDevice.ID, wos.IssueDescription).First(&existingWO).Error
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			hashedCode, err := bcrypt.GenerateFromPassword([]byte(wos.PlainCode), bcrypt.DefaultCost)
+			if err != nil {
+				log.Fatalf("Failed to hash security code for work order: %v", err)
+			}
+
+			clientOwner := targetDevice.User
+			if clientOwner.ID == uuid.Nil && targetDevice.UserID != nil {
+				fetchedUser, _ := userRepo.FindByID(*targetDevice.UserID)
+				if fetchedUser != nil {
+					clientOwner = *fetchedUser
+				}
+			}
+
+			clientIDStr := clientOwner.ID.String()
+			var staffPtr *string
+			if adminUserID != "" {
+				staffPtr = &adminUserID
+			}
+
+			newWO := &models.WorkOrder{
+				ClientID:             &clientIDStr,
+				DeviceID:             &targetDevice.ID,
+				StaffID:              staffPtr,
+				SecurityCodeHash:     string(hashedCode),
+				ClientNameSnapshot:   clientOwner.Name,
+				ClientDniSnapshot:    clientOwner.Dni,
+				ClientPhoneSnapshot:  clientOwner.PhoneNumber,
+				DeviceBrandSnapshot:  targetDevice.Brand,
+				DeviceModelSnapshot:  targetDevice.Model,
+				DeviceSerialSnapshot: targetDevice.SerialNumber,
+				IssueDescription:     wos.IssueDescription,
+				Notes:                wos.Notes,
+				RepairStatus:         wos.RepairStatus,
+			}
+
+			savedWO, err := workOrderRepo.Save(newWO)
+			if err != nil {
+				log.Fatalf("Failed to create work order for device %s: %v", targetDevice.SerialNumber, err)
+			}
+
+			log.Printf("[NEW] Created Work Order: ID: %s | Status: %s | Client: %s | Device: %s %s | Security Code: %s",
+				savedWO.ID, savedWO.RepairStatus, savedWO.ClientNameSnapshot, savedWO.DeviceBrandSnapshot, savedWO.DeviceModelSnapshot, wos.PlainCode)
+		} else if err != nil {
+			log.Fatalf("Error querying work order for device %s: %v", targetDevice.SerialNumber, err)
+		} else {
+			log.Printf("[EXISTING] Work Order found: ID: %s | Status: %s | Device: %s %s",
+				existingWO.ID, existingWO.RepairStatus, existingWO.DeviceBrandSnapshot, existingWO.DeviceModelSnapshot)
+		}
+	}
 }
