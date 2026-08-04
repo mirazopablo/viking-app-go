@@ -10,5 +10,9 @@ dist/
 tmp/
 .gemini/
 .vscode/
-to_do.md
-notifications.md
+# Ignorar todos los archivos Markdown
+*.md
+
+# Exceptuar el README
+!README.md
+!readme.md
