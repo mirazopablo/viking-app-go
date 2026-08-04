@@ -137,10 +137,15 @@ func toDiagnosticPointResponseDto(dp *models.DiagnosticPoint) *models.Diagnostic
 	if dp.ClientID != nil {
 		clientIDStr = *dp.ClientID
 	}
+	entryType := dp.EntryType
+	if entryType == "" {
+		entryType = models.EntryTypeEvidenceImage
+	}
 	return &models.DiagnosticPointResponseDto{
 		ID:          dp.ID,
 		WorkOrderID: dp.WorkOrderID,
 		ClientID:    clientIDStr,
+		EntryType:   entryType,
 		Description: dp.Description,
 		ImageURL:    dp.ImageURL,
 		CreatedAt:   dp.CreatedAt.Format(time.RFC3339),
