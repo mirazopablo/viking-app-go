@@ -1,5 +1,44 @@
 basePath: /
 definitions:
+  models.AvailabilityResponseDto:
+    properties:
+      availableSlots:
+        items:
+          $ref: '#/definitions/models.TimeSlotDto'
+        type: array
+      date:
+        type: string
+    type: object
+  models.BookingCreateDto:
+    properties:
+      date:
+        type: string
+      deviceType:
+        type: string
+      fullName:
+        type: string
+      notes:
+        type: string
+      phone:
+        type: string
+      timeSlotId:
+        type: string
+    required:
+    - date
+    - deviceType
+    - fullName
+    - phone
+    - timeSlotId
+    type: object
+  models.BookingResponseDto:
+    properties:
+      bookingId:
+        type: string
+      message:
+        type: string
+      status:
+        type: string
+    type: object
   models.BudgetItemSaveDto:
     properties:
       costPrice:
@@ -354,6 +393,15 @@ definitions:
       id:
         type: string
       securityCode:
+        type: string
+    type: object
+  models.TimeSlotDto:
+    properties:
+      id:
+        type: string
+      isAvailable:
+        type: boolean
+      time:
         type: string
     type: object
   models.UserAutocompleteDto:
@@ -1091,6 +1139,54 @@ paths:
       summary: Actualizar Usuario
       tags:
       - User Controller
+  /api/v1/bookings:
+    post:
+      consumes:
+      - application/json
+      description: Crea un nuevo turno y reserva el slot en Google Calendar
+      operationId: createBooking
+      parameters:
+      - description: Booking Payload
+        in: body
+        name: booking
+        required: true
+        schema:
+          $ref: '#/definitions/models.BookingCreateDto'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.BookingResponseDto'
+        "409":
+          description: Conflict
+          schema:
+            type: object
+      summary: Crear reserva de turno
+      tags:
+      - Bookings
+  /api/v1/bookings/availability:
+    get:
+      description: Retorna los bloques horarios (Time Slots) disponibles para una
+        fecha específica.
+      operationId: getAvailability
+      parameters:
+      - description: Fecha en formato YYYY-MM-DD
+        in: query
+        name: date
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.AvailabilityResponseDto'
+      summary: Obtener slots disponibles
+      tags:
+      - Bookings
   /api/work-order/{orderId}:
     get:
       description: Retorna el detalle completo de una orden de trabajo individual

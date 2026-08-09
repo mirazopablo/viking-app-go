@@ -882,6 +882,77 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/bookings": {
+            "post": {
+                "description": "Crea un nuevo turno y reserva el slot en Google Calendar",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Bookings"
+                ],
+                "summary": "Crear reserva de turno",
+                "operationId": "createBooking",
+                "parameters": [
+                    {
+                        "description": "Booking Payload",
+                        "name": "booking",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.BookingCreateDto"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.BookingResponseDto"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/bookings/availability": {
+            "get": {
+                "description": "Retorna los bloques horarios (Time Slots) disponibles para una fecha específica.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Bookings"
+                ],
+                "summary": "Obtener slots disponibles",
+                "operationId": "getAvailability",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Fecha en formato YYYY-MM-DD",
+                        "name": "date",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.AvailabilityResponseDto"
+                        }
+                    }
+                }
+            }
+        },
         "/api/work-order/delete/{orderId}": {
             "delete": {
                 "security": [
@@ -1806,6 +1877,64 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "models.AvailabilityResponseDto": {
+            "type": "object",
+            "properties": {
+                "availableSlots": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.TimeSlotDto"
+                    }
+                },
+                "date": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.BookingCreateDto": {
+            "type": "object",
+            "required": [
+                "date",
+                "deviceType",
+                "fullName",
+                "phone",
+                "timeSlotId"
+            ],
+            "properties": {
+                "date": {
+                    "type": "string"
+                },
+                "deviceType": {
+                    "type": "string"
+                },
+                "fullName": {
+                    "type": "string"
+                },
+                "notes": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "timeSlotId": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.BookingResponseDto": {
+            "type": "object",
+            "properties": {
+                "bookingId": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
         "models.BudgetItemSaveDto": {
             "type": "object",
             "properties": {
@@ -2327,6 +2456,20 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "securityCode": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.TimeSlotDto": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "isAvailable": {
+                    "type": "boolean"
+                },
+                "time": {
                     "type": "string"
                 }
             }
