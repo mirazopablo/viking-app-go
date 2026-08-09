@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"os"
@@ -127,9 +128,26 @@ func extractDate(input string) string {
 	return input
 }
 
+// loadGoogleCredentials loads the service account JSON from an environment
+// variable (base64-encoded) in production, falling back to a local file for
+// development. The two variables are:
+//   - GOOGLE_CREDENTIALS_JSON  → base64 of the full credentials.json content
+//   - GOOGLE_CALENDAR_ID       → target calendar (e.g. your personal gmail)
+func loadGoogleCredentials() ([]byte, error) {
+	if encoded := os.Getenv("GOOGLE_CREDENTIALS_JSON"); encoded != "" {
+		decoded, err := base64.StdEncoding.DecodeString(encoded)
+		if err != nil {
+			return nil, fmt.Errorf("GOOGLE_CREDENTIALS_JSON is not valid base64: %w", err)
+		}
+		return decoded, nil
+	}
+	// Local development fallback
+	return os.ReadFile("credentials.json")
+}
+
 func getOccupiedSlotsFromCalendar(date string, targetSlots []models.TimeSlotDto) (map[string]bool, error) {
 	ctx := context.Background()
-	b, err := os.ReadFile("credentials.json")
+	b, err := loadGoogleCredentials()
 	if err != nil {
 		return nil, err
 	}
@@ -196,9 +214,9 @@ func getOccupiedSlotsFromCalendar(date string, targetSlots []models.TimeSlotDto)
 
 func insertToGoogleCalendar(booking *models.Booking, timeSlotID string) (string, error) {
 	ctx := context.Background()
-	b, err := os.ReadFile("credentials.json")
+	b, err := loadGoogleCredentials()
 	if err != nil {
-		return "", fmt.Errorf("could not read credentials: %v", err)
+		return "", fmt.Errorf("could not load credentials: %w", err)
 	}
 
 	// Parse JSON config to get JWT
