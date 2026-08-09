@@ -68,6 +68,7 @@ func SetupRouter() *gin.Engine {
 	pushSubscriptionRepo := repositories.NewPushSubscriptionRepository()
 	notificationHistoryRepo := repositories.NewNotificationHistoryRepository()
 	budgetRepo := repositories.NewBudgetRepository()
+	bookingRepo := repositories.NewBookingRepository()
 
 	// Initialize Services
 	roleService := services.NewRoleService(roleRepo)
@@ -78,6 +79,7 @@ func SetupRouter() *gin.Engine {
 	workOrderService := services.NewWorkOrderService(workOrderRepo, userRepo, deviceRepo, diagnosticPointRepo, notificationService)
 	diagnosticPointService := services.NewDiagnosticPointService(diagnosticPointRepo, workOrderRepo, userRepo, notificationService)
 	budgetService := services.NewBudgetService(budgetRepo, workOrderRepo, diagnosticPointRepo, notificationService)
+	bookingService := services.NewBookingService(bookingRepo)
 
 	// Initialize Controllers
 	homeCtrl := controllers.NewHomeController()
@@ -91,6 +93,7 @@ func SetupRouter() *gin.Engine {
 	diagnosticPointCtrl := controllers.NewDiagnosticPointController(diagnosticPointService)
 	notificationCtrl := controllers.NewNotificationController(notificationService)
 	budgetCtrl := controllers.NewBudgetController(budgetService)
+	bookingCtrl := controllers.NewBookingController(bookingService)
 
 	// Swagger UI Route (Always Public)
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
@@ -125,6 +128,12 @@ func SetupRouter() *gin.Engine {
 		publicNotifications.POST("/unsubscribe", notificationCtrl.Unsubscribe)
 		publicNotifications.GET("/history", notificationCtrl.GetHistory)
 		publicNotifications.POST("/mark-read", notificationCtrl.MarkAsRead)
+	}
+
+	apiV1 := r.Group("/api/v1")
+	{
+		apiV1.GET("/bookings/availability", bookingCtrl.GetAvailability)
+		apiV1.POST("/bookings", bookingCtrl.CreateBooking)
 	}
 
 	// =========================================================================
