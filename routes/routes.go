@@ -94,7 +94,7 @@ func SetupRouter() *gin.Engine {
 	notificationCtrl := controllers.NewNotificationController(notificationService)
 	budgetCtrl := controllers.NewBudgetController(budgetService)
 	bookingCtrl := controllers.NewBookingController(bookingService)
-	automationCtrl := controllers.NewAutomationController(bookingService)
+	//automationCtrl := controllers.NewAutomationController(bookingService)
 
 	// Swagger UI Route (Always Public)
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
@@ -147,15 +147,15 @@ func SetupRouter() *gin.Engine {
 			bookingBlocks.POST("", bookingCtrl.CreateBlock)
 			bookingBlocks.DELETE("/:id", bookingCtrl.DeleteBlock)
 		}
-		
-		// Automation Routes (Internal APIs for n8n/Evolution)
-		automationTasks := apiV1.Group("/automation/tasks")
-		{
-			automationTasks.GET("/tomorrow", automationCtrl.GetTomorrowTasks)
-			automationTasks.PATCH("/:id/status", automationCtrl.UpdateTaskStatus)
-			automationTasks.PATCH("/:id/bot-status", automationCtrl.UpdateTaskBotStatus)
-			automationTasks.DELETE("/:id", automationCtrl.DeleteTask)
-		}
+
+		// // Automation Routes (Internal APIs for n8n/Evolution)
+		// automationTasks := apiV1.Group("/automation/tasks")
+		// {
+		// 	automationTasks.GET("/tomorrow", automationCtrl.GetTomorrowTasks)
+		// 	automationTasks.PATCH("/:id/status", automationCtrl.UpdateTaskStatus)
+		// 	automationTasks.PATCH("/:id/bot-status", automationCtrl.UpdateTaskBotStatus)
+		// 	automationTasks.DELETE("/:id", automationCtrl.DeleteTask)
+		// }
 	}
 
 	// =========================================================================
