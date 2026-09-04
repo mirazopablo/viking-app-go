@@ -18,3 +18,4 @@ tmp/
 !readme.md
 *.txt
 credentials.json
+markdown/

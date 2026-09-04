@@ -110,7 +110,7 @@ func (s *bookingServiceImpl) GetAvailability(date string, deviceType string) (*m
 				blockEnd, err4 := time.Parse(time.RFC3339, fmt.Sprintf("%sT%s:00-03:00", cleanDate, block.EndTime))
 				
 				if err1 == nil && err2 == nil && err3 == nil && err4 == nil {
-					if blockStart.Before(slotEnd) && blockEnd.After(slotStart) {
+					if blockStart.Before(slotEnd) && !blockEnd.Before(slotStart) {
 						isBlocked = true
 						break
 					}
@@ -225,7 +225,7 @@ func (s *bookingServiceImpl) ListBlocks() ([]models.BlockResponseDto, error) {
 	for _, b := range blocks {
 		response = append(response, models.BlockResponseDto{
 			ID:        b.ID,
-			Date:      b.Date,
+			Date:      extractDate(b.Date),
 			IsFullDay: b.IsFullDay,
 			StartTime: b.StartTime,
 			EndTime:   b.EndTime,

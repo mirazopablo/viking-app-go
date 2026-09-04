@@ -45,8 +45,8 @@ func main() {
 
 	// 5. Start HTTP server
 	port := ":" + config.AppConfig.ServerPort
+
 	log.Printf("App is running on port %s", port)
-	
 	srv := &http.Server{
 		Addr:         port,
 		Handler:      r,
