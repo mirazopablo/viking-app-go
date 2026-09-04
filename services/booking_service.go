@@ -10,6 +10,7 @@ import (
 
 	"github.com/mirazopablo/viking-app-go/models"
 	"github.com/mirazopablo/viking-app-go/repositories"
+	"github.com/google/uuid"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/calendar/v3"
 	"google.golang.org/api/option"
@@ -19,6 +20,13 @@ import (
 type BookingService interface {
 	GetAvailability(date string, deviceType string) (*models.AvailabilityResponseDto, error)
 	CreateBooking(dto *models.BookingCreateDto) (*models.BookingResponseDto, error)
+	GetBookingsByDate(date string) ([]models.Booking, error)
+	UpdateBookingStatus(id string, dto *models.UpdateBookingStatusDto) error
+	UpdateBotStatus(id string, dto *models.UpdateBotStatusDto) error
+	DeleteBooking(id string) error
+	ListBlocks() ([]models.BlockResponseDto, error)
+	CreateBlock(dto *models.BlockCreateDto) (*models.BlockResponseDto, error)
+	DeleteBlock(id string) error
 }
 
 type bookingServiceImpl struct {
@@ -57,6 +65,20 @@ var reducedSlots = []models.TimeSlotDto{
 func (s *bookingServiceImpl) GetAvailability(date string, deviceType string) (*models.AvailabilityResponseDto, error) {
 	cleanDate := extractDate(date)
 
+	blocks, err := s.repo.GetBlocksByDate(cleanDate)
+	if err != nil {
+		return nil, fmt.Errorf("could not fetch blocks: %w", err)
+	}
+
+	for _, block := range blocks {
+		if block.IsFullDay {
+			return &models.AvailabilityResponseDto{
+				Date:           cleanDate,
+				AvailableSlots: []models.TimeSlotDto{},
+			}, nil
+		}
+	}
+
 	var targetSlots []models.TimeSlotDto
 	if deviceType == "general" {
 		targetSlots = generalSlots
@@ -74,9 +96,31 @@ func (s *bookingServiceImpl) GetAvailability(date string, deviceType string) (*m
 
 	var availableSlots []models.TimeSlotDto
 	for _, slot := range targetSlots {
-		s := slot // copy
-		s.IsAvailable = !calendarOccupied[s.ID]
-		availableSlots = append(availableSlots, s)
+		sCopy := slot // copy
+		sCopy.IsAvailable = !calendarOccupied[sCopy.ID]
+
+		isBlocked := false
+		for _, block := range blocks {
+			if !block.IsFullDay && block.StartTime != "" && block.EndTime != "" {
+				startTimeStr, endTimeStr := getSlotTimes(cleanDate, slot.ID)
+				slotStart, err1 := time.Parse(time.RFC3339, startTimeStr)
+				slotEnd, err2 := time.Parse(time.RFC3339, endTimeStr)
+				
+				blockStart, err3 := time.Parse(time.RFC3339, fmt.Sprintf("%sT%s:00-03:00", cleanDate, block.StartTime))
+				blockEnd, err4 := time.Parse(time.RFC3339, fmt.Sprintf("%sT%s:00-03:00", cleanDate, block.EndTime))
+				
+				if err1 == nil && err2 == nil && err3 == nil && err4 == nil {
+					if blockStart.Before(slotEnd) && blockEnd.After(slotStart) {
+						isBlocked = true
+						break
+					}
+				}
+			}
+		}
+
+		if !isBlocked {
+			availableSlots = append(availableSlots, sCopy)
+		}
 	}
 
 	return &models.AvailabilityResponseDto{
@@ -119,6 +163,127 @@ func (s *bookingServiceImpl) CreateBooking(dto *models.BookingCreateDto) (*model
 		BookingID: saved.ID,
 		Status:    saved.Status,
 	}, nil
+}
+
+func (s *bookingServiceImpl) GetBookingsByDate(date string) ([]models.Booking, error) {
+	cleanDate := extractDate(date)
+	return s.repo.GetBookingsByDate(cleanDate)
+}
+
+func (s *bookingServiceImpl) UpdateBookingStatus(id string, dto *models.UpdateBookingStatusDto) error {
+	booking, err := s.repo.FindByID(id)
+	if err != nil {
+		return err
+	}
+
+	err = s.repo.UpdateStatus(id, dto.Status)
+	if err != nil {
+		return err
+	}
+
+	booking.Status = dto.Status
+	if booking.GoogleEventID != "" {
+		_ = updateEventStatusInGoogleCalendar(booking)
+	}
+
+	return nil
+}
+
+func (s *bookingServiceImpl) UpdateBotStatus(id string, dto *models.UpdateBotStatusDto) error {
+	if dto.BotActive == nil {
+		return errors.New("botActive field is required")
+	}
+	return s.repo.UpdateBotStatus(id, *dto.BotActive)
+}
+
+func (s *bookingServiceImpl) DeleteBooking(id string) error {
+	booking, err := s.repo.FindByID(id)
+	if err != nil {
+		return err
+	}
+
+	err = s.repo.Delete(id)
+	if err != nil {
+		return err
+	}
+
+	if booking.GoogleEventID != "" {
+		_ = deleteEventFromGoogleCalendar(booking.GoogleEventID)
+	}
+
+	return nil
+}
+
+func (s *bookingServiceImpl) ListBlocks() ([]models.BlockResponseDto, error) {
+	today := time.Now().Format("2006-01-02")
+	blocks, err := s.repo.GetBlocksByDateRange(today)
+	if err != nil {
+		return nil, err
+	}
+
+	var response = make([]models.BlockResponseDto, 0)
+	for _, b := range blocks {
+		response = append(response, models.BlockResponseDto{
+			ID:        b.ID,
+			Date:      b.Date,
+			IsFullDay: b.IsFullDay,
+			StartTime: b.StartTime,
+			EndTime:   b.EndTime,
+			Reason:    b.Notes,
+			CreatedAt: b.CreatedAt.Format(time.RFC3339),
+		})
+	}
+
+	return response, nil
+}
+
+func (s *bookingServiceImpl) CreateBlock(dto *models.BlockCreateDto) (*models.BlockResponseDto, error) {
+	cleanDate := extractDate(dto.Date)
+	
+	blockID := uuid.New().String()
+	
+	block := &models.Booking{
+		ID:         blockID,
+		FullName:   "BLOCK",
+		Phone:      "-",
+		DeviceType: "-",
+		Date:       cleanDate,
+		TimeSlotID: "BLOCK-" + blockID,
+		Notes:      dto.Reason,
+		Status:     "confirmed",
+		BotActive:  false,
+		Type:       "block",
+		IsFullDay:  dto.IsFullDay,
+		StartTime:  dto.StartTime,
+		EndTime:    dto.EndTime,
+	}
+
+	saved, err := s.repo.Save(block)
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.BlockResponseDto{
+		ID:        saved.ID,
+		Date:      saved.Date,
+		IsFullDay: saved.IsFullDay,
+		StartTime: saved.StartTime,
+		EndTime:   saved.EndTime,
+		Reason:    saved.Notes,
+		CreatedAt: saved.CreatedAt.Format(time.RFC3339),
+	}, nil
+}
+
+func (s *bookingServiceImpl) DeleteBlock(id string) error {
+	booking, err := s.repo.FindByID(id)
+	if err != nil {
+		return err
+	}
+	if booking.Type != "block" {
+		return errors.New("cannot delete a regular booking from block endpoint")
+	}
+
+	return s.repo.Delete(id)
 }
 
 func extractDate(input string) string {
@@ -257,6 +422,68 @@ func insertToGoogleCalendar(booking *models.Booking, timeSlotID string) (string,
 	}
 
 	return event.Id, nil
+}
+
+func updateEventStatusInGoogleCalendar(booking *models.Booking) error {
+	ctx := context.Background()
+	b, err := loadGoogleCredentials()
+	if err != nil {
+		return err
+	}
+
+	config, err := google.JWTConfigFromJSON(b, calendar.CalendarEventsScope)
+	if err != nil {
+		return err
+	}
+	client := config.Client(ctx)
+
+	srv, err := calendar.NewService(ctx, option.WithHTTPClient(client))
+	if err != nil {
+		return err
+	}
+
+	calendarID := os.Getenv("GOOGLE_CALENDAR_ID")
+	if calendarID == "" {
+		calendarID = "primary"
+	}
+
+	// Fetch existing event
+	event, err := srv.Events.Get(calendarID, booking.GoogleEventID).Do()
+	if err != nil {
+		return err
+	}
+
+	// Prepend status to the summary
+	event.Summary = fmt.Sprintf("[%s] Turno: %s - %s", booking.Status, booking.DeviceType, booking.FullName)
+	
+	_, err = srv.Events.Update(calendarID, booking.GoogleEventID, event).Do()
+	return err
+}
+
+func deleteEventFromGoogleCalendar(eventID string) error {
+	ctx := context.Background()
+	b, err := loadGoogleCredentials()
+	if err != nil {
+		return err
+	}
+
+	config, err := google.JWTConfigFromJSON(b, calendar.CalendarEventsScope)
+	if err != nil {
+		return err
+	}
+	client := config.Client(ctx)
+
+	srv, err := calendar.NewService(ctx, option.WithHTTPClient(client))
+	if err != nil {
+		return err
+	}
+
+	calendarID := os.Getenv("GOOGLE_CALENDAR_ID")
+	if calendarID == "" {
+		calendarID = "primary"
+	}
+
+	return srv.Events.Delete(calendarID, eventID).Do()
 }
 
 func getSlotTimes(date string, timeSlotID string) (string, string) {

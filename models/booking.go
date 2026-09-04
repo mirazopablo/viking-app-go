@@ -18,6 +18,11 @@ type Booking struct {
 	Notes         string    `gorm:"type:text" json:"notes"`
 	GoogleEventID string    `gorm:"type:varchar(255)" json:"googleEventId"`
 	Status        string    `gorm:"type:varchar(50);not null;default:'pending_confirmation'" json:"status"`
+	BotActive     bool      `gorm:"type:boolean;not null;default:true" json:"botActive"`
+	Type          string    `gorm:"type:varchar(50);not null;default:'booking'" json:"type"`
+	IsFullDay     bool      `gorm:"type:boolean;default:false" json:"isFullDay"`
+	StartTime     string    `gorm:"type:varchar(10)" json:"startTime"`
+	EndTime       string    `gorm:"type:varchar(10)" json:"endTime"`
 	CreatedAt     time.Time `json:"createdAt"`
 	UpdatedAt     time.Time `json:"updatedAt"`
 }

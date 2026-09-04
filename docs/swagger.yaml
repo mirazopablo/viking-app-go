@@ -9,6 +9,33 @@ definitions:
       date:
         type: string
     type: object
+  models.Booking:
+    properties:
+      botActive:
+        type: boolean
+      createdAt:
+        type: string
+      date:
+        type: string
+      deviceType:
+        type: string
+      fullName:
+        type: string
+      googleEventId:
+        type: string
+      id:
+        type: string
+      notes:
+        type: string
+      phone:
+        type: string
+      status:
+        type: string
+      timeSlotId:
+        type: string
+      updatedAt:
+        type: string
+    type: object
   models.BookingCreateDto:
     properties:
       date:
@@ -403,6 +430,33 @@ definitions:
         type: boolean
       time:
         type: string
+    type: object
+  models.TomorrowTaskDto:
+    properties:
+      clientName:
+        type: string
+      eventId:
+        type: string
+      phone:
+        type: string
+      serviceType:
+        type: string
+      taskId:
+        type: string
+    type: object
+  models.UpdateBookingStatusDto:
+    properties:
+      status:
+        type: string
+    required:
+    - status
+    type: object
+  models.UpdateBotStatusDto:
+    properties:
+      botActive:
+        type: boolean
+    required:
+    - botActive
     type: object
   models.UserAutocompleteDto:
     properties:
@@ -1139,6 +1193,122 @@ paths:
       summary: Actualizar Usuario
       tags:
       - User Controller
+  /api/v1/automation/tasks/{id}:
+    delete:
+      description: Elimina el turno en DB y Google Calendar (ej. al cancelar por WhatsApp)
+      operationId: deleteTask
+      parameters:
+      - description: ID del turno (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            type: object
+      summary: Eliminar turno desde automatización
+      tags:
+      - Automation
+  /api/v1/automation/tasks/{id}/bot-status:
+    patch:
+      consumes:
+      - application/json
+      description: Pausa o reactiva las respuestas automáticas para un turno
+      operationId: updateTaskBotStatus
+      parameters:
+      - description: ID del turno (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Estado del bot (botActive)
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateBotStatusDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            type: object
+      summary: Actualizar estado del bot (Handoff)
+      tags:
+      - Automation
+  /api/v1/automation/tasks/{id}/status:
+    patch:
+      consumes:
+      - application/json
+      description: Actualiza el estado local y sincroniza con Google Calendar
+      operationId: updateTaskStatus
+      parameters:
+      - description: ID del turno (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Nuevo estado
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateBookingStatusDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            type: object
+      summary: Actualizar estado del turno desde la automatización
+      tags:
+      - Automation
+  /api/v1/automation/tasks/tomorrow:
+    get:
+      description: Retorna los turnos de mañana en UTC-3 mapeados para n8n
+      operationId: getTomorrowTasks
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.TomorrowTaskDto'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            type: object
+      summary: Obtener los turnos agendados para el día siguiente
+      tags:
+      - Automation
   /api/v1/bookings:
     post:
       consumes:
@@ -1166,14 +1336,119 @@ paths:
       summary: Crear reserva de turno
       tags:
       - Bookings
+  /api/v1/bookings/{id}/bot-status:
+    patch:
+      consumes:
+      - application/json
+      description: Habilita o deshabilita la atención automática por bot (n8n/Evolution
+        API)
+      operationId: updateBotStatus
+      parameters:
+      - description: ID del turno (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Estado del bot (botActive)
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateBotStatusDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            type: object
+      summary: Actualizar estado del bot para Handoff
+      tags:
+      - Bookings
+  /api/v1/bookings/{id}/status:
+    patch:
+      consumes:
+      - application/json
+      description: Actualiza el estado del turno tanto en DB como en Google Calendar
+      operationId: updateBookingStatus
+      parameters:
+      - description: ID del turno (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Nuevo estado
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateBookingStatusDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            type: object
+      summary: Actualizar estado del turno
+      tags:
+      - Bookings
   /api/v1/bookings/availability:
     get:
       description: Retorna los bloques horarios (Time Slots) disponibles para una
-        fecha específica.
+        fecha específica. Para 'general' devuelve 14 slots; para el resto, 4 slots.
       operationId: getAvailability
       parameters:
       - description: Fecha en formato YYYY-MM-DD
         in: query
+        name: date
+        required: true
+        type: string
+      - description: Tipo de equipo/servicio (general | pc | laptop | mobile | gaming)
+        in: query
+        name: deviceType
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.AvailabilityResponseDto'
+        "400":
+          description: Bad Request
+          schema:
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            type: object
+      summary: Obtener slots disponibles
+      tags:
+      - Bookings
+  /api/v1/bookings/date/{date}:
+    get:
+      description: Obtiene la lista de turnos (bookings) para una fecha específica.
+      operationId: getBookingsByDate
+      parameters:
+      - description: Fecha en formato YYYY-MM-DD
+        in: path
         name: date
         required: true
         type: string
@@ -1183,8 +1458,14 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.AvailabilityResponseDto'
-      summary: Obtener slots disponibles
+            items:
+              $ref: '#/definitions/models.Booking'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            type: object
+      summary: Obtener turnos por fecha
       tags:
       - Bookings
   /api/work-order/{orderId}:

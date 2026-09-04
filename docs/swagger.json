@@ -876,6 +876,180 @@
                 }
             }
         },
+        "/api/v1/automation/tasks/tomorrow": {
+            "get": {
+                "description": "Retorna los turnos de mañana en UTC-3 mapeados para n8n",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Automation"
+                ],
+                "summary": "Obtener los turnos agendados para el día siguiente",
+                "operationId": "getTomorrowTasks",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.TomorrowTaskDto"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/automation/tasks/{id}": {
+            "delete": {
+                "description": "Elimina el turno en DB y Google Calendar (ej. al cancelar por WhatsApp)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Automation"
+                ],
+                "summary": "Eliminar turno desde automatización",
+                "operationId": "deleteTask",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID del turno (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/automation/tasks/{id}/bot-status": {
+            "patch": {
+                "description": "Pausa o reactiva las respuestas automáticas para un turno",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Automation"
+                ],
+                "summary": "Actualizar estado del bot (Handoff)",
+                "operationId": "updateTaskBotStatus",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID del turno (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Estado del bot (botActive)",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.UpdateBotStatusDto"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/automation/tasks/{id}/status": {
+            "patch": {
+                "description": "Actualiza el estado local y sincroniza con Google Calendar",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Automation"
+                ],
+                "summary": "Actualizar estado del turno desde la automatización",
+                "operationId": "updateTaskStatus",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID del turno (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Nuevo estado",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.UpdateBookingStatusDto"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/bookings": {
             "post": {
                 "description": "Crea un nuevo turno y reserva el slot en Google Calendar",
@@ -919,7 +1093,7 @@
         },
         "/api/v1/bookings/availability": {
             "get": {
-                "description": "Retorna los bloques horarios (Time Slots) disponibles para una fecha específica.",
+                "description": "Retorna los bloques horarios (Time Slots) disponibles para una fecha específica. Para 'general' devuelve 14 slots; para el resto, 4 slots.",
                 "produces": [
                     "application/json"
                 ],
@@ -935,6 +1109,12 @@
                         "name": "date",
                         "in": "query",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Tipo de equipo/servicio (general | pc | laptop | mobile | gaming)",
+                        "name": "deviceType",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -942,6 +1122,165 @@
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/models.AvailabilityResponseDto"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/bookings/date/{date}": {
+            "get": {
+                "description": "Obtiene la lista de turnos (bookings) para una fecha específica.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Bookings"
+                ],
+                "summary": "Obtener turnos por fecha",
+                "operationId": "getBookingsByDate",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Fecha en formato YYYY-MM-DD",
+                        "name": "date",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Booking"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/bookings/{id}/bot-status": {
+            "patch": {
+                "description": "Habilita o deshabilita la atención automática por bot (n8n/Evolution API)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Bookings"
+                ],
+                "summary": "Actualizar estado del bot para Handoff",
+                "operationId": "updateBotStatus",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID del turno (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Estado del bot (botActive)",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.UpdateBotStatusDto"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/bookings/{id}/status": {
+            "patch": {
+                "description": "Actualiza el estado del turno tanto en DB como en Google Calendar",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Bookings"
+                ],
+                "summary": "Actualizar estado del turno",
+                "operationId": "updateBookingStatus",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID del turno (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Nuevo estado",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.UpdateBookingStatusDto"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object"
                         }
                     }
                 }
@@ -1885,6 +2224,47 @@
                 }
             }
         },
+        "models.Booking": {
+            "type": "object",
+            "properties": {
+                "botActive": {
+                    "type": "boolean"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "date": {
+                    "type": "string"
+                },
+                "deviceType": {
+                    "type": "string"
+                },
+                "fullName": {
+                    "type": "string"
+                },
+                "googleEventId": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "notes": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "timeSlotId": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
         "models.BookingCreateDto": {
             "type": "object",
             "required": [
@@ -2465,6 +2845,48 @@
                 },
                 "time": {
                     "type": "string"
+                }
+            }
+        },
+        "models.TomorrowTaskDto": {
+            "type": "object",
+            "properties": {
+                "clientName": {
+                    "type": "string"
+                },
+                "eventId": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "serviceType": {
+                    "type": "string"
+                },
+                "taskId": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.UpdateBookingStatusDto": {
+            "type": "object",
+            "required": [
+                "status"
+            ],
+            "properties": {
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.UpdateBotStatusDto": {
+            "type": "object",
+            "required": [
+                "botActive"
+            ],
+            "properties": {
+                "botActive": {
+                    "type": "boolean"
                 }
             }
         },

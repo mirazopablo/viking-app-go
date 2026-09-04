@@ -29,3 +29,33 @@ type BookingResponseDto struct {
 	BookingID string `json:"bookingId"`
 	Status    string `json:"status"`
 }
+
+// UpdateBookingStatusDto represents the request payload to update a booking's status.
+type UpdateBookingStatusDto struct {
+	Status string `json:"status" binding:"required"`
+}
+
+// UpdateBotStatusDto represents the request payload to update the bot active flag for a booking.
+type UpdateBotStatusDto struct {
+	BotActive *bool `json:"botActive" binding:"required"`
+}
+
+// BlockCreateDto represents the incoming request to create a block (exception).
+type BlockCreateDto struct {
+	Date      string `json:"date" binding:"required"`
+	IsFullDay bool   `json:"isFullDay"`
+	StartTime string `json:"startTime"`
+	EndTime   string `json:"endTime"`
+	Reason    string `json:"reason"`
+}
+
+// BlockResponseDto represents the response for a block.
+type BlockResponseDto struct {
+	ID        string `json:"id"`
+	Date      string `json:"date"`
+	IsFullDay bool   `json:"isFullDay"`
+	StartTime string `json:"startTime"`
+	EndTime   string `json:"endTime"`
+	Reason    string `json:"reason"`
+	CreatedAt string `json:"createdAt"`
+}

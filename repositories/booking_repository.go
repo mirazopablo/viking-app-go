@@ -18,7 +18,13 @@ var (
 type BookingRepository interface {
 	Save(booking *models.Booking) (*models.Booking, error)
 	GetBookingsByDate(date string) ([]models.Booking, error)
+	GetBlocksByDate(date string) ([]models.Booking, error)
+	GetBlocksByDateRange(startDate string) ([]models.Booking, error)
+	FindByID(id string) (*models.Booking, error)
 	Update(booking *models.Booking) error
+	UpdateStatus(id string, status string) error
+	UpdateBotStatus(id string, botActive bool) error
+	Delete(id string) error
 }
 
 type bookingRepositoryImpl struct {
@@ -43,12 +49,45 @@ func (r *bookingRepositoryImpl) Save(booking *models.Booking) (*models.Booking, 
 
 func (r *bookingRepositoryImpl) GetBookingsByDate(date string) ([]models.Booking, error) {
 	var bookings []models.Booking
-	err := r.db.Where("date = ?", date).Find(&bookings).Error
+	err := r.db.Where("date = ? AND type != ?", date, "block").Find(&bookings).Error
+	return bookings, err
+}
+
+func (r *bookingRepositoryImpl) GetBlocksByDate(date string) ([]models.Booking, error) {
+	var bookings []models.Booking
+	err := r.db.Where("date = ? AND type = ?", date, "block").Find(&bookings).Error
+	return bookings, err
+}
+
+func (r *bookingRepositoryImpl) GetBlocksByDateRange(startDate string) ([]models.Booking, error) {
+	var bookings []models.Booking
+	err := r.db.Where("date >= ? AND type = ?", startDate, "block").Order("date ASC").Find(&bookings).Error
 	return bookings, err
 }
 
 func (r *bookingRepositoryImpl) Update(booking *models.Booking) error {
 	return r.db.Save(booking).Error
+}
+
+func (r *bookingRepositoryImpl) FindByID(id string) (*models.Booking, error) {
+	var booking models.Booking
+	err := r.db.Where("id = ?", id).First(&booking).Error
+	if err != nil {
+		return nil, err
+	}
+	return &booking, nil
+}
+
+func (r *bookingRepositoryImpl) UpdateStatus(id string, status string) error {
+	return r.db.Model(&models.Booking{}).Where("id = ?", id).Update("status", status).Error
+}
+
+func (r *bookingRepositoryImpl) UpdateBotStatus(id string, botActive bool) error {
+	return r.db.Model(&models.Booking{}).Where("id = ?", id).Update("bot_active", botActive).Error
+}
+
+func (r *bookingRepositoryImpl) Delete(id string) error {
+	return r.db.Where("id = ?", id).Delete(&models.Booking{}).Error
 }
 
 func containsDuplicateKeyError(err error) bool {
