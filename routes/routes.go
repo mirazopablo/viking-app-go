@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -79,7 +80,12 @@ func SetupRouter() *gin.Engine {
 	workOrderService := services.NewWorkOrderService(workOrderRepo, userRepo, deviceRepo, diagnosticPointRepo, notificationService)
 	diagnosticPointService := services.NewDiagnosticPointService(diagnosticPointRepo, workOrderRepo, userRepo, notificationService)
 	budgetService := services.NewBudgetService(budgetRepo, workOrderRepo, diagnosticPointRepo, notificationService)
-	bookingService := services.NewBookingService(bookingRepo)
+	
+	calendarProvider, err := services.NewGoogleCalendarProvider()
+	if err != nil {
+		log.Fatalf("Failed to initialize Google Calendar Provider: %v", err)
+	}
+	bookingService := services.NewBookingService(bookingRepo, calendarProvider)
 
 	// Initialize Controllers
 	homeCtrl := controllers.NewHomeController()
