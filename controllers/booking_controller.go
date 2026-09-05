@@ -3,6 +3,7 @@ package controllers
 import (
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/mirazopablo/viking-app-go/models"
@@ -94,6 +95,26 @@ func (bc *BookingController) GetBookingsByDate(c *gin.Context) {
 	date := c.Param("date")
 	
 	bookings, err := bc.service.GetBookingsByDate(date)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, bookings)
+}
+
+// GetTodayBookings godoc
+// @Summary Obtener turnos del día actual
+// @Description Obtiene la lista de turnos (bookings) para el día de hoy automáticamente calculando la fecha.
+// @Tags Bookings
+// @ID getTodayBookings
+// @Produce json
+// @Success 200 {array} models.Booking
+// @Failure 500 {object} object "Internal Server Error"
+// @Router /api/v1/bookings/today [get]
+func (bc *BookingController) GetTodayBookings(c *gin.Context) {
+	today := time.Now().Format("2006-01-02")
+	bookings, err := bc.service.GetBookingsByDate(today)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

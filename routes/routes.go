@@ -141,6 +141,7 @@ func SetupRouter() *gin.Engine {
 	{
 		apiV1.GET("/bookings/availability", bookingCtrl.GetAvailability)
 		apiV1.POST("/bookings", bookingCtrl.CreateBooking)
+		apiV1.GET("/bookings/today", bookingCtrl.GetTodayBookings)
 		apiV1.GET("/bookings/date/:date", bookingCtrl.GetBookingsByDate)
 		apiV1.PATCH("/bookings/:id/status", bookingCtrl.UpdateBookingStatus)
 		apiV1.PATCH("/bookings/:id/bot-status", bookingCtrl.UpdateBotStatus)
