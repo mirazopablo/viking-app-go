@@ -16,8 +16,8 @@ type UserRepository interface {
 	CreateWithRole(user *models.User, roleID uuid.UUID) error
 	FindByID(id string) (*models.User, error)
 	FindByEmail(email string) (*models.User, error)
-	FindAll() ([]models.User, error)
-	Search(id, dni, name, email, phone, query string) ([]models.User, error)
+	FindAll(page, limit int) ([]models.User, int64, error)
+	Search(id, dni, name, email, phone, query string, page, limit int) ([]models.User, int64, error)
 	Update(user *models.User) error
 	UpdateWithRole(user *models.User, roleID uuid.UUID) error
 	Delete(id string) error
@@ -81,17 +81,24 @@ func (r *userRepositoryImpl) FindByEmail(email string) (*models.User, error) {
 	return &user, nil
 }
 
-// FindAll retrieves all user records from database, preloading roles.
-func (r *userRepositoryImpl) FindAll() ([]models.User, error) {
+// FindAll retrieves all user records from database, paginated.
+func (r *userRepositoryImpl) FindAll(page, limit int) ([]models.User, int64, error) {
 	var users []models.User
-	err := config.DB.Preload("UserRoles.Role").Find(&users).Error
-	return users, err
+	var total int64
+
+	db := config.DB.Model(&models.User{})
+	db.Count(&total)
+
+	offset := (page - 1) * limit
+	err := db.Preload("UserRoles.Role").Offset(offset).Limit(limit).Find(&users).Error
+	return users, total, err
 }
 
-// Search retrieves users filtered by partial matching or general query.
-func (r *userRepositoryImpl) Search(id, dni, name, email, phone, query string) ([]models.User, error) {
+// Search retrieves users filtered by partial matching or general query, paginated.
+func (r *userRepositoryImpl) Search(id, dni, name, email, phone, query string, page, limit int) ([]models.User, int64, error) {
 	var users []models.User
-	queryBuilder := config.DB.Preload("UserRoles.Role")
+	var total int64
+	queryBuilder := config.DB.Model(&models.User{})
 
 	if id != "" {
 		queryBuilder = queryBuilder.Where("id = ?", id)
@@ -110,17 +117,18 @@ func (r *userRepositoryImpl) Search(id, dni, name, email, phone, query string) (
 	}
 	if query != "" {
 		lowerQ := strings.ToLower(strings.TrimSpace(query))
-		if lowerQ != "all" && !strings.HasPrefix(lowerQ, "by-") && lowerQ != "dni" && lowerQ != "name" && lowerQ != "email" && lowerQ != "phone" {
-			q := "%" + lowerQ + "%"
-			queryBuilder = queryBuilder.Where(
-				"LOWER(name) LIKE ? OR LOWER(email) LIKE ? OR LOWER(phone_number) LIKE ? OR CAST(dni AS TEXT) LIKE ?",
-				q, q, q, q,
-			)
-		}
+		q := "%" + lowerQ + "%"
+		queryBuilder = queryBuilder.Where(
+			"LOWER(name) LIKE ? OR LOWER(email) LIKE ? OR LOWER(phone_number) LIKE ? OR CAST(dni AS TEXT) LIKE ?",
+			q, q, q, q,
+		)
 	}
 
-	err := queryBuilder.Find(&users).Error
-	return users, err
+	queryBuilder.Count(&total)
+
+	offset := (page - 1) * limit
+	err := queryBuilder.Preload("UserRoles.Role").Offset(offset).Limit(limit).Find(&users).Error
+	return users, total, err
 }
 
 // Update modifies an existing user record without altering role associations.
@@ -128,29 +136,19 @@ func (r *userRepositoryImpl) Update(user *models.User) error {
 	return config.DB.Save(user).Error
 }
 
-// UpdateWithRole modifies an existing user record and updates their primary role association within a transaction.
+// UpdateWithRole modifies an existing user record and updates their primary role association using GORM.
 func (r *userRepositoryImpl) UpdateWithRole(user *models.User, roleID uuid.UUID) error {
-	return config.DB.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Save(user).Error; err != nil {
-			return err
-		}
+	if err := config.DB.Save(user).Error; err != nil {
+		return err
+	}
 
-		// Remove existing role associations and replace with the updated role ID
-		if err := tx.Where("user_id = ?", user.ID).Delete(&models.UserRole{}).Error; err != nil {
-			return err
-		}
-
-		userRole := &models.UserRole{
-			UserID: user.ID,
-			RoleID: roleID,
-		}
-		if err := tx.Create(userRole).Error; err != nil {
-			return err
-		}
-
-		user.UserRoles = []models.UserRole{*userRole}
-		return nil
-	})
+	userRole := &models.UserRole{
+		UserID: user.ID,
+		RoleID: roleID,
+	}
+	
+	// Replace existing associations
+	return config.DB.Model(user).Association("UserRoles").Replace(userRole)
 }
 
 // Delete physically deletes a user and all their associated UserRoles within a transaction.

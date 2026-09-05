@@ -8,6 +8,11 @@ import (
 	"gorm.io/gorm"
 )
 
+// Global role constants to prevent magic strings across the system.
+const (
+	RoleClient = "CLIENTE"
+)
+
 // User represents a system user entity in database.
 type User struct {
 	ID                   uuid.UUID      `gorm:"type:uuid;primary_key;" json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
@@ -89,7 +94,7 @@ func (u *User) GetPrimaryRoleName() string {
 // IsStaff evaluates whether the user holds an administrative or staff role.
 func (u *User) IsStaff() bool {
 	roleName := strings.ToUpper(strings.TrimSpace(u.GetPrimaryRoleName()))
-	return roleName != "CLIENTE" && roleName != "CLIENT" && roleName != ""
+	return roleName != RoleClient && roleName != "CLIENT" && roleName != ""
 }
 
 // ToResponseDto converts User model to safe UserResponseDto.

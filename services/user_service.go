@@ -11,24 +11,19 @@ import (
 )
 
 var (
-	// ErrUserNotFound indicates the requested user ID or email does not exist.
-	ErrUserNotFound = errors.New("user not found")
-	// ErrEmailAlreadyTaken indicates the email is already in use by another account.
+	ErrUserNotFound      = errors.New("user not found")
 	ErrEmailAlreadyTaken = errors.New("email address is already registered")
-	// ErrInvalidCreds indicates login credentials failed validation.
-	ErrInvalidCreds = errors.New("invalid email or password")
-	// ErrPasswordRequired indicates that a password is mandatory for non-client roles.
-	ErrPasswordRequired = errors.New("password is required for non-client roles")
+	ErrInvalidCreds      = errors.New("invalid email or password")
+	ErrPasswordRequired  = errors.New("password is required for non-client roles")
 )
 
-// UserService defines user management and authentication logic.
 type UserService interface {
 	RegisterUser(req *models.RegisterDto) (*models.UserResponseDto, error)
 	LoginUser(req *models.LoginUserDto) (*models.LoginResponseDto, error)
 	ValidateTokenString(tokenString string) bool
-	GetAllUsers() ([]models.UserResponseDto, error)
-	SearchUsers(id, dni, name, email, phone, query string) ([]models.UserResponseDto, error)
-	AutocompleteUsers(query string) ([]models.UserAutocompleteDto, error)
+	GetAllUsers(page, limit int) (*models.PaginatedResponse[models.UserResponseDto], error)
+	SearchUsers(id, dni, name, email, phone, query string, page, limit int) (*models.PaginatedResponse[models.UserResponseDto], error)
+	AutocompleteUsers(query string, limit int) ([]models.UserAutocompleteDto, error)
 	GetUserByID(id string) (*models.UserResponseDto, error)
 	UpdateUser(id string, req *models.RegisterDto) (*models.UserResponseDto, error)
 	DeleteUser(id string) error
@@ -40,7 +35,6 @@ type userServiceImpl struct {
 	jwtSvc   JWTService
 }
 
-// NewUserService instantiates a new UserService.
 func NewUserService(userRepo repositories.UserRepository, roleRepo repositories.RoleRepository, jwtSvc JWTService) UserService {
 	return &userServiceImpl{
 		userRepo: userRepo,
@@ -49,7 +43,6 @@ func NewUserService(userRepo repositories.UserRepository, roleRepo repositories.
 	}
 }
 
-// RegisterUser hashes password and saves new user to database within a transaction.
 func (s *userServiceImpl) RegisterUser(req *models.RegisterDto) (*models.UserResponseDto, error) {
 	existing, err := s.userRepo.FindByEmail(req.Email)
 	if err != nil {
@@ -68,7 +61,7 @@ func (s *userServiceImpl) RegisterUser(req *models.RegisterDto) (*models.UserRes
 	}
 
 	desc := strings.ToUpper(strings.TrimSpace(role.Name))
-	isClientRole := desc == "CLIENTE" || desc == "CLIENT"
+	isClientRole := desc == models.RoleClient || desc == "CLIENT"
 
 	if !isClientRole && strings.TrimSpace(req.Password) == "" {
 		return nil, ErrPasswordRequired
@@ -101,7 +94,6 @@ func (s *userServiceImpl) RegisterUser(req *models.RegisterDto) (*models.UserRes
 	return user.ToResponseDto(), nil
 }
 
-// LoginUser verifies credentials and returns a signed JWT token along with user profile.
 func (s *userServiceImpl) LoginUser(req *models.LoginUserDto) (*models.LoginResponseDto, error) {
 	user, err := s.userRepo.FindByEmail(req.Email)
 	if err != nil {
@@ -135,54 +127,62 @@ func (s *userServiceImpl) LoginUser(req *models.LoginUserDto) (*models.LoginResp
 	}, nil
 }
 
-// ValidateTokenString checks if a token string is valid and unexpired.
 func (s *userServiceImpl) ValidateTokenString(tokenString string) bool {
 	_, err := s.jwtSvc.ValidateToken(tokenString)
 	return err == nil
 }
 
-// GetAllUsers retrieves all users converted to safe response DTOs.
-func (s *userServiceImpl) GetAllUsers() ([]models.UserResponseDto, error) {
-	users, err := s.userRepo.FindAll()
+func (s *userServiceImpl) GetAllUsers(page, limit int) (*models.PaginatedResponse[models.UserResponseDto], error) {
+	users, total, err := s.userRepo.FindAll(page, limit)
 	if err != nil {
 		return nil, err
 	}
 
-	var res []models.UserResponseDto
+	var res = make([]models.UserResponseDto, 0, len(users))
 	for _, u := range users {
 		res = append(res, *u.ToResponseDto())
 	}
-	return res, nil
+	
+	return &models.PaginatedResponse[models.UserResponseDto]{
+		Data:  res,
+		Total: total,
+		Page:  page,
+		Limit: limit,
+	}, nil
 }
 
-func (s *userServiceImpl) SearchUsers(id, dni, name, email, phone, query string) ([]models.UserResponseDto, error) {
-	users, err := s.userRepo.Search(id, dni, name, email, phone, query)
+func (s *userServiceImpl) SearchUsers(id, dni, name, email, phone, query string, page, limit int) (*models.PaginatedResponse[models.UserResponseDto], error) {
+	users, total, err := s.userRepo.Search(id, dni, name, email, phone, query, page, limit)
 	if err != nil {
 		return nil, err
 	}
 
-	var res []models.UserResponseDto
+	var res = make([]models.UserResponseDto, 0, len(users))
 	for _, u := range users {
 		res = append(res, *u.ToResponseDto())
 	}
-	return res, nil
+	
+	return &models.PaginatedResponse[models.UserResponseDto]{
+		Data:  res,
+		Total: total,
+		Page:  page,
+		Limit: limit,
+	}, nil
 }
 
-// AutocompleteUsers returns a lightweight projection of users for selectors without sensitive PII.
-func (s *userServiceImpl) AutocompleteUsers(query string) ([]models.UserAutocompleteDto, error) {
-	users, err := s.userRepo.Search("", "", "", "", "", query)
+func (s *userServiceImpl) AutocompleteUsers(query string, limit int) ([]models.UserAutocompleteDto, error) {
+	users, _, err := s.userRepo.Search("", "", "", "", "", query, 1, limit)
 	if err != nil {
 		return nil, err
 	}
 
-	var res []models.UserAutocompleteDto
+	var res = make([]models.UserAutocompleteDto, 0, len(users))
 	for _, u := range users {
 		res = append(res, *u.ToAutocompleteDto())
 	}
 	return res, nil
 }
 
-// GetUserByID retrieves a specific user by ID.
 func (s *userServiceImpl) GetUserByID(id string) (*models.UserResponseDto, error) {
 	user, err := s.userRepo.FindByID(id)
 	if err != nil {
@@ -194,7 +194,6 @@ func (s *userServiceImpl) GetUserByID(id string) (*models.UserResponseDto, error
 	return user.ToResponseDto(), nil
 }
 
-// UpdateUser updates user profile properties and optionally hashes a new password.
 func (s *userServiceImpl) UpdateUser(id string, req *models.RegisterDto) (*models.UserResponseDto, error) {
 	user, err := s.userRepo.FindByID(id)
 	if err != nil {
@@ -211,7 +210,7 @@ func (s *userServiceImpl) UpdateUser(id string, req *models.RegisterDto) (*model
 	user.SecondaryPhoneNumber = req.SecondaryPhoneNumber
 	user.Email = req.Email
 
-	if req.Password != "" && req.Password != "------" {
+	if req.Password != "" {
 		hashed, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 		if err != nil {
 			return nil, err
@@ -226,7 +225,6 @@ func (s *userServiceImpl) UpdateUser(id string, req *models.RegisterDto) (*model
 	return user.ToResponseDto(), nil
 }
 
-// DeleteUser removes a user record by ID.
 func (s *userServiceImpl) DeleteUser(id string) error {
 	return s.userRepo.Delete(id)
 }

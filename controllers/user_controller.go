@@ -3,7 +3,7 @@ package controllers
 import (
 	"errors"
 	"net/http"
-	"strings"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/mirazopablo/viking-app-go/models"
@@ -112,7 +112,16 @@ func (uc *UserController) SearchUser(c *gin.Context) {
 	phone := c.Query("phone")
 	query := c.Query("query")
 
-	users, err := uc.service.SearchUsers(id, dni, name, email, phone, query)
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	if page < 1 {
+		page = 1
+	}
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "100"))
+	if limit < 1 {
+		limit = 100
+	}
+
+	users, err := uc.service.SearchUsers(id, dni, name, email, phone, query, page, limit)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -132,7 +141,12 @@ func (uc *UserController) SearchUser(c *gin.Context) {
 // @Router /api/user/autocomplete [get]
 func (uc *UserController) AutocompleteUser(c *gin.Context) {
 	query := c.Query("query")
-	users, err := uc.service.AutocompleteUsers(query)
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+	if limit < 1 {
+		limit = 10
+	}
+	
+	users, err := uc.service.AutocompleteUsers(query, limit)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -150,22 +164,14 @@ func (uc *UserController) AutocompleteUser(c *gin.Context) {
 // @Security bearer-jwt
 // @Router /api/user/current [get]
 func (uc *UserController) GetCurrentUser(c *gin.Context) {
-	authHeader := c.GetHeader("Authorization")
-	if authHeader == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header missing"})
+	// The AuthMiddleware already extracted the claims and set the "userID" in context
+	userID, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
 
-	tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-	tokenString = strings.TrimSpace(tokenString)
-
-	claims, err := uc.jwtSvc.ValidateToken(tokenString)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired token"})
-		return
-	}
-
-	user, err := uc.service.GetUserByID(claims.UserID)
+	user, err := uc.service.GetUserByID(userID.(string))
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return
