@@ -13,11 +13,11 @@ tmp/
 # Ignorar todos los archivos Markdown
 *.md
 
-# Exceptuar el README y CHANGELOG
+# Exceptuar archivos Markdown específicos
 !README.md
 !readme.md
 !CHANGELOG.md
-!markdowns/*.md
+!.chglog/CHANGELOG.tpl.md
 *.txt
 credentials.json
 markdown/

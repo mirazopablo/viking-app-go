@@ -123,6 +123,26 @@ func (bc *BookingController) GetTodayBookings(c *gin.Context) {
 	c.JSON(http.StatusOK, bookings)
 }
 
+// GetTomorrowBookings godoc
+// @Summary Obtener turnos del día de mañana
+// @Description Obtiene la lista de turnos (bookings) para el día de mañana automáticamente calculando la fecha.
+// @Tags Bookings
+// @ID getTomorrowBookings
+// @Produce json
+// @Success 200 {array} models.Booking
+// @Failure 500 {object} object "Internal Server Error"
+// @Router /api/v1/bookings/tomorrow [get]
+func (bc *BookingController) GetTomorrowBookings(c *gin.Context) {
+	tomorrow := time.Now().AddDate(0, 0, 1).Format("2006-01-02")
+	bookings, err := bc.service.GetBookingsByDate(tomorrow)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, bookings)
+}
+
 // UpdateBookingStatus godoc
 // @Summary Actualizar estado del turno
 // @Description Actualiza el estado del turno tanto en DB como en Google Calendar
