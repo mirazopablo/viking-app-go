@@ -2,6 +2,13 @@
 ## [Unreleased]
 
 
+<a name="v2.2.0"></a>
+## [v2.2.0](https://github.com/mirazopablo/viking-app-go/compare/v2.1.0...v2.2.0) (2026-09-05)
+
+### Features
+- **booking:** add dedicated endpoint for tomorrow bookings
+
+
 <a name="v2.1.0"></a>
 ## [v2.1.0](https://github.com/mirazopablo/viking-app-go/compare/v2.0.0...v2.1.0) (2026-09-04)
 
