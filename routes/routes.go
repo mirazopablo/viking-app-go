@@ -86,6 +86,8 @@ func SetupRouter() *gin.Engine {
 		log.Fatalf("Failed to initialize Google Calendar Provider: %v", err)
 	}
 	bookingService := services.NewBookingService(bookingRepo, calendarProvider)
+	
+	webhookDebounceService := services.NewWebhookDebounceService()
 
 	// Initialize Controllers
 	homeCtrl := controllers.NewHomeController()
@@ -100,6 +102,7 @@ func SetupRouter() *gin.Engine {
 	notificationCtrl := controllers.NewNotificationController(notificationService)
 	budgetCtrl := controllers.NewBudgetController(budgetService)
 	bookingCtrl := controllers.NewBookingController(bookingService)
+	webhookCtrl := controllers.NewWebhookController(webhookDebounceService)
 	//automationCtrl := controllers.NewAutomationController(bookingService)
 
 	// Swagger UI Route (Always Public)
@@ -144,8 +147,12 @@ func SetupRouter() *gin.Engine {
 		apiV1.GET("/bookings/today", bookingCtrl.GetTodayBookings)
 		apiV1.GET("/bookings/tomorrow", bookingCtrl.GetTomorrowBookings)
 		apiV1.GET("/bookings/date/:date", bookingCtrl.GetBookingsByDate)
+		apiV1.GET("/bookings/client/:phone", bookingCtrl.GetClientByPhone)
 		apiV1.PATCH("/bookings/:id/status", bookingCtrl.UpdateBookingStatus)
 		apiV1.PATCH("/bookings/:id/bot-status", bookingCtrl.UpdateBotStatus)
+
+		// Webhook for Evolution API (Public)
+		apiV1.POST("/webhook/whatsapp", webhookCtrl.HandleWhatsAppWebhook)
 
 		// Booking Blocks Routes (Protected)
 		bookingBlocks := apiV1.Group("/bookings/blocks")
