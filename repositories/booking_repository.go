@@ -25,6 +25,7 @@ type BookingRepository interface {
 	UpdateStatus(id string, status string) error
 	UpdateBotStatus(id string, botActive bool) error
 	Delete(id string) error
+	GetLatestBookingByPhone(phone string) (*models.Booking, error)
 }
 
 type bookingRepositoryImpl struct {
@@ -88,6 +89,15 @@ func (r *bookingRepositoryImpl) UpdateBotStatus(id string, botActive bool) error
 
 func (r *bookingRepositoryImpl) Delete(id string) error {
 	return r.db.Where("id = ?", id).Delete(&models.Booking{}).Error
+}
+
+func (r *bookingRepositoryImpl) GetLatestBookingByPhone(phone string) (*models.Booking, error) {
+	var booking models.Booking
+	err := r.db.Where("phone = ?", phone).Order("created_at desc").First(&booking).Error
+	if err != nil {
+		return nil, err
+	}
+	return &booking, nil
 }
 
 func containsDuplicateKeyError(err error) bool {

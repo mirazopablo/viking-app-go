@@ -276,3 +276,28 @@ func (bc *BookingController) DeleteBlock(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Block deleted successfully"})
 }
 
+// GetClientByPhone godoc
+// @Summary Obtener cliente por teléfono
+// @Description Obtiene el nombre del cliente basado en su número de teléfono
+// @Tags Bookings
+// @ID getClientByPhone
+// @Produce json
+// @Param phone path string true "Número de teléfono"
+// @Success 200 {object} object "OK"
+// @Failure 404 {object} object "Not Found"
+// @Router /api/v1/bookings/client/{phone} [get]
+func (bc *BookingController) GetClientByPhone(c *gin.Context) {
+	phone := c.Param("phone")
+
+	user, err := bc.service.GetClientByPhone(phone)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Client not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"fullName": user.Name,
+		"phone":    user.PhoneNumber,
+	})
+}
+

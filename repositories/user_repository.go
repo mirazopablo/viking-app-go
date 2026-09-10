@@ -21,6 +21,7 @@ type UserRepository interface {
 	Update(user *models.User) error
 	UpdateWithRole(user *models.User, roleID uuid.UUID) error
 	Delete(id string) error
+	FindByPhone(phone string) (*models.User, error)
 }
 
 type userRepositoryImpl struct{}
@@ -72,6 +73,19 @@ func (r *userRepositoryImpl) FindByID(id string) (*models.User, error) {
 func (r *userRepositoryImpl) FindByEmail(email string) (*models.User, error) {
 	var user models.User
 	err := config.DB.Preload("UserRoles.Role").Where("email = ?", email).First(&user).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &user, nil
+}
+
+// FindByPhone retrieves a user by their phone number.
+func (r *userRepositoryImpl) FindByPhone(phone string) (*models.User, error) {
+	var user models.User
+	err := config.DB.Where("phone_number = ?", phone).First(&user).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil

@@ -3,6 +3,7 @@ package services
 import (
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -22,6 +23,7 @@ type BookingService interface {
 	ListBlocks() ([]models.BlockResponseDto, error)
 	CreateBlock(dto *models.BlockCreateDto) (*models.BlockResponseDto, error)
 	DeleteBlock(id string) error
+	GetClientByPhone(phone string) (*models.User, error)
 }
 
 type bookingServiceImpl struct {
@@ -119,10 +121,11 @@ func (s *bookingServiceImpl) GetAvailability(date string, deviceType string) (*m
 
 func (s *bookingServiceImpl) CreateBooking(dto *models.BookingCreateDto) (*models.BookingResponseDto, error) {
 	cleanDate := extractDate(dto.Date)
+	normalizedPhone := normalizePhone(dto.Phone)
 
 	booking := &models.Booking{
 		FullName:   dto.FullName,
-		Phone:      dto.Phone,
+		Phone:      normalizedPhone,
 		DeviceType: dto.DeviceType,
 		Date:       cleanDate,
 		TimeSlotID: dto.TimeSlotID,
@@ -274,11 +277,44 @@ func (s *bookingServiceImpl) DeleteBlock(id string) error {
 	return s.repo.Delete(id)
 }
 
+func (s *bookingServiceImpl) GetClientByPhone(phone string) (*models.User, error) {
+	phone = normalizePhone(phone)
+	userRepo := repositories.NewUserRepository()
+	user, err := userRepo.FindByPhone(phone)
+	if err != nil {
+		return nil, err
+	}
+	if user == nil {
+		return nil, errors.New("client not found")
+	}
+	return user, nil
+}
+
 func extractDate(input string) string {
 	if len(input) > 10 {
 		return input[:10] // Extract YYYY-MM-DD from YYYY-MM-DDTHH:MM:SSZ
 	}
 	return input
+}
+
+// normalizePhone normalizes a phone number to WhatsApp Evolution API standard (e.g. 5492604845789)
+func normalizePhone(phone string) string {
+	re := regexp.MustCompile("[^0-9]")
+	clean := re.ReplaceAllString(phone, "")
+
+	if strings.HasPrefix(clean, "0") {
+		clean = clean[1:]
+	}
+
+	if len(clean) == 10 {
+		return "549" + clean
+	}
+
+	if len(clean) == 12 && strings.HasPrefix(clean, "54") {
+		return "549" + clean[2:]
+	}
+
+	return clean
 }
 
 // generateSlotTimes parses slot_HHMM and returns RFC3339 start and end strings (30 min duration)

@@ -135,6 +135,13 @@ func (p *googleCalendarProvider) InsertEvent(booking *models.Booking, timeSlotID
 			DateTime: endTime,
 			TimeZone: p.timeZone,
 		},
+		Reminders: &calendar.EventReminders{
+			UseDefault:      false,
+			ForceSendFields: []string{"UseDefault"},
+			Overrides: []*calendar.EventReminder{
+				{Method: "popup", Minutes: 60},
+			},
+		},
 	}
 
 	event, err := p.client.Events.Insert(p.calendarID, event).Do()
