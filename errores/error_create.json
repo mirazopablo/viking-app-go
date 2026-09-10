@@ -1,0 +1,28 @@
+{
+    "errorMessage": "The service was not able to process your request",
+    "errorDescription": "ERROR: invalid input syntax for type date: \"PC_DESKTOP\" (SQLSTATE 22007)",
+    "errorDetails": {
+        "rawErrorMessage": [
+            "500 - \"{\\\"error\\\":\\\"ERROR: invalid input syntax for type date: \\\\\\\"PC_DESKTOP\\\\\\\" (SQLSTATE 22007)\\\"}\""
+        ],
+        "httpCode": "500"
+    },
+    "n8nDetails": {
+        "nodeName": "createServiceOrder",
+        "nodeType": "n8n-nodes-base.httpRequestTool",
+        "nodeVersion": 4.5,
+        "itemIndex": 0,
+        "time": "9/9/2026, 5:32:59 PM",
+        "n8nVersion": "2.33.7 (Self Hosted)",
+        "binaryDataMode": "filesystem",
+        "stackTrace": [
+            "NodeApiError: The service was not able to process your request",
+            "    at ExecuteContext.execute (/usr/local/lib/node_modules/n8n/node_modules/.pnpm/n8n-nodes-base@file+packages+nodes-base_@opentelemetry+api@1.9.0_@opentelemetry+exporte_9e31dcec10980323a9c957753d2416c7/node_modules/n8n-nodes-base/nodes/HttpRequest/V3/HttpRequestV3.node.ts:870:16)",
+            "    at processTicksAndRejections (node:internal/process/task_queues:104:5)",
+            "    at WorkflowExecute.executeNode (/usr/local/lib/node_modules/n8n/node_modules/.pnpm/n8n-core@file+packages+core_@opentelemetry+api@1.9.0_@opentelemetry+exporter-trace-otlp_56f5a5be5f9a76dfbcdc404d6ec4dea5/node_modules/n8n-core/src/execution-engine/workflow-execute.ts:1082:8)",
+            "    at WorkflowExecute.runNode (/usr/local/lib/node_modules/n8n/node_modules/.pnpm/n8n-core@file+packages+core_@opentelemetry+api@1.9.0_@opentelemetry+exporter-trace-otlp_56f5a5be5f9a76dfbcdc404d6ec4dea5/node_modules/n8n-core/src/execution-engine/workflow-execute.ts:1382:11)",
+            "    at /usr/local/lib/node_modules/n8n/node_modules/.pnpm/n8n-core@file+packages+core_@opentelemetry+api@1.9.0_@opentelemetry+exporter-trace-otlp_56f5a5be5f9a76dfbcdc404d6ec4dea5/node_modules/n8n-core/src/execution-engine/workflow-execute.ts:1855:27",
+            "    at /usr/local/lib/node_modules/n8n/node_modules/.pnpm/n8n-core@file+packages+core_@opentelemetry+api@1.9.0_@opentelemetry+exporter-trace-otlp_56f5a5be5f9a76dfbcdc404d6ec4dea5/node_modules/n8n-core/src/execution-engine/workflow-execute.ts:2549:11"
+        ]
+    }
+}

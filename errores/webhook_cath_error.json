@@ -1,0 +1,140 @@
+[
+    {
+        "headers": {
+            "accept": "application/json, text/plain, */*",
+            "content-type": "application/json",
+            "user-agent": "axios/1.13.2",
+            "content-length": "1750",
+            "accept-encoding": "gzip, compress, deflate, br",
+            "host": "n8n_automation:5678",
+            "connection": "keep-alive"
+        },
+        "params": {},
+        "query": {},
+        "body": {
+            "event": "messages.upsert",
+            "instance": "viking-app",
+            "data": {
+                "key": {
+                    "remoteJid": "5492604845789@s.whatsapp.net",
+                    "remoteJidAlt": "5492604845789@s.whatsapp.net",
+                    "fromMe": false,
+                    "id": "AC9074619780081413F234530345909C",
+                    "participant": "",
+                    "addressingMode": "lid"
+                },
+                "pushName": "Pablo Mirazo",
+                "status": "DELIVERY_ACK",
+                "message": {
+                    "messageContextInfo": {
+                        "threadId": [],
+                        "deviceListMetadata": {
+                            "senderKeyIndexes": [],
+                            "recipientKeyIndexes": [],
+                            "senderKeyHash": {
+                                "0": 118,
+                                "1": 152,
+                                "2": 87,
+                                "3": 83,
+                                "4": 211,
+                                "5": 25,
+                                "6": 232,
+                                "7": 146,
+                                "8": 25,
+                                "9": 114
+                            },
+                            "senderTimestamp": {
+                                "low": 1788797267,
+                                "high": 0,
+                                "unsigned": true
+                            },
+                            "recipientKeyHash": {
+                                "0": 118,
+                                "1": 32,
+                                "2": 48,
+                                "3": 232,
+                                "4": 238,
+                                "5": 226,
+                                "6": 189,
+                                "7": 7,
+                                "8": 216,
+                                "9": 58
+                            },
+                            "recipientTimestamp": {
+                                "low": 1787691456,
+                                "high": 0,
+                                "unsigned": true
+                            }
+                        },
+                        "deviceListMetadataVersion": 2,
+                        "messageSecret": {
+                            "0": 211,
+                            "1": 98,
+                            "2": 239,
+                            "3": 57,
+                            "4": 199,
+                            "5": 139,
+                            "6": 222,
+                            "7": 194,
+                            "8": 88,
+                            "9": 252,
+                            "10": 89,
+                            "11": 114,
+                            "12": 102,
+                            "13": 50,
+                            "14": 189,
+                            "15": 67,
+                            "16": 160,
+                            "17": 165,
+                            "18": 100,
+                            "19": 232,
+                            "20": 226,
+                            "21": 125,
+                            "22": 131,
+                            "23": 198,
+                            "24": 26,
+                            "25": 93,
+                            "26": 35,
+                            "27": 68,
+                            "28": 0,
+                            "29": 241,
+                            "30": 8,
+                            "31": 36
+                        }
+                    },
+                    "conversation": "."
+                },
+                "contextInfo": {
+                    "mentionedJid": [],
+                    "groupMentions": [],
+                    "statusAttributions": [],
+                    "expiration": 0,
+                    "ephemeralSettingTimestamp": {
+                        "low": 1709326386,
+                        "high": 0,
+                        "unsigned": false
+                    },
+                    "disappearingMode": {
+                        "initiator": 0,
+                        "trigger": 0,
+                        "initiatedByMe": false
+                    }
+                },
+                "messageType": "conversation",
+                "messageTimestamp": 1788979547,
+                "instanceId": "7b4a5578-9cda-4c3b-b822-ce0e01d98b5d",
+                "source": "android",
+                "chatwootMessageId": 15,
+                "chatwootInboxId": 1,
+                "chatwootConversationId": 1
+            },
+            "destination": "http://n8n_automation:5678/webhook/vicki-bot",
+            "date_time": "2026-09-09T15:45:51.320Z",
+            "sender": "5492604845489@s.whatsapp.net",
+            "server_url": "https://lenovov15.tail6f4be3.ts.net/evolution",
+            "apikey": "29678E2A99AC-4B96-B670-C0E5931654BD"
+        },
+        "webhookUrl": "https://lenovov15.tail6f4be3.ts.net/n8n/webhook/vicki-bot",
+        "executionMode": "production"
+    }
+]
