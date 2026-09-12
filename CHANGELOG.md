@@ -2,6 +2,16 @@
 ## [Unreleased]
 
 
+<a name="v2.3.0"></a>
+## [v2.3.0](https://github.com/mirazopablo/viking-app-go/compare/v2.2.0...v2.3.0) (2026-09-10)
+
+### Code Refactoring
+- **booking:** update booking logic and calendar provider integrations
+
+### Features
+- **webhook:** implement whatsapp message debounce middleware
+
+
 <a name="v2.2.0"></a>
 ## [v2.2.0](https://github.com/mirazopablo/viking-app-go/compare/v2.1.0...v2.2.0) (2026-09-05)
 
