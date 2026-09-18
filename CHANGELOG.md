@@ -2,8 +2,15 @@
 ## [Unreleased]
 
 
+<a name="v2.4.0"></a>
+## [v2.4.0](https://github.com/mirazopablo/viking-app-go/compare/v2.3.0...v2.4.0) (2026-09-18)
+
+### Features
+- **bookings:** add fallback to bookings dor cliente name resolution
+
+
 <a name="v2.3.0"></a>
-## [v2.3.0](https://github.com/mirazopablo/viking-app-go/compare/v2.2.0...v2.3.0) (2026-09-10)
+## [v2.3.0](https://github.com/mirazopablo/viking-app-go/compare/v2.2.0...v2.3.0) (2026-09-11)
 
 ### Code Refactoring
 - **booking:** update booking logic and calendar provider integrations
