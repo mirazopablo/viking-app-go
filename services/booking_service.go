@@ -280,14 +280,24 @@ func (s *bookingServiceImpl) DeleteBlock(id string) error {
 func (s *bookingServiceImpl) GetClientByPhone(phone string) (*models.User, error) {
 	phone = normalizePhone(phone)
 	userRepo := repositories.NewUserRepository()
+	
 	user, err := userRepo.FindByPhone(phone)
 	if err != nil {
 		return nil, err
 	}
-	if user == nil {
-		return nil, errors.New("client not found")
+	if user != nil {
+		return user, nil
 	}
-	return user, nil
+
+	booking, err := s.repo.GetLatestBookingByPhone(phone)
+	if err == nil && booking != nil {
+		return &models.User{
+			Name:        booking.FullName,
+			PhoneNumber: booking.Phone,
+		}, nil
+	}
+
+	return nil, errors.New("client not found")
 }
 
 func extractDate(input string) string {
