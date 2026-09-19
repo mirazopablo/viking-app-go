@@ -34,7 +34,13 @@ func main() {
 	config.ConnectDatabase()
 
 	// 3. Perform database auto-migration for models including PushSubscription, NotificationHistory & Budget
-	err := config.DB.AutoMigrate(&models.Role{}, &models.User{}, &models.UserRole{}, &models.Device{}, &models.WorkOrder{}, &models.DiagnosticPoint{}, &models.PushSubscription{}, &models.NotificationHistory{}, &models.Budget{}, &models.Booking{})
+	err := config.DB.AutoMigrate(
+		&models.Role{}, &models.User{}, &models.UserRole{},
+		&models.Device{}, &models.WorkOrder{}, &models.DiagnosticPoint{},
+		&models.PushSubscription{}, &models.NotificationHistory{},
+		&models.Budget{}, &models.Booking{},
+		&models.DeviceToken{},
+	)
 	if err != nil {
 		log.Fatalf("Database auto-migration failed: %v", err)
 	}
