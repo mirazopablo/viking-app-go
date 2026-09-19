@@ -70,6 +70,7 @@ func SetupRouter() *gin.Engine {
 	notificationHistoryRepo := repositories.NewNotificationHistoryRepository()
 	budgetRepo := repositories.NewBudgetRepository()
 	bookingRepo := repositories.NewBookingRepository()
+	deviceTokenRepo := repositories.NewDeviceTokenRepository()
 
 	// Initialize Services
 	roleService := services.NewRoleService(roleRepo)
@@ -80,13 +81,13 @@ func SetupRouter() *gin.Engine {
 	workOrderService := services.NewWorkOrderService(workOrderRepo, userRepo, deviceRepo, diagnosticPointRepo, notificationService)
 	diagnosticPointService := services.NewDiagnosticPointService(diagnosticPointRepo, workOrderRepo, userRepo, notificationService)
 	budgetService := services.NewBudgetService(budgetRepo, workOrderRepo, diagnosticPointRepo, notificationService)
-	
+
 	calendarProvider, err := services.NewGoogleCalendarProvider()
 	if err != nil {
 		log.Fatalf("Failed to initialize Google Calendar Provider: %v", err)
 	}
 	bookingService := services.NewBookingService(bookingRepo, calendarProvider)
-	
+
 	webhookDebounceService := services.NewWebhookDebounceService()
 
 	// Initialize Controllers
@@ -103,6 +104,7 @@ func SetupRouter() *gin.Engine {
 	budgetCtrl := controllers.NewBudgetController(budgetService)
 	bookingCtrl := controllers.NewBookingController(bookingService)
 	webhookCtrl := controllers.NewWebhookController(webhookDebounceService)
+	pushCtrl := controllers.NewPushController(deviceTokenRepo)
 	//automationCtrl := controllers.NewAutomationController(bookingService)
 
 	// Swagger UI Route (Always Public)
@@ -239,6 +241,12 @@ func SetupRouter() *gin.Engine {
 			budgetGroup.PATCH("/update-status/:id", budgetCtrl.UpdateBudgetStatus)
 			budgetGroup.DELETE("/delete/:id", budgetCtrl.DeleteBudget)
 			budgetGroup.DELETE("/:id", budgetCtrl.DeleteBudget)
+		}
+		// Push Notifications Controller Endpoints
+		pushGroup := privateApi.Group("/push")
+		{
+			pushGroup.POST("/register", pushCtrl.RegisterToken)
+			pushGroup.POST("/unregister", pushCtrl.UnregisterToken)
 		}
 	}
 
