@@ -21,3 +21,6 @@ tmp/
 *.txt
 credentials.json
 markdown/
+n8n_workflows/
+produccion/
+tests/
