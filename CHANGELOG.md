@@ -2,6 +2,19 @@
 ## [Unreleased]
 
 
+<a name="v2.5.0"></a>
+## [v2.5.0](https://github.com/mirazopablo/viking-app-go/compare/v2.4.0...v2.5.0) (2026-09-23)
+
+### Code Refactoring
+- **backend:** load firebase credentials from env
+- **logging:** standardize error logging and silence success logs
+- **notificaions:** remove imminent booking notifications and fix timezone
+
+### Features
+- **database:** add device token model for FCM
+- **push:** add fcm token registration endpoints
+
+
 <a name="v2.4.0"></a>
 ## [v2.4.0](https://github.com/mirazopablo/viking-app-go/compare/v2.3.0...v2.4.0) (2026-09-18)
 
