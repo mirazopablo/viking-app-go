@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"log"
 	"strings"
 
 	"github.com/google/uuid"
@@ -46,6 +47,7 @@ func NewUserService(userRepo repositories.UserRepository, roleRepo repositories.
 func (s *userServiceImpl) RegisterUser(req *models.RegisterDto) (*models.UserResponseDto, error) {
 	existing, err := s.userRepo.FindByEmail(req.Email)
 	if err != nil {
+		log.Printf("[services/user_service.go] [RegisterUser] Database error querying email: %v", err)
 		return nil, err
 	}
 	if existing != nil {
@@ -88,6 +90,7 @@ func (s *userServiceImpl) RegisterUser(req *models.RegisterDto) (*models.UserRes
 	}
 
 	if err := s.userRepo.CreateWithRole(user, req.RoleID); err != nil {
+		log.Printf("[services/user_service.go] [RegisterUser] Database error creating user: %v", err)
 		return nil, err
 	}
 
@@ -97,6 +100,7 @@ func (s *userServiceImpl) RegisterUser(req *models.RegisterDto) (*models.UserRes
 func (s *userServiceImpl) LoginUser(req *models.LoginUserDto) (*models.LoginResponseDto, error) {
 	user, err := s.userRepo.FindByEmail(req.Email)
 	if err != nil {
+		log.Printf("[services/user_service.go] [LoginUser] Database error querying email: %v", err)
 		return nil, err
 	}
 	if user == nil || user.Password == nil || strings.TrimSpace(*user.Password) == "" {
@@ -135,6 +139,7 @@ func (s *userServiceImpl) ValidateTokenString(tokenString string) bool {
 func (s *userServiceImpl) GetAllUsers(page, limit int) (*models.PaginatedResponse[models.UserResponseDto], error) {
 	users, total, err := s.userRepo.FindAll(page, limit)
 	if err != nil {
+		log.Printf("[services/user_service.go] [GetAllUsers] Database error getting users: %v", err)
 		return nil, err
 	}
 
@@ -154,6 +159,7 @@ func (s *userServiceImpl) GetAllUsers(page, limit int) (*models.PaginatedRespons
 func (s *userServiceImpl) SearchUsers(id, dni, name, email, phone, query string, page, limit int) (*models.PaginatedResponse[models.UserResponseDto], error) {
 	users, total, err := s.userRepo.Search(id, dni, name, email, phone, query, page, limit)
 	if err != nil {
+		log.Printf("[services/user_service.go] [SearchUsers] Database error searching users: %v", err)
 		return nil, err
 	}
 
@@ -186,6 +192,7 @@ func (s *userServiceImpl) AutocompleteUsers(query string, limit int) ([]models.U
 func (s *userServiceImpl) GetUserByID(id string) (*models.UserResponseDto, error) {
 	user, err := s.userRepo.FindByID(id)
 	if err != nil {
+		log.Printf("[services/user_service.go] [GetUserByID] Database error finding user: %v", err)
 		return nil, err
 	}
 	if user == nil {
@@ -220,11 +227,16 @@ func (s *userServiceImpl) UpdateUser(id string, req *models.RegisterDto) (*model
 	}
 
 	if err := s.userRepo.UpdateWithRole(user, req.RoleID); err != nil {
+		log.Printf("[services/user_service.go] [UpdateUser] Database error updating user: %v", err)
 		return nil, err
 	}
 	return user.ToResponseDto(), nil
 }
 
 func (s *userServiceImpl) DeleteUser(id string) error {
-	return s.userRepo.Delete(id)
+	err := s.userRepo.Delete(id)
+	if err != nil {
+		log.Printf("[services/user_service.go] [DeleteUser] Database error deleting user: %v", err)
+	}
+	return err
 }

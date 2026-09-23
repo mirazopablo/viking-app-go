@@ -1,6 +1,6 @@
 services:
   # ==========================================
-  # Backend: Viking Go API (Local Dev Simulation)
+  # Backend: Viking Go API (Local Dev)
   # ==========================================
   viking-api:
     build: .
@@ -8,24 +8,27 @@ services:
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
+    env_file:
+      - .env # Trae todas las variables del .env
     environment:
       - SERVER_PORT=65298
-      - DB_HOST=postgres_db
+      - DB_HOST=postgres_db # Apunta al contenedor postgres_db que ya tienes corriendo en mired2
       - DB_PORT=5432
+      - DB_SSLMODE=disable
+      - UPLOAD_DIR=/root/uploads
+      
+      # Mapeo explícito
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_NAME=${DB_NAME}
-      - DB_SSLMODE=disable
       - JWT_SECRET=${JWT_SECRET}
       - JWT_EXPIRATION_HOURS=${JWT_EXPIRATION_HOURS}
-      - UPLOAD_DIR=/root/uploads
-      # VAPID Keys for Push Notifications
       - VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY}
       - VAPID_PRIVATE_KEY=${VAPID_PRIVATE_KEY}
       - VAPID_SUBSCRIBER_EMAIL=${VAPID_SUBSCRIBER_EMAIL}
-      # Google Calendar Integration
       - GOOGLE_CALENDAR_ID=${GOOGLE_CALENDAR_ID}
       - GOOGLE_CREDENTIALS_JSON=${GOOGLE_CREDENTIALS_JSON}
+      - FIREBASE_CREDENTIALS_JSON=${FIREBASE_CREDENTIALS_JSON}
     volumes:
       - viking_uploads:/root/uploads
     networks:
@@ -39,23 +42,18 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=mired2"
-
-      # Regla de enrutamiento por Host de Tailscale y Rutas
-      - "traefik.http.routers.viking-api.rule=Host(`${SUBDOMAIN}`) && (PathPrefix(`/viking`) || PathPrefix(`/auth`) || PathPrefix(`/api`) || PathPrefix(`/swagger`) || PathPrefix(`/public`))"
+      
+      # Quitamos la regla del Host() para que puedas entrar desde el celular usando tu IP local
+      - "traefik.http.routers.viking-api.rule=PathPrefix(`/viking`) || PathPrefix(`/auth`) || PathPrefix(`/api`) || PathPrefix(`/swagger`) || PathPrefix(`/public`)"
       - "traefik.http.routers.viking-api.entrypoints=web"
       - "traefik.http.routers.viking-api.priority=100"
 
-      # Middleware para remover el prefijo /viking
+      # Middlewares
       - "traefik.http.middlewares.viking-strip.stripprefix.prefixes=/viking"
-
-      # Middleware para buffer de uploads pesados
       - "traefik.http.middlewares.upload-buffer.buffering.maxrequestbodybytes=104857600"
       - "traefik.http.middlewares.upload-buffer.buffering.memrequestbodybytes=10485760"
 
-      # Aplicar middlewares combinados
       - "traefik.http.routers.viking-api.middlewares=viking-strip,upload-buffer"
-
-      # Mapeo al puerto interno de Go
       - "traefik.http.services.viking-api.loadbalancer.server.port=65298"
 
 networks:

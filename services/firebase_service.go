@@ -18,23 +18,22 @@ var fcmClient *messaging.Client
 func InitFirebase() {
 	b, err := loadFirebaseCredentials()
 	if err != nil {
-		log.Fatalf("could not load firebase credentials: %v", err)
+		log.Fatalf("[services/firebase_service.go] [InitFirebase] could not load firebase credentials: %v", err)
 	}
 
 	// Usamos WithCredentialsJSON para pasar los bytes directamente
 	opt := option.WithCredentialsJSON(b)
 	app, err := firebase.NewApp(context.Background(), nil, opt)
 	if err != nil {
-		log.Fatalf("Error initializing Firebase App: %v", err)
+		log.Fatalf("[services/firebase_service.go] [InitFirebase] Error initializing Firebase App: %v", err)
 	}
 
 	client, err := app.Messaging(context.Background())
 	if err != nil {
-		log.Fatalf("Error getting FCM client: %v", err)
+		log.Fatalf("[services/firebase_service.go] [InitFirebase] Error getting FCM client: %v", err)
 	}
 
 	fcmClient = client
-	log.Println("Firebase Cloud Messaging (FCM) initialized successfully!")
 }
 
 // loadFirebaseCredentials lee el JSON desde Base64 en el .env, o cae en el archivo local.
@@ -51,10 +50,9 @@ func loadFirebaseCredentials() ([]byte, error) {
 }
 
 // SendMulticastPushNotification sends a single message to multiple device tokens (Broadcast).
-// Rationale: SendMulticast is highly optimized by Google to process up to 500 tokens in a single network request.
+// Rationale: Utilizamos SendEachForMulticast ya que Google dio de baja la API de /batch usada por SendMulticast.
 func SendMulticastPushNotification(tokens []string, title string, body string) error {
 	if len(tokens) == 0 {
-		log.Println("No tokens provided for multicast push notification. Skipping.")
 		return nil
 	}
 
@@ -66,12 +64,15 @@ func SendMulticastPushNotification(tokens []string, title string, body string) e
 		Tokens: tokens,
 	}
 
-	br, err := fcmClient.SendMulticast(context.Background(), message)
+	// NUEVO: Usamos SendEachForMulticast en lugar de SendMulticast
+	br, err := fcmClient.SendEachForMulticast(context.Background(), message)
 	if err != nil {
-		log.Printf("Error sending multicast message: %v\n", err)
+		log.Printf("[services/firebase_service.go] [SendMulticastPushNotification] Error sending multicast message: %v\n", err)
 		return err
 	}
 
-	log.Printf("Multicast push sent. Success count: %d, Failure count: %d\n", br.SuccessCount, br.FailureCount)
+	if br.FailureCount > 0 {
+		log.Printf("[services/firebase_service.go] [SendMulticastPushNotification] Multicast push partially failed. Failure count: %d\n", br.FailureCount)
+	}
 	return nil
 }

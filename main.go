@@ -7,7 +7,10 @@ import (
 
 	"github.com/mirazopablo/viking-app-go/config"
 	"github.com/mirazopablo/viking-app-go/models"
+	"github.com/mirazopablo/viking-app-go/repositories"
 	"github.com/mirazopablo/viking-app-go/routes"
+	"github.com/mirazopablo/viking-app-go/services"
+	"github.com/mirazopablo/viking-app-go/workers"
 )
 
 // @title Viking-App ApiREST
@@ -34,6 +37,9 @@ func main() {
 	config.ConnectDatabase()
 
 	// 3. Perform database auto-migration for models including PushSubscription, NotificationHistory & Budget
+	services.InitFirebase()
+	deviceTokenRepo := repositories.NewDeviceTokenRepository()
+	workers.StartCronJobs(deviceTokenRepo)
 	err := config.DB.AutoMigrate(
 		&models.Role{}, &models.User{}, &models.UserRole{},
 		&models.Device{}, &models.WorkOrder{}, &models.DiagnosticPoint{},
@@ -42,9 +48,8 @@ func main() {
 		&models.DeviceToken{},
 	)
 	if err != nil {
-		log.Fatalf("Database auto-migration failed: %v", err)
+		log.Fatalf("[main.go] [main] Database auto-migration failed: %v", err)
 	}
-	log.Println("Database auto-migration completed successfully.")
 
 	// 4. Initialize Gin router and endpoints
 	r := routes.SetupRouter()
@@ -62,6 +67,6 @@ func main() {
 	}
 
 	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		log.Fatalf("Server failed to start: %v", err)
+		log.Fatalf("[main.go] [main] Server failed to start: %v", err)
 	}
 }

@@ -32,7 +32,7 @@ var AppConfig *Config
 func LoadConfig() {
 	err := godotenv.Load()
 	if err != nil {
-		log.Println("No .env file found or error loading it. Using environment variables directly.")
+		log.Printf("[config/config.go] [LoadConfig] Warning: No .env file found or error loading it: %v", err)
 	}
 
 	AppConfig = &Config{
@@ -53,7 +53,7 @@ func LoadConfig() {
 
 	// Ensure upload directory exists
 	if err := os.MkdirAll(AppConfig.UploadDir, os.ModePerm); err != nil {
-		log.Fatalf("Failed to create upload directory: %v", err)
+		log.Fatalf("[config/config.go] [LoadConfig] Failed to create upload directory: %v", err)
 	}
 }
 

@@ -84,7 +84,7 @@ func SetupRouter() *gin.Engine {
 
 	calendarProvider, err := services.NewGoogleCalendarProvider()
 	if err != nil {
-		log.Fatalf("Failed to initialize Google Calendar Provider: %v", err)
+		log.Fatalf("[routes/routes.go] [SetupRouter] Failed to initialize Google Calendar Provider: %v", err)
 	}
 	bookingService := services.NewBookingService(bookingRepo, calendarProvider)
 

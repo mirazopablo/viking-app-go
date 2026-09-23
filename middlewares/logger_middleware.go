@@ -51,16 +51,8 @@ func CustomLoggerMiddleware() gin.HandlerFunc {
 			path = path + "?" + rawQuery
 		}
 
-		// Rule 1: For 2XX responses, log only the minimal Gin standard info
+		// Rule 1: For 2XX responses, do not log anything to keep the console clean in production
 		if statusCode >= http.StatusOK && statusCode < http.StatusMultipleChoices {
-			log.Printf("[GIN] %s | %3d | %v | %s | %-7s %q",
-				time.Now().Format("2006/01/02 - 15:04:05"),
-				statusCode,
-				latency,
-				clientIP,
-				method,
-				path,
-			)
 			return
 		}
 

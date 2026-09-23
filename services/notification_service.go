@@ -163,7 +163,7 @@ func (s *notificationServiceImpl) NotifyOrderStatusChanged(wo *models.WorkOrder,
 		IsRead:      false,
 	}
 	if _, err := s.historyRepo.Save(nh); err != nil {
-		log.Printf("[NotificationService] Error saving status change notification history for order %s: %v", wo.ID, err)
+		log.Printf("[services/notification_service.go] [NotifyOrderStatusChanged] Error saving status change notification history for order %s: %v", wo.ID, err)
 	}
 
 	// 2. Dispatch live WebPush notification asynchronously
@@ -192,7 +192,7 @@ func (s *notificationServiceImpl) NotifyDiagnosticPointAdded(dp *models.Diagnost
 		IsRead:      false,
 	}
 	if _, err := s.historyRepo.Save(nh); err != nil {
-		log.Printf("[NotificationService] Error saving diagnostic point history for order %s: %v", wo.ID, err)
+		log.Printf("[services/notification_service.go] [NotifyDiagnosticPointAdded] Error saving diagnostic point history for order %s: %v", wo.ID, err)
 	}
 
 	// 2. Apply memory debounce window (2 minutes) to coalesce multiple quick diagnostic point uploads
@@ -235,7 +235,6 @@ func (s *notificationServiceImpl) flushDiagnosticDebounce(workOrderID string) {
 
 func (s *notificationServiceImpl) sendWebPushToWorkOrder(workOrderID, title, body, targetURL string) {
 	if config.AppConfig.VAPIDPublicKey == "" || config.AppConfig.VAPIDPrivateKey == "" {
-		log.Println("[NotificationService] VAPID keys not configured. Skipping WebPush dispatch.")
 		return
 	}
 
@@ -252,7 +251,7 @@ func (s *notificationServiceImpl) sendWebPushToWorkOrder(workOrderID, title, bod
 	}
 	payloadBytes, err := json.Marshal(payloadMap)
 	if err != nil {
-		log.Printf("[NotificationService] Error marshaling push payload: %v", err)
+		log.Printf("[services/notification_service.go] [sendWebPushToWorkOrder] Error marshaling push payload: %v", err)
 		return
 	}
 
@@ -285,14 +284,14 @@ func (s *notificationServiceImpl) sendWebPushToWorkOrder(workOrderID, title, bod
 				},
 			)
 			if err != nil {
-				log.Printf("[NotificationService] Push error to endpoint %s: %v", subscription.Endpoint, err)
+				log.Printf("[services/notification_service.go] [sendWebPushToWorkOrder] Push error to endpoint %s: %v", subscription.Endpoint, err)
 				return
 			}
 			defer resp.Body.Close()
 
 			// Check HTTP status code: 410 Gone or 404 Not Found indicates subscription expired or revoked by browser
 			if resp.StatusCode == http.StatusGone || resp.StatusCode == http.StatusNotFound {
-				log.Printf("[NotificationService] Subscription expired (status %d), cleaning up endpoint: %s", resp.StatusCode, subscription.Endpoint)
+				log.Printf("[services/notification_service.go] [sendWebPushToWorkOrder] Subscription expired (status %d), cleaning up endpoint: %s", resp.StatusCode, subscription.Endpoint)
 				_ = s.pushRepo.DeleteByEndpoint(subscription.Endpoint)
 			}
 		}(sub)

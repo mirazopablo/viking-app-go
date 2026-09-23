@@ -16,7 +16,7 @@ var DB *gorm.DB
 // ConnectDatabase establishes a connection to the PostgreSQL database using GORM.
 func ConnectDatabase() {
 	if AppConfig == nil {
-		log.Fatal("AppConfig is not loaded before connecting to the database.")
+		log.Fatal("[config/database.go] [ConnectDatabase] AppConfig is not loaded before connecting to the database.")
 	}
 
 	dsn := fmt.Sprintf(
@@ -33,7 +33,7 @@ func ConnectDatabase() {
 		Logger: logger.Default.LogMode(logger.Silent),
 	})
 	if err != nil {
-		log.Fatalf("Failed to connect to PostgreSQL database: %v", err)
+		log.Fatalf("[config/database.go] [ConnectDatabase] Failed to connect to PostgreSQL database: %v", err)
 	}
 
 	// Setup connection pool
@@ -44,6 +44,5 @@ func ConnectDatabase() {
 		sqlDB.SetConnMaxLifetime(time.Hour)
 	}
 
-	log.Println("DB Connected!")
 	DB = db
 }

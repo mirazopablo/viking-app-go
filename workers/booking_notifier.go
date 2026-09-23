@@ -17,7 +17,7 @@ var argTimezone *time.Location
 func init() {
 	loc, err := time.LoadLocation("America/Argentina/Buenos_Aires")
 	if err != nil {
-		log.Printf("Warning: could not load timezone, falling back to Local. Error: %v", err)
+		log.Printf("[workers/booking_notifier.go] [init] Error al cargar la zona horaria: %v", err)
 		argTimezone = time.Local
 	} else {
 		argTimezone = loc
@@ -30,15 +30,13 @@ func StartCronJobs(deviceTokenRepo repositories.DeviceTokenRepository) {
 
 	// FASE 1: Resumen Diario a las 20:00 hs
 	_, err := c.AddFunc("0 20 * * *", func() {
-		log.Println("[CRON] Iniciando Fase 1: Resumen de turnos para mañana")
 		notifyTomorrowBookings(deviceTokenRepo)
 	})
 	if err != nil {
-		log.Fatalf("Error scheduling Fase 1: %v", err)
+		log.Printf("[workers/booking_notifier.go] [StartCronJobs] Error al programar la Fase 1: %v", err)
 	}
 
 	c.Start()
-	log.Println("Cron Jobs scheduled and running in the background.")
 }
 
 func notifyTomorrowBookings(tokenRepo repositories.DeviceTokenRepository) {
@@ -51,7 +49,7 @@ func notifyTomorrowBookings(tokenRepo repositories.DeviceTokenRepository) {
 		Count(&count).Error
 
 	if err != nil {
-		log.Printf("Error al contar turnos: %v", err)
+		log.Printf("[workers/booking_notifier.go] [notifyTomorrowBookings] Error al contar los turnos de mañana: %v", err)
 		return
 	}
 
@@ -60,7 +58,12 @@ func notifyTomorrowBookings(tokenRepo repositories.DeviceTokenRepository) {
 	}
 
 	tokens, err := tokenRepo.GetAllTokens()
-	if err != nil || len(tokens) == 0 {
+	if err != nil {
+		log.Printf("[workers/booking_notifier.go] [notifyTomorrowBookings] Error al obtener los tokens de los dispositivos: %v", err)
+		return
+	}
+	
+	if len(tokens) == 0 {
 		return
 	}
 

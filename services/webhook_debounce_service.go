@@ -138,7 +138,7 @@ func (s *webhookDebounceServiceImpl) flushSession(remoteJid string) {
 		}
 	}
 
-	log.Printf("Debounce completed for %s, forwarding %d concatenated messages.", remoteJid, len(session.Messages))
+	// Success log removed to keep console clean
 	s.forwardToN8N(payload)
 }
 
@@ -151,13 +151,13 @@ func (s *webhookDebounceServiceImpl) forwardToN8N(payload map[string]interface{}
 
 	jsonData, err := json.Marshal(payload)
 	if err != nil {
-		log.Printf("Error marshalling debounced webhook: %v", err)
+		log.Printf("[services/webhook_debounce_service.go] [forwardToN8N] Error marshalling debounced webhook: %v", err)
 		return err
 	}
 	
 	req, err := http.NewRequest("POST", n8nURL, bytes.NewBuffer(jsonData))
 	if err != nil {
-		log.Printf("Error creating request to n8n: %v", err)
+		log.Printf("[services/webhook_debounce_service.go] [forwardToN8N] Error creating request to n8n: %v", err)
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
@@ -165,13 +165,13 @@ func (s *webhookDebounceServiceImpl) forwardToN8N(payload map[string]interface{}
 	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Printf("Error forwarding webhook to n8n: %v", err)
+		log.Printf("[services/webhook_debounce_service.go] [forwardToN8N] Error forwarding webhook to n8n: %v", err)
 		return err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 300 {
-		log.Printf("n8n responded with status %d", resp.StatusCode)
+		log.Printf("[services/webhook_debounce_service.go] [forwardToN8N] n8n responded with status %d", resp.StatusCode)
 	}
 
 	return nil
