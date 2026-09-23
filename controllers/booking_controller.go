@@ -38,7 +38,7 @@ func (bc *BookingController) GetAvailability(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Date parameter is required"})
 		return
 	}
-	
+
 	deviceType := c.Query("deviceType")
 
 	response, err := bc.service.GetAvailability(date, deviceType)
@@ -93,7 +93,7 @@ func (bc *BookingController) CreateBooking(c *gin.Context) {
 // @Router /api/v1/bookings/date/{date} [get]
 func (bc *BookingController) GetBookingsByDate(c *gin.Context) {
 	date := c.Param("date")
-	
+
 	bookings, err := bc.service.GetBookingsByDate(date)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -113,13 +113,14 @@ func (bc *BookingController) GetBookingsByDate(c *gin.Context) {
 // @Failure 500 {object} object "Internal Server Error"
 // @Router /api/v1/bookings/today [get]
 func (bc *BookingController) GetTodayBookings(c *gin.Context) {
-	today := time.Now().Format("2006-01-02")
+	loc, _ := time.LoadLocation("America/Argentina/Buenos_Aires")
+	today := time.Now().In(loc).Format("2006-01-02")
+
 	bookings, err := bc.service.GetBookingsByDate(today)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-
 	c.JSON(http.StatusOK, bookings)
 }
 
@@ -133,13 +134,14 @@ func (bc *BookingController) GetTodayBookings(c *gin.Context) {
 // @Failure 500 {object} object "Internal Server Error"
 // @Router /api/v1/bookings/tomorrow [get]
 func (bc *BookingController) GetTomorrowBookings(c *gin.Context) {
-	tomorrow := time.Now().AddDate(0, 0, 1).Format("2006-01-02")
+	loc, _ := time.LoadLocation("America/Argentina/Buenos_Aires")
+	tomorrow := time.Now().In(loc).AddDate(0, 0, 1).Format("2006-01-02")
+
 	bookings, err := bc.service.GetBookingsByDate(tomorrow)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-
 	c.JSON(http.StatusOK, bookings)
 }
 
@@ -158,7 +160,7 @@ func (bc *BookingController) GetTomorrowBookings(c *gin.Context) {
 // @Router /api/v1/bookings/{id}/status [patch]
 func (bc *BookingController) UpdateBookingStatus(c *gin.Context) {
 	id := c.Param("id")
-	
+
 	var dto models.UpdateBookingStatusDto
 	if err := c.ShouldBindJSON(&dto); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid payload format: " + err.Error()})
@@ -189,7 +191,7 @@ func (bc *BookingController) UpdateBookingStatus(c *gin.Context) {
 // @Router /api/v1/bookings/{id}/bot-status [patch]
 func (bc *BookingController) UpdateBotStatus(c *gin.Context) {
 	id := c.Param("id")
-	
+
 	var dto models.UpdateBotStatusDto
 	if err := c.ShouldBindJSON(&dto); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid payload format: " + err.Error()})
@@ -266,7 +268,7 @@ func (bc *BookingController) CreateBlock(c *gin.Context) {
 // @Router /api/v1/bookings/blocks/{id} [delete]
 func (bc *BookingController) DeleteBlock(c *gin.Context) {
 	id := c.Param("id")
-	
+
 	err := bc.service.DeleteBlock(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -300,4 +302,3 @@ func (bc *BookingController) GetClientByPhone(c *gin.Context) {
 		"phone":    user.PhoneNumber,
 	})
 }
-
