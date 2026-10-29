@@ -46,6 +46,7 @@ func main() {
 		&models.PushSubscription{}, &models.NotificationHistory{},
 		&models.Budget{}, &models.Booking{},
 		&models.DeviceToken{},
+		&models.Invoice{},
 	)
 	if err != nil {
 		log.Fatalf("[main.go] [main] Database auto-migration failed: %v", err)

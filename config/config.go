@@ -23,6 +23,15 @@ type Config struct {
 	VAPIDPublicKey       string
 	VAPIDPrivateKey      string
 	VAPIDSubscriberEmail string
+
+	// AFIP / ARCA Configuration
+	AfipCUIT       string
+	AfipPuntoVenta int
+	AfipCertPath   string
+	AfipKeyPath    string
+	AfipEnv        string
+	AfipWSAAURL    string
+	AfipWSFEURL    string
 }
 
 // AppConfig is the global configuration instance.
@@ -49,6 +58,15 @@ func LoadConfig() {
 		VAPIDPublicKey:       getEnv("VAPID_PUBLIC_KEY", ""),
 		VAPIDPrivateKey:      getEnv("VAPID_PRIVATE_KEY", ""),
 		VAPIDSubscriberEmail: getEnv("VAPID_SUBSCRIBER_EMAIL", "mailto:admin@viking-app.zondasolutions.com"),
+
+		// AFIP / ARCA
+		AfipCUIT:       getEnv("AFIP_CUIT", ""),
+		AfipPuntoVenta: getEnvAsInt("AFIP_PUNTO_VENTA", 2),
+		AfipCertPath:   getEnv("AFIP_CERT_PATH", "./config/certs/viking-app.crt"),
+		AfipKeyPath:    getEnv("AFIP_KEY_PATH", "./config/certs/viking-app.key"),
+		AfipEnv:        getEnv("AFIP_ENV", "production"),
+		AfipWSAAURL:    getEnv("AFIP_WSAA_URL", "https://wsaa.afip.gov.ar/ws/services/LoginCms"),
+		AfipWSFEURL:    getEnv("AFIP_WSFE_URL", "https://servicios1.afip.gov.ar/wsfev1/service.asmx"),
 	}
 
 	// Ensure upload directory exists
