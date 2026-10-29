@@ -105,6 +105,7 @@ func SetupRouter() *gin.Engine {
 	bookingCtrl := controllers.NewBookingController(bookingService)
 	webhookCtrl := controllers.NewWebhookController(webhookDebounceService)
 	pushCtrl := controllers.NewPushController(deviceTokenRepo)
+	invoiceCtrl := controllers.NewInvoiceController()
 	//automationCtrl := controllers.NewAutomationController(bookingService)
 
 	// Swagger UI Route (Always Public)
@@ -163,6 +164,15 @@ func SetupRouter() *gin.Engine {
 			bookingBlocks.GET("", bookingCtrl.ListBlocks)
 			bookingBlocks.POST("", bookingCtrl.CreateBlock)
 			bookingBlocks.DELETE("/:id", bookingCtrl.DeleteBlock)
+		}
+
+		// Invoice Routes (Protected)
+		invoiceGroup := apiV1.Group("/invoices")
+		invoiceGroup.Use(middlewares.AuthMiddleware(jwtService))
+		{
+			invoiceGroup.POST("", invoiceCtrl.CreateInvoice)
+			invoiceGroup.GET("", invoiceCtrl.GetInvoices)
+			invoiceGroup.GET("/:id", invoiceCtrl.GetInvoiceByID)
 		}
 
 		// // Automation Routes (Internal APIs for n8n/Evolution)
