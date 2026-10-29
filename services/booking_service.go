@@ -149,6 +149,37 @@ func (s *bookingServiceImpl) CreateBooking(dto *models.BookingCreateDto) (*model
 		_ = s.repo.Update(saved) // Update silently
 	}
 
+	// 3. Auto-create User if not exists
+	userRepo := repositories.NewUserRepository()
+	existingUser, _ := userRepo.FindByDni(dto.Dni)
+	if existingUser == nil {
+		existingUser, _ = userRepo.FindByPhone(normalizedPhone)
+	}
+
+	if existingUser == nil {
+		roleRepo := repositories.NewRoleRepository()
+		roles, _ := roleRepo.FindAll()
+		var clientRoleID uuid.UUID
+		for _, r := range roles {
+			nameUpper := strings.ToUpper(r.Name)
+			if nameUpper == models.RoleClient || nameUpper == "CLIENT" {
+				clientRoleID = r.ID
+				break
+			}
+		}
+
+		if clientRoleID != uuid.Nil {
+			email := fmt.Sprintf("%d@bot.viking.com", dto.Dni)
+			newUser := &models.User{
+				Name:        dto.FullName,
+				Dni:         dto.Dni,
+				PhoneNumber: normalizedPhone,
+				Email:       email,
+			}
+			_ = userRepo.CreateWithRole(newUser, clientRoleID)
+		}
+	}
+
 	return &models.BookingResponseDto{
 		Message:   "Booking created successfully",
 		BookingID: saved.ID,

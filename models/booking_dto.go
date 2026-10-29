@@ -16,6 +16,7 @@ type AvailabilityResponseDto struct {
 // BookingCreateDto represents the incoming request to create a booking.
 type BookingCreateDto struct {
 	FullName   string `json:"fullName" binding:"required"`
+	Dni        int32  `json:"dni" binding:"required"`
 	Phone      string `json:"phone" binding:"required"`
 	DeviceType string `json:"deviceType" binding:"required"`
 	Date       string `json:"date" binding:"required"` 

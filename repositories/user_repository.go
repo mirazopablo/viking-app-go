@@ -22,6 +22,7 @@ type UserRepository interface {
 	UpdateWithRole(user *models.User, roleID uuid.UUID) error
 	Delete(id string) error
 	FindByPhone(phone string) (*models.User, error)
+	FindByDni(dni int32) (*models.User, error)
 }
 
 type userRepositoryImpl struct{}
@@ -86,6 +87,19 @@ func (r *userRepositoryImpl) FindByEmail(email string) (*models.User, error) {
 func (r *userRepositoryImpl) FindByPhone(phone string) (*models.User, error) {
 	var user models.User
 	err := config.DB.Where("phone_number = ?", phone).First(&user).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &user, nil
+}
+
+// FindByDni retrieves a user by their DNI.
+func (r *userRepositoryImpl) FindByDni(dni int32) (*models.User, error) {
+	var user models.User
+	err := config.DB.Where("dni = ?", dni).First(&user).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
