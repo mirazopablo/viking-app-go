@@ -169,6 +169,16 @@ func (s *WSFEService) RequestCAE(reqData models.CreateInvoiceRequest) (*models.I
         <FchVtoPago>%s</FchVtoPago>`, desde, hasta, vto)
 	}
 
+	// Condicion Frente al IVA del Receptor (RG 5616)
+	// Default: 5 (Consumidor Final)
+	condicionIvaReceptorId := 5
+	if reqData.CondicionIvaReceptorId != nil && *reqData.CondicionIvaReceptorId > 0 {
+		condicionIvaReceptorId = *reqData.CondicionIvaReceptorId
+	} else if reqData.DocTipo == 80 {
+		// Si es CUIT y no se especifico, asumir Responsable Inscripto (1)
+		condicionIvaReceptorId = 1
+	}
+
 	// 2. Build FECAESolicitar XML
 	soapEnvelope := fmt.Sprintf(`<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
@@ -201,6 +211,7 @@ func (s *WSFEService) RequestCAE(reqData models.CreateInvoiceRequest) (*models.I
             <ImpIVA>0</ImpIVA>%s
             <MonId>PES</MonId>
             <MonCotiz>1</MonCotiz>
+            <CondicionIVAReceptorId>%d</CondicionIVAReceptorId>
           </FECAEDetRequest>
         </FeDetReq>
       </FeCAEReq>
@@ -213,6 +224,7 @@ func (s *WSFEService) RequestCAE(reqData models.CreateInvoiceRequest) (*models.I
 		nextNro, nextNro, today,
 		reqData.ImporteTotal, reqData.ImporteTotal,
 		serviceXML,
+		condicionIvaReceptorId,
 	)
 
 	req, err := http.NewRequest("POST", config.AppConfig.AfipWSFEURL, bytes.NewBufferString(soapEnvelope))
@@ -269,6 +281,12 @@ func (s *WSFEService) RequestCAE(reqData models.CreateInvoiceRequest) (*models.I
 							Msg  string `xml:"Msg"`
 						} `xml:"Err"`
 					} `xml:"Errors"`
+					Events struct {
+						Evt []struct {
+							Code int    `xml:"Code"`
+							Msg  string `xml:"Msg"`
+						} `xml:"Evt"`
+					} `xml:"Events"`
 				} `xml:"FECAESolicitarResult"`
 			} `xml:"FECAESolicitarResponse"`
 		} `xml:"Body"`
@@ -294,23 +312,27 @@ func (s *WSFEService) RequestCAE(reqData models.CreateInvoiceRequest) (*models.I
 	det := res.FeDetResp.FECAEDetResponse[0]
 
 	obsMsg := ""
+	for _, evt := range res.Events.Evt {
+		obsMsg += fmt.Sprintf("[Evt %d: %s] ", evt.Code, evt.Msg)
+	}
 	for _, o := range det.Observaciones.Obs {
-		obsMsg += fmt.Sprintf("[%d: %s] ", o.Code, o.Msg)
+		obsMsg += fmt.Sprintf("[Obs %d: %s] ", o.Code, o.Msg)
 	}
 
 	invoice := &models.Invoice{
-		PuntoVenta:    puntoVenta,
-		TipoCmp:       tipoCmp,
-		NumeroCmp:     nextNro,
-		FechaEmision:  today,
-		Concepto:      reqData.Concepto,
-		DocTipo:       reqData.DocTipo,
-		DocNro:        reqData.DocNro,
-		ImporteTotal:  reqData.ImporteTotal,
-		CAE:           det.CAE,
-		CAEVto:        det.CAEFchVto,
-		Resultado:     det.Resultado,
-		Observaciones: obsMsg,
+		PuntoVenta:             puntoVenta,
+		TipoCmp:                tipoCmp,
+		NumeroCmp:              nextNro,
+		FechaEmision:           today,
+		Concepto:               reqData.Concepto,
+		DocTipo:                reqData.DocTipo,
+		DocNro:                 reqData.DocNro,
+		CondicionIvaReceptorId: condicionIvaReceptorId,
+		ImporteTotal:           reqData.ImporteTotal,
+		CAE:                    det.CAE,
+		CAEVto:                 det.CAEFchVto,
+		Resultado:              det.Resultado,
+		Observaciones:          obsMsg,
 	}
 
 	if det.Resultado == "A" {

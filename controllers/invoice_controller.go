@@ -66,6 +66,8 @@ func (c *InvoiceController) CreateInvoice(ctx *gin.Context) {
 		CAE:          invoice.CAE,
 		CAEVto:       invoice.CAEVto,
 		Resultado:    invoice.Resultado,
+		Status:       string(invoice.Status),
+		Observaciones: invoice.Observaciones,
 	}
 
 	ctx.JSON(http.StatusCreated, resp)

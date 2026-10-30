@@ -57,8 +57,12 @@ type LoginTicketResponse struct {
 }
 
 // GetAuthToken retrieves a valid Token and Sign for the specified service (e.g. "wsfe").
-// Uses in-memory caching to avoid hitting ARCA rate limits.
+// Uses a 2-tier cache: in-memory sync.RWMutex first, then PostgreSQL DB.
+// Survives server restarts and avoids "coe.alreadyAuthenticated" faults from ARCA.
 func (s *WSAAService) GetAuthToken(service string) (*models.AFIPAuthToken, error) {
+	env := config.AppConfig.AfipEnv
+
+	// 1. Check in-memory cache
 	s.mu.RLock()
 	cached, exists := s.tokenCache[service]
 	if exists && cached.IsValid() {
@@ -67,19 +71,28 @@ func (s *WSAAService) GetAuthToken(service string) (*models.AFIPAuthToken, error
 	}
 	s.mu.RUnlock()
 
-	// Acquire write lock to request a new ticket
+	// Acquire write lock to update cache/DB
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	// Double check after lock
+	// Double check memory cache after acquiring lock
 	if cached, exists := s.tokenCache[service]; exists && cached.IsValid() {
 		return cached, nil
 	}
 
-	// 1. Generate TRA
+	// 2. Check Database persistence
+	var dbToken models.AFIPAuthToken
+	if err := config.DB.Where("service = ? AND environment = ?", service, env).First(&dbToken).Error; err == nil {
+		if dbToken.IsValid() {
+			s.tokenCache[service] = &dbToken
+			return &dbToken, nil
+		}
+	}
+
+	// 3. Generate TRA and request new ticket from WSAA
 	traXML := GenerateTRA(service)
 
-	// 2. Sign TRA
+	// 4. Sign TRA
 	cmsBase64, err := SignTRA(traXML, config.AppConfig.AfipCertPath, config.AppConfig.AfipKeyPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to sign TRA for service %s: %w", service, err)
@@ -152,9 +165,23 @@ func (s *WSAAService) GetAuthToken(service string) (*models.AFIPAuthToken, error
 	}
 
 	newToken := &models.AFIPAuthToken{
-		Token:      ticket.Credentials.Token,
-		Sign:       ticket.Credentials.Sign,
-		Expiration: expTime,
+		Service:     service,
+		Environment: env,
+		Token:       ticket.Credentials.Token,
+		Sign:        ticket.Credentials.Sign,
+		Expiration:  expTime,
+	}
+
+	// Persist or update in database
+	var existing models.AFIPAuthToken
+	if err := config.DB.Where("service = ? AND environment = ?", service, env).First(&existing).Error; err == nil {
+		config.DB.Model(&existing).Updates(map[string]interface{}{
+			"token":      newToken.Token,
+			"sign":       newToken.Sign,
+			"expiration": newToken.Expiration,
+		})
+	} else {
+		config.DB.Create(newToken)
 	}
 
 	s.tokenCache[service] = newToken

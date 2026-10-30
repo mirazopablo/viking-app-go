@@ -1,18 +1,25 @@
 package models
 
-import "time"
+import (
+	"time"
+)
 
-// AFIPAuthToken represents the cached credentials obtained from WSAA.
+// AFIPAuthToken represents credentials obtained from WSAA, persisted in DB to survive server restarts.
 type AFIPAuthToken struct {
-	Token      string    `json:"token"`
-	Sign       string    `json:"sign"`
-	Expiration time.Time `json:"expiration"`
+	ID          uint      `gorm:"primaryKey" json:"id"`
+	Service     string    `gorm:"size:50;not null;uniqueIndex:idx_service_env" json:"service"` // e.g. "wsfe"
+	Environment string    `gorm:"size:20;not null;uniqueIndex:idx_service_env" json:"environment"` // "production" or "homologation"
+	Token       string    `gorm:"type:text;not null" json:"token"`
+	Sign        string    `gorm:"type:text;not null" json:"sign"`
+	Expiration  time.Time `gorm:"not null" json:"expiration"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
-// IsValid checks if the token is still valid (with a 10-minute safety buffer).
+// IsValid checks if the token is still valid (with a 5-minute safety buffer).
 func (a *AFIPAuthToken) IsValid() bool {
 	if a == nil || a.Token == "" || a.Sign == "" {
 		return false
 	}
-	return time.Now().Add(10 * time.Minute).Before(a.Expiration)
+	return time.Now().Add(5 * time.Minute).Before(a.Expiration)
 }
+
