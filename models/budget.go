@@ -18,10 +18,11 @@ const (
 
 // Budget status constants
 const (
-	BudgetStatusDraft    = "DRAFT"
-	BudgetStatusSent     = "SENT"
-	BudgetStatusApproved = "APPROVED"
-	BudgetStatusRejected = "REJECTED"
+	BudgetStatusDraft     = "DRAFT"
+	BudgetStatusSent      = "SENT"
+	BudgetStatusApproved  = "APPROVED"
+	BudgetStatusRejected  = "REJECTED"
+	BudgetStatusConverted = "CONVERTED"
 )
 
 // Budget represents a structured dynamic budget attached to a work order.
@@ -56,10 +57,10 @@ func (b *Budget) BeforeCreate(tx *gorm.DB) (err error) {
 func ValidateBudgetStatus(status string) error {
 	s := strings.ToUpper(strings.TrimSpace(status))
 	switch s {
-	case BudgetStatusDraft, BudgetStatusSent, BudgetStatusApproved, BudgetStatusRejected:
+	case BudgetStatusDraft, BudgetStatusSent, BudgetStatusApproved, BudgetStatusRejected, BudgetStatusConverted:
 		return nil
 	default:
-		return errors.New("invalid budget status: must be DRAFT, SENT, APPROVED, or REJECTED")
+		return errors.New("invalid budget status: must be DRAFT, SENT, APPROVED, REJECTED or CONVERTED")
 	}
 }
 

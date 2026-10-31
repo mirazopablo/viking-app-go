@@ -48,6 +48,8 @@ func main() {
 		&models.DeviceToken{},
 		&models.Invoice{},
 		&models.AFIPAuthToken{},
+		&models.SalesNote{},
+		&models.SalesNoteItem{},
 	)
 	if err != nil {
 		log.Fatalf("[main.go] [main] Database auto-migration failed: %v", err)

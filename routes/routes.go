@@ -106,6 +106,7 @@ func SetupRouter() *gin.Engine {
 	webhookCtrl := controllers.NewWebhookController(webhookDebounceService)
 	pushCtrl := controllers.NewPushController(deviceTokenRepo)
 	invoiceCtrl := controllers.NewInvoiceController()
+	accountingCtrl := controllers.NewAccountingController()
 	//automationCtrl := controllers.NewAutomationController(bookingService)
 
 	// Swagger UI Route (Always Public)
@@ -171,8 +172,26 @@ func SetupRouter() *gin.Engine {
 		invoiceGroup.Use(middlewares.AuthMiddleware(jwtService))
 		{
 			invoiceGroup.POST("", invoiceCtrl.CreateInvoice)
+			invoiceGroup.POST("/import-manual", invoiceCtrl.ImportManualInvoice)
 			invoiceGroup.GET("", invoiceCtrl.GetInvoices)
 			invoiceGroup.GET("/:id", invoiceCtrl.GetInvoiceByID)
+		}
+
+		// Sales Notes Routes (Protected - Internal non-fiscal sales)
+		salesNotesGroup := apiV1.Group("/sales-notes")
+		salesNotesGroup.Use(middlewares.AuthMiddleware(jwtService))
+		{
+			salesNotesGroup.POST("", accountingCtrl.CreateSalesNote)
+			salesNotesGroup.GET("", accountingCtrl.GetSalesNotes)
+			salesNotesGroup.GET("/:id", accountingCtrl.GetSalesNoteByID)
+			salesNotesGroup.POST("/:id/fiscalize", accountingCtrl.FiscalizeSalesNote)
+		}
+
+		// Accounting Dashboard Routes (Protected)
+		accountingGroup := apiV1.Group("/accounting")
+		accountingGroup.Use(middlewares.AuthMiddleware(jwtService))
+		{
+			accountingGroup.GET("/dashboard", accountingCtrl.GetDashboardMetrics)
 		}
 
 		// // Automation Routes (Internal APIs for n8n/Evolution)
@@ -249,6 +268,7 @@ func SetupRouter() *gin.Engine {
 			budgetGroup.POST("/save", budgetCtrl.SaveBudget)
 			budgetGroup.GET("/by-work-order/:workOrderId", budgetCtrl.GetBudgetByWorkOrder)
 			budgetGroup.PATCH("/update-status/:id", budgetCtrl.UpdateBudgetStatus)
+			budgetGroup.POST("/:id/convert-to-sale-note", accountingCtrl.ConvertBudgetToSaleNote)
 			budgetGroup.DELETE("/delete/:id", budgetCtrl.DeleteBudget)
 			budgetGroup.DELETE("/:id", budgetCtrl.DeleteBudget)
 		}
