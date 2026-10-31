@@ -73,6 +73,40 @@ func (c *InvoiceController) CreateInvoice(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, resp)
 }
 
+// ImportManualInvoice godoc
+// @Summary Registrar factura emitida externamente en ARCA (RCEL / Facturador)
+// @Description Permite cargar manualmente una Factura emitida por fuera del sistema para cuadrar la contabilidad
+// @Tags Invoices
+// @Accept json
+// @Produce json
+// @Param invoice body models.ImportManualInvoiceRequest true "Datos del comprobante emitido en ARCA"
+// @Success 201 {object} models.Invoice
+// @Failure 400 {object} map[string]string
+// @Security bearer-jwt
+// @Router /api/v1/invoices/import-manual [post]
+func (c *InvoiceController) ImportManualInvoice(ctx *gin.Context) {
+	var req models.ImportManualInvoiceRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Datos inválidos: " + err.Error()})
+		return
+	}
+
+	var userIDPtr *uint
+	if val, exists := ctx.Get("userID"); exists {
+		if uid, ok := val.(uint); ok {
+			userIDPtr = &uid
+		}
+	}
+
+	invoice, err := c.invoiceService.ImportManualInvoice(req, userIDPtr)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusCreated, invoice)
+}
+
 // GetInvoices godoc
 // @Summary Listar facturas emitidas
 // @Description Obtiene un listado paginado de las facturas registradas localmente

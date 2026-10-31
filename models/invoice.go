@@ -64,3 +64,19 @@ type InvoiceResponse struct {
 	Status        string  `json:"status"`
 	Observaciones string  `json:"observaciones,omitempty"`
 }
+
+// ImportManualInvoiceRequest represents the payload to register an invoice issued externally via ARCA RCEL / Facturador.
+type ImportManualInvoiceRequest struct {
+	PuntoVenta             int     `json:"punto_venta" binding:"required"`
+	TipoCmp                int     `json:"tipo_cmp" binding:"required"` // 11 = Factura C
+	NumeroCmp              int64   `json:"numero_cmp" binding:"required,gt=0"`
+	FechaEmision           string  `json:"fecha_emision" binding:"required"` // YYYYMMDD
+	Concepto               int     `json:"concepto" binding:"required,oneof=1 2 3"`
+	DocTipo                int     `json:"doc_tipo" binding:"required"`
+	DocNro                 int64   `json:"doc_nro"`
+	CondicionIvaReceptorId *int    `json:"condicion_iva_receptor_id,omitempty"`
+	ImporteTotal           float64 `json:"importe_total" binding:"required,gt=0"`
+	CAE                    string  `json:"cae" binding:"required"`
+	CAEVto                 string  `json:"cae_vto" binding:"required"`
+	Observaciones          string  `json:"observaciones,omitempty"`
+}

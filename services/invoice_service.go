@@ -52,6 +52,49 @@ func (s *InvoiceService) CreateInvoice(req models.CreateInvoiceRequest, userID *
 	return invoice, nil
 }
 
+// ImportManualInvoice registers an invoice issued externally (e.g. from ARCA RCEL Punto 1) without calling WSFE.
+func (s *InvoiceService) ImportManualInvoice(req models.ImportManualInvoiceRequest, userID *uint) (*models.Invoice, error) {
+	if req.ImporteTotal <= 0 {
+		return nil, errors.New("el importe total debe ser mayor a 0")
+	}
+
+	condicionIVA := 5 // Default Consumidor Final
+	if req.CondicionIvaReceptorId != nil && *req.CondicionIvaReceptorId > 0 {
+		condicionIVA = *req.CondicionIvaReceptorId
+	} else if req.DocTipo == 80 {
+		condicionIVA = 1
+	}
+
+	docNro := req.DocNro
+	if req.DocTipo == 99 {
+		docNro = 0
+	}
+
+	invoice := &models.Invoice{
+		UserID:                 userID,
+		PuntoVenta:             req.PuntoVenta,
+		TipoCmp:                req.TipoCmp,
+		NumeroCmp:              req.NumeroCmp,
+		FechaEmision:           req.FechaEmision,
+		Concepto:               req.Concepto,
+		DocTipo:                req.DocTipo,
+		DocNro:                 docNro,
+		CondicionIvaReceptorId: condicionIVA,
+		ImporteTotal:           req.ImporteTotal,
+		CAE:                    req.CAE,
+		CAEVto:                 req.CAEVto,
+		Resultado:              "A",
+		Status:                 models.InvoiceStatusApproved,
+		Observaciones:          "[Comprobante importado manualmente desde ARCA] " + req.Observaciones,
+	}
+
+	if err := config.DB.Create(invoice).Error; err != nil {
+		return nil, fmt.Errorf("error al guardar comprobante manual: %w", err)
+	}
+
+	return invoice, nil
+}
+
 // GetInvoices retrieves a paginated list of issued invoices.
 func (s *InvoiceService) GetInvoices(limit, offset int) ([]models.Invoice, int64, error) {
 	var invoices []models.Invoice
