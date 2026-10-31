@@ -43,6 +43,27 @@ func (s *InvoiceService) CreateInvoice(req models.CreateInvoiceRequest, userID *
 
 	invoice.UserID = userID
 
+	// Convert requested items to InvoiceItem entities if provided
+	var items []models.InvoiceItem
+	for _, it := range req.Items {
+		total := it.TotalPrice
+		if total <= 0 {
+			total = it.UnitPrice * it.Quantity
+		}
+		itemType := it.ItemType
+		if itemType == "" {
+			itemType = "SERVICE"
+		}
+		items = append(items, models.InvoiceItem{
+			Description: it.Description,
+			ItemType:    itemType,
+			Quantity:    it.Quantity,
+			UnitPrice:   it.UnitPrice,
+			TotalPrice:  total,
+		})
+	}
+	invoice.Items = items
+
 	// 3. Persist invoice to database
 	if err := config.DB.Create(invoice).Error; err != nil {
 		// Log warning: Invoice was approved by ARCA but failed to persist locally
@@ -70,6 +91,25 @@ func (s *InvoiceService) ImportManualInvoice(req models.ImportManualInvoiceReque
 		docNro = 0
 	}
 
+	var items []models.InvoiceItem
+	for _, it := range req.Items {
+		total := it.TotalPrice
+		if total <= 0 {
+			total = it.UnitPrice * it.Quantity
+		}
+		itemType := it.ItemType
+		if itemType == "" {
+			itemType = "SERVICE"
+		}
+		items = append(items, models.InvoiceItem{
+			Description: it.Description,
+			ItemType:    itemType,
+			Quantity:    it.Quantity,
+			UnitPrice:   it.UnitPrice,
+			TotalPrice:  total,
+		})
+	}
+
 	invoice := &models.Invoice{
 		UserID:                 userID,
 		PuntoVenta:             req.PuntoVenta,
@@ -86,6 +126,7 @@ func (s *InvoiceService) ImportManualInvoice(req models.ImportManualInvoiceReque
 		Resultado:              "A",
 		Status:                 models.InvoiceStatusApproved,
 		Observaciones:          "[Comprobante importado manualmente desde ARCA] " + req.Observaciones,
+		Items:                  items,
 	}
 
 	if err := config.DB.Create(invoice).Error; err != nil {
@@ -104,7 +145,7 @@ func (s *InvoiceService) GetInvoices(limit, offset int) ([]models.Invoice, int64
 		return nil, 0, err
 	}
 
-	if err := config.DB.Order("id desc").Limit(limit).Offset(offset).Find(&invoices).Error; err != nil {
+	if err := config.DB.Order("id desc").Limit(limit).Offset(offset).Preload("Items").Find(&invoices).Error; err != nil {
 		return nil, 0, err
 	}
 
@@ -114,7 +155,7 @@ func (s *InvoiceService) GetInvoices(limit, offset int) ([]models.Invoice, int64
 // GetInvoiceByID retrieves a single invoice by its local ID.
 func (s *InvoiceService) GetInvoiceByID(id uint) (*models.Invoice, error) {
 	var invoice models.Invoice
-	if err := config.DB.First(&invoice, id).Error; err != nil {
+	if err := config.DB.Preload("Items").First(&invoice, id).Error; err != nil {
 		return nil, err
 	}
 	return &invoice, nil

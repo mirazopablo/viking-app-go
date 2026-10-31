@@ -267,6 +267,19 @@ func (s *AccountingService) FiscalizeSalesNote(salesNoteID uint, req models.Fisc
 
 	invoice.UserID = userID
 
+	// Clone SalesNote items into Invoice items
+	var invoiceItems []models.InvoiceItem
+	for _, it := range note.Items {
+		invoiceItems = append(invoiceItems, models.InvoiceItem{
+			Description: it.Description,
+			ItemType:    it.ItemType,
+			Quantity:    it.Quantity,
+			UnitPrice:   it.UnitPrice,
+			TotalPrice:  it.TotalPrice,
+		})
+	}
+	invoice.Items = invoiceItems
+
 	err = config.DB.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(invoice).Error; err != nil {
 			return err

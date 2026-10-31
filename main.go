@@ -47,6 +47,7 @@ func main() {
 		&models.Budget{}, &models.Booking{},
 		&models.DeviceToken{},
 		&models.Invoice{},
+		&models.InvoiceItem{},
 		&models.AFIPAuthToken{},
 		&models.SalesNote{},
 		&models.SalesNoteItem{},
