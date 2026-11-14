@@ -1,10 +1,10 @@
 package middlewares
 
 import (
-	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/mirazopablo/viking-app-go/apperrors"
 	"github.com/mirazopablo/viking-app-go/services"
 )
 
@@ -13,7 +13,10 @@ func AuthMiddleware(jwtSvc services.JWTService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Authorization header is required"})
+			apperrors.AbortError(c, apperrors.NewUnauthorized(
+				apperrors.CodeAuthTokenMissing,
+				"Authorization header is required",
+			))
 			return
 		}
 
@@ -21,13 +24,19 @@ func AuthMiddleware(jwtSvc services.JWTService) gin.HandlerFunc {
 		tokenString = strings.TrimSpace(tokenString)
 
 		if tokenString == "" {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Bearer token is missing"})
+			apperrors.AbortError(c, apperrors.NewUnauthorized(
+				apperrors.CodeAuthTokenMissing,
+				"Bearer token is missing",
+			))
 			return
 		}
 
 		claims, err := jwtSvc.ValidateToken(tokenString)
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired token"})
+			apperrors.AbortError(c, apperrors.NewUnauthorized(
+				apperrors.CodeAuthTokenInvalid,
+				"Invalid or expired token",
+			))
 			return
 		}
 

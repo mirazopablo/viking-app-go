@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/mirazopablo/viking-app-go/apperrors"
 )
 
 // bodyLogWriter wraps the standard gin.ResponseWriter to capture response payloads.
@@ -102,9 +103,7 @@ func CustomRecoveryMiddleware() gin.HandlerFunc {
 				)
 
 				// Abort gracefully without breaking the API process
-				c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-					"error": "Internal Server Error - Execution Aborted Gracefully",
-				})
+				apperrors.AbortError(c, apperrors.NewInternal(fmt.Errorf("panic recovered: %v", err)))
 			}
 		}()
 		c.Next()
