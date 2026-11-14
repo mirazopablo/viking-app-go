@@ -2,6 +2,10 @@
 ## [Unreleased]
 
 
+<a name="v2.6.1"></a>
+## [v2.6.1](https://github.com/mirazopablo/viking-app-go/compare/v2.6.0...v2.6.1) (2026-11-14)
+
+
 <a name="v2.6.0"></a>
 ## [v2.6.0](https://github.com/mirazopablo/viking-app-go/compare/v2.5.0...v2.6.0) (2026-11-14)
 
