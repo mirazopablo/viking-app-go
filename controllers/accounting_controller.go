@@ -1,10 +1,11 @@
 package controllers
 
 import (
-	"net/http"
+	"errors"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/mirazopablo/viking-app-go/apperrors"
 	"github.com/mirazopablo/viking-app-go/models"
 	"github.com/mirazopablo/viking-app-go/services"
 )
@@ -35,7 +36,7 @@ func NewAccountingController() *AccountingController {
 func (c *AccountingController) CreateSalesNote(ctx *gin.Context) {
 	var req models.CreateSalesNoteRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Datos inválidos: " + err.Error()})
+		apperrors.ValidationError(ctx, err)
 		return
 	}
 
@@ -48,11 +49,11 @@ func (c *AccountingController) CreateSalesNote(ctx *gin.Context) {
 
 	note, err := c.accountingService.CreateSalesNote(req, staffIDPtr)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		apperrors.BadRequest(ctx, apperrors.CodeBusinessRule, err.Error())
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, note)
+	apperrors.Created(ctx, note)
 }
 
 // ConvertBudgetToSaleNote godoc
@@ -73,7 +74,7 @@ func (c *AccountingController) ConvertBudgetToSaleNote(ctx *gin.Context) {
 
 	var req models.ConvertBudgetToSaleNoteRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Datos inválidos: " + err.Error()})
+		apperrors.ValidationError(ctx, err)
 		return
 	}
 
@@ -86,15 +87,15 @@ func (c *AccountingController) ConvertBudgetToSaleNote(ctx *gin.Context) {
 
 	note, err := c.accountingService.ConvertBudgetToSaleNote(budgetID, req, staffIDPtr)
 	if err != nil {
-		if err == services.ErrBudgetAlreadyConverted {
-			ctx.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+		if errors.Is(err, services.ErrBudgetAlreadyConverted) {
+			apperrors.Conflict(ctx, apperrors.CodeConflict, err.Error())
 			return
 		}
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		apperrors.BadRequest(ctx, apperrors.CodeBusinessRule, err.Error())
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, gin.H{
+	apperrors.Created(ctx, gin.H{
 		"message":   "Presupuesto convertido exitosamente a Nota de Venta",
 		"sale_note": note,
 	})
@@ -117,13 +118,13 @@ func (c *AccountingController) FiscalizeSalesNote(ctx *gin.Context) {
 	idParam := ctx.Param("id")
 	id, err := strconv.ParseUint(idParam, 10, 32)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "ID de Nota de Venta inválido"})
+		apperrors.BadRequest(ctx, apperrors.CodeInvalidID, "ID de Nota de Venta inválido")
 		return
 	}
 
 	var req models.FiscalizeSalesNoteRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Datos inválidos: " + err.Error()})
+		apperrors.ValidationError(ctx, err)
 		return
 	}
 
@@ -136,11 +137,11 @@ func (c *AccountingController) FiscalizeSalesNote(ctx *gin.Context) {
 
 	note, err := c.accountingService.FiscalizeSalesNote(uint(id), req, userIDPtr)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		apperrors.BadRequest(ctx, apperrors.CodeBusinessRule, err.Error())
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
+	apperrors.OK(ctx, gin.H{
 		"message":      "Nota de Venta fiscalizada exitosamente ante ARCA",
 		"sale_note_id": note.ID,
 		"is_fiscal":    note.IsFiscal,
@@ -166,11 +167,11 @@ func (c *AccountingController) GetSalesNotes(ctx *gin.Context) {
 
 	notes, total, err := c.accountingService.GetSalesNotes(limit, offset, pm)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Error al listar notas de venta: " + err.Error()})
+		apperrors.HandleError(ctx, err)
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
+	apperrors.OK(ctx, gin.H{
 		"total": total,
 		"data":  notes,
 	})
@@ -182,24 +183,24 @@ func (c *AccountingController) GetSalesNotes(ctx *gin.Context) {
 // @Produce json
 // @Param id path int true "ID de la Nota de Venta"
 // @Success 200 {object} models.SalesNote
-// @Failure 404 {object} map[string]string
+// @Failure 404 {object} apperrors.ErrorResponse
 // @Security bearer-jwt
 // @Router /api/v1/sales-notes/{id} [get]
 func (c *AccountingController) GetSalesNoteByID(ctx *gin.Context) {
 	idParam := ctx.Param("id")
 	id, err := strconv.ParseUint(idParam, 10, 32)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "ID inválido"})
+		apperrors.BadRequest(ctx, apperrors.CodeInvalidID, "ID inválido")
 		return
 	}
 
 	note, err := c.accountingService.GetSalesNoteByID(uint(id))
 	if err != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{"error": "Nota de Venta no encontrada"})
+		apperrors.NotFound(ctx, apperrors.CodeResourceNotFound, "Nota de Venta no encontrada")
 		return
 	}
 
-	ctx.JSON(http.StatusOK, note)
+	apperrors.OK(ctx, note)
 }
 
 // GetDashboardMetrics godoc
@@ -218,9 +219,9 @@ func (c *AccountingController) GetDashboardMetrics(ctx *gin.Context) {
 
 	metrics, err := c.accountingService.GetDashboardMetrics(from, to)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Error al calcular métricas: " + err.Error()})
+		apperrors.HandleError(ctx, err)
 		return
 	}
 
-	ctx.JSON(http.StatusOK, metrics)
+	apperrors.OK(ctx, metrics)
 }

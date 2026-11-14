@@ -2,9 +2,9 @@ package controllers
 
 import (
 	"errors"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/mirazopablo/viking-app-go/apperrors"
 	"github.com/mirazopablo/viking-app-go/models"
 	"github.com/mirazopablo/viking-app-go/services"
 )
@@ -33,21 +33,21 @@ func NewBudgetController(service services.BudgetService) *BudgetController {
 func (bc *BudgetController) SaveBudget(c *gin.Context) {
 	var dto models.BudgetSaveDto
 	if err := c.ShouldBindJSON(&dto); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid payload format: " + err.Error()})
+		apperrors.ValidationError(c, err)
 		return
 	}
 
 	saved, err := bc.service.SaveBudget(&dto)
 	if err != nil {
 		if errors.Is(err, services.ErrWorkOrderNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Associated work order not found"})
+			apperrors.NotFound(c, apperrors.CodeResourceNotFound, "Associated work order not found")
 			return
 		}
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		apperrors.BadRequest(c, apperrors.CodeBusinessRule, err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, saved)
+	apperrors.OK(c, saved)
 }
 
 // GetBudgetByWorkOrder godoc
@@ -68,14 +68,14 @@ func (bc *BudgetController) GetBudgetByWorkOrder(c *gin.Context) {
 	res, err := bc.service.GetBudgetByWorkOrder(workOrderID, isPublic)
 	if err != nil {
 		if errors.Is(err, services.ErrBudgetNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "No budget found for this work order"})
+			apperrors.NotFound(c, apperrors.CodeResourceNotFound, "No budget found for this work order")
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apperrors.HandleError(c, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, res)
+	apperrors.OK(c, res)
 }
 
 // GetPublicBudgetByWorkOrder godoc
@@ -87,8 +87,8 @@ func (bc *BudgetController) GetBudgetByWorkOrder(c *gin.Context) {
 // @Param workOrderId path string true "Work Order UUID" format(uuid)
 // @Param securityCode query string false "Security Code (WOVIK-XXXXX)"
 // @Success 200 {object} models.BudgetResponseDto "OK"
-// @Failure 401 {object} map[string]string "Unauthorized"
-// @Failure 404 {object} map[string]string "Not Found"
+// @Failure 401 {object} apperrors.ErrorResponse "Unauthorized"
+// @Failure 404 {object} apperrors.ErrorResponse "Not Found"
 // @Router /public/work-order/budget/{workOrderId} [get]
 func (bc *BudgetController) GetPublicBudgetByWorkOrder(c *gin.Context) {
 	workOrderID := c.Param("workOrderId")
@@ -97,18 +97,18 @@ func (bc *BudgetController) GetPublicBudgetByWorkOrder(c *gin.Context) {
 	res, err := bc.service.GetBudgetByWorkOrder(workOrderID, true, securityCode)
 	if err != nil {
 		if errors.Is(err, services.ErrBudgetNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Budget not found for the specified work order"})
+			apperrors.NotFound(c, apperrors.CodeResourceNotFound, "Budget not found for the specified work order")
 			return
 		}
 		if errors.Is(err, services.ErrInvalidSecurityCode) {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid security code"})
+			apperrors.Unauthorized(c, apperrors.CodeInvalidSecurityCode, "Invalid security code")
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apperrors.HandleError(c, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, res)
+	apperrors.OK(c, res)
 }
 
 // UpdateBudgetStatus godoc
@@ -128,21 +128,21 @@ func (bc *BudgetController) UpdateBudgetStatus(c *gin.Context) {
 
 	var dto models.BudgetStatusUpdateDto
 	if err := c.ShouldBindJSON(&dto); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid payload format: " + err.Error()})
+		apperrors.ValidationError(c, err)
 		return
 	}
 
 	res, err := bc.service.UpdateBudgetStatus(id, dto.Status)
 	if err != nil {
 		if errors.Is(err, services.ErrBudgetNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Budget not found"})
+			apperrors.NotFound(c, apperrors.CodeResourceNotFound, "Budget not found")
 			return
 		}
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		apperrors.BadRequest(c, apperrors.CodeBusinessRule, err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, res)
+	apperrors.OK(c, res)
 }
 
 // DeleteBudget godoc
@@ -153,7 +153,7 @@ func (bc *BudgetController) UpdateBudgetStatus(c *gin.Context) {
 // @Produce json
 // @Param id path string true "Budget UUID" format(uuid)
 // @Success 200 {object} map[string]string "OK"
-// @Failure 404 {object} map[string]string "Not Found"
+// @Failure 404 {object} apperrors.ErrorResponse "Not Found"
 // @Security bearer-jwt
 // @Router /api/budget/delete/{id} [delete]
 func (bc *BudgetController) DeleteBudget(c *gin.Context) {
@@ -161,12 +161,12 @@ func (bc *BudgetController) DeleteBudget(c *gin.Context) {
 
 	if err := bc.service.DeleteBudget(id); err != nil {
 		if errors.Is(err, services.ErrBudgetNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Budget not found"})
+			apperrors.NotFound(c, apperrors.CodeResourceNotFound, "Budget not found")
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apperrors.HandleError(c, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Budget deleted successfully"})
+	apperrors.OK(c, gin.H{"message": "Budget deleted successfully"})
 }
