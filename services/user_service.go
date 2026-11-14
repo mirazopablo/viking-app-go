@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/mirazopablo/viking-app-go/apperrors"
 	"github.com/mirazopablo/viking-app-go/models"
 	"github.com/mirazopablo/viking-app-go/repositories"
 	"golang.org/x/crypto/bcrypt"
@@ -51,7 +52,7 @@ func (s *userServiceImpl) RegisterUser(req *models.RegisterDto) (*models.UserRes
 		return nil, err
 	}
 	if existing != nil {
-		return nil, ErrEmailAlreadyTaken
+		return nil, apperrors.NewConflict(apperrors.CodeAuthEmailExists, "Email already registered").WithInternal(ErrEmailAlreadyTaken)
 	}
 
 	role, err := s.roleRepo.FindByID(req.RoleID.String())
@@ -59,14 +60,14 @@ func (s *userServiceImpl) RegisterUser(req *models.RegisterDto) (*models.UserRes
 		return nil, err
 	}
 	if role == nil {
-		return nil, errors.New("invalid role specified")
+		return nil, apperrors.NewBadRequest(apperrors.CodeBusinessRule, "Invalid role specified")
 	}
 
 	desc := strings.ToUpper(strings.TrimSpace(role.Name))
 	isClientRole := desc == models.RoleClient || desc == "CLIENT"
 
 	if !isClientRole && strings.TrimSpace(req.Password) == "" {
-		return nil, ErrPasswordRequired
+		return nil, apperrors.NewBadRequest(apperrors.CodeValidationError, "Password is required for non-client roles").WithInternal(ErrPasswordRequired)
 	}
 
 	var passwordPtr *string
@@ -104,17 +105,17 @@ func (s *userServiceImpl) LoginUser(req *models.LoginUserDto) (*models.LoginResp
 		return nil, err
 	}
 	if user == nil || user.Password == nil || strings.TrimSpace(*user.Password) == "" {
-		return nil, ErrInvalidCreds
+		return nil, apperrors.NewUnauthorized(apperrors.CodeAuthInvalidCredentials, "Invalid email or password").WithInternal(ErrInvalidCreds)
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(*user.Password), []byte(req.Password))
 	if err != nil {
-		return nil, ErrInvalidCreds
+		return nil, apperrors.NewUnauthorized(apperrors.CodeAuthInvalidCredentials, "Invalid email or password").WithInternal(ErrInvalidCreds)
 	}
 
 	primaryRoleID := user.GetPrimaryRoleID()
 	if primaryRoleID == uuid.Nil {
-		return nil, ErrInvalidCreds
+		return nil, apperrors.NewUnauthorized(apperrors.CodeAuthInvalidCredentials, "Invalid email or password").WithInternal(ErrInvalidCreds)
 	}
 
 	primaryRoleName := user.GetPrimaryRoleName()

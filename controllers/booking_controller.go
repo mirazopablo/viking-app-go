@@ -1,11 +1,11 @@
 package controllers
 
 import (
-	"net/http"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/mirazopablo/viking-app-go/apperrors"
 	"github.com/mirazopablo/viking-app-go/models"
 	"github.com/mirazopablo/viking-app-go/services"
 )
@@ -29,13 +29,16 @@ func NewBookingController(service services.BookingService) *BookingController {
 // @Param date query string true "Fecha en formato YYYY-MM-DD"
 // @Param deviceType query string false "Tipo de equipo/servicio (general | pc | laptop | mobile | gaming)"
 // @Success 200 {object} models.AvailabilityResponseDto "OK"
-// @Failure 400 {object} object "Bad Request"
-// @Failure 500 {object} object "Internal Server Error"
+// @Failure 400 {object} apperrors.ErrorResponse "Bad Request"
+// @Failure 500 {object} apperrors.ErrorResponse "Internal Server Error"
 // @Router /api/v1/bookings/availability [get]
 func (bc *BookingController) GetAvailability(c *gin.Context) {
 	date := c.Query("date")
 	if date == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Date parameter is required"})
+		apperrors.BadRequest(c, apperrors.CodeValidationError, "Date parameter is required")
+		return
+	}
+	if !apperrors.ValidateDate(c, date, "date") {
 		return
 	}
 
@@ -43,11 +46,11 @@ func (bc *BookingController) GetAvailability(c *gin.Context) {
 
 	response, err := bc.service.GetAvailability(date, deviceType)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apperrors.HandleError(c, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, response)
+	apperrors.OK(c, response)
 }
 
 // CreateBooking godoc
@@ -59,26 +62,26 @@ func (bc *BookingController) GetAvailability(c *gin.Context) {
 // @Produce json
 // @Param booking body models.BookingCreateDto true "Booking Payload"
 // @Success 201 {object} models.BookingResponseDto "Created"
-// @Failure 409 {object} object "Conflict"
+// @Failure 409 {object} apperrors.ErrorResponse "Conflict"
 // @Router /api/v1/bookings [post]
 func (bc *BookingController) CreateBooking(c *gin.Context) {
 	var dto models.BookingCreateDto
 	if err := c.ShouldBindJSON(&dto); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid payload format: " + err.Error()})
+		apperrors.ValidationError(c, err)
 		return
 	}
 
 	response, err := bc.service.CreateBooking(&dto)
 	if err != nil {
 		if strings.Contains(err.Error(), "conflict") {
-			c.JSON(http.StatusConflict, gin.H{"error": "El horario ya se encuentra ocupado. Por favor, selecciona otro."})
+			apperrors.Conflict(c, apperrors.CodeConflict, "El horario ya se encuentra ocupado. Por favor, selecciona otro.")
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apperrors.HandleError(c, err)
 		return
 	}
 
-	c.JSON(http.StatusCreated, response)
+	apperrors.Created(c, response)
 }
 
 // GetBookingsByDate godoc
@@ -89,18 +92,21 @@ func (bc *BookingController) CreateBooking(c *gin.Context) {
 // @Produce json
 // @Param date path string true "Fecha en formato YYYY-MM-DD"
 // @Success 200 {array} models.Booking
-// @Failure 500 {object} object "Internal Server Error"
+// @Failure 500 {object} apperrors.ErrorResponse "Internal Server Error"
 // @Router /api/v1/bookings/date/{date} [get]
 func (bc *BookingController) GetBookingsByDate(c *gin.Context) {
 	date := c.Param("date")
-
-	bookings, err := bc.service.GetBookingsByDate(date)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	if !apperrors.ValidateDate(c, date, "date") {
 		return
 	}
 
-	c.JSON(http.StatusOK, bookings)
+	bookings, err := bc.service.GetBookingsByDate(date)
+	if err != nil {
+		apperrors.HandleError(c, err)
+		return
+	}
+
+	apperrors.OK(c, bookings)
 }
 
 // GetTodayBookings godoc
@@ -110,7 +116,7 @@ func (bc *BookingController) GetBookingsByDate(c *gin.Context) {
 // @ID getTodayBookings
 // @Produce json
 // @Success 200 {array} models.Booking
-// @Failure 500 {object} object "Internal Server Error"
+// @Failure 500 {object} apperrors.ErrorResponse "Internal Server Error"
 // @Router /api/v1/bookings/today [get]
 func (bc *BookingController) GetTodayBookings(c *gin.Context) {
 	loc, _ := time.LoadLocation("America/Argentina/Buenos_Aires")
@@ -118,10 +124,10 @@ func (bc *BookingController) GetTodayBookings(c *gin.Context) {
 
 	bookings, err := bc.service.GetBookingsByDate(today)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apperrors.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, bookings)
+	apperrors.OK(c, bookings)
 }
 
 // GetTomorrowBookings godoc
@@ -131,7 +137,7 @@ func (bc *BookingController) GetTodayBookings(c *gin.Context) {
 // @ID getTomorrowBookings
 // @Produce json
 // @Success 200 {array} models.Booking
-// @Failure 500 {object} object "Internal Server Error"
+// @Failure 500 {object} apperrors.ErrorResponse "Internal Server Error"
 // @Router /api/v1/bookings/tomorrow [get]
 func (bc *BookingController) GetTomorrowBookings(c *gin.Context) {
 	loc, _ := time.LoadLocation("America/Argentina/Buenos_Aires")
@@ -139,10 +145,10 @@ func (bc *BookingController) GetTomorrowBookings(c *gin.Context) {
 
 	bookings, err := bc.service.GetBookingsByDate(tomorrow)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apperrors.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, bookings)
+	apperrors.OK(c, bookings)
 }
 
 // UpdateBookingStatus godoc
@@ -155,25 +161,28 @@ func (bc *BookingController) GetTomorrowBookings(c *gin.Context) {
 // @Param id path string true "ID del turno (UUID)"
 // @Param payload body models.UpdateBookingStatusDto true "Nuevo estado"
 // @Success 200 {object} object "OK"
-// @Failure 400 {object} object "Bad Request"
-// @Failure 500 {object} object "Internal Server Error"
+// @Failure 400 {object} apperrors.ErrorResponse "Bad Request"
+// @Failure 500 {object} apperrors.ErrorResponse "Internal Server Error"
 // @Router /api/v1/bookings/{id}/status [patch]
 func (bc *BookingController) UpdateBookingStatus(c *gin.Context) {
 	id := c.Param("id")
+	if !apperrors.ValidateUUID(c, id, "id") {
+		return
+	}
 
 	var dto models.UpdateBookingStatusDto
 	if err := c.ShouldBindJSON(&dto); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid payload format: " + err.Error()})
+		apperrors.ValidationError(c, err)
 		return
 	}
 
 	err := bc.service.UpdateBookingStatus(id, &dto)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apperrors.HandleError(c, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Booking status updated successfully"})
+	apperrors.OK(c, gin.H{"message": "Booking status updated successfully"})
 }
 
 // UpdateBotStatus godoc
@@ -186,25 +195,28 @@ func (bc *BookingController) UpdateBookingStatus(c *gin.Context) {
 // @Param id path string true "ID del turno (UUID)"
 // @Param payload body models.UpdateBotStatusDto true "Estado del bot (botActive)"
 // @Success 200 {object} object "OK"
-// @Failure 400 {object} object "Bad Request"
-// @Failure 500 {object} object "Internal Server Error"
+// @Failure 400 {object} apperrors.ErrorResponse "Bad Request"
+// @Failure 500 {object} apperrors.ErrorResponse "Internal Server Error"
 // @Router /api/v1/bookings/{id}/bot-status [patch]
 func (bc *BookingController) UpdateBotStatus(c *gin.Context) {
 	id := c.Param("id")
+	if !apperrors.ValidateUUID(c, id, "id") {
+		return
+	}
 
 	var dto models.UpdateBotStatusDto
 	if err := c.ShouldBindJSON(&dto); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid payload format: " + err.Error()})
+		apperrors.ValidationError(c, err)
 		return
 	}
 
 	err := bc.service.UpdateBotStatus(id, &dto)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apperrors.HandleError(c, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Bot status updated successfully"})
+	apperrors.OK(c, gin.H{"message": "Bot status updated successfully"})
 }
 
 // ListBlocks godoc
@@ -215,16 +227,16 @@ func (bc *BookingController) UpdateBotStatus(c *gin.Context) {
 // @Produce json
 // @Security BearerAuth
 // @Success 200 {array} models.BlockResponseDto
-// @Failure 500 {object} object "Internal Server Error"
+// @Failure 500 {object} apperrors.ErrorResponse "Internal Server Error"
 // @Router /api/v1/bookings/blocks [get]
 func (bc *BookingController) ListBlocks(c *gin.Context) {
 	blocks, err := bc.service.ListBlocks()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apperrors.HandleError(c, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, blocks)
+	apperrors.OK(c, blocks)
 }
 
 // CreateBlock godoc
@@ -237,23 +249,23 @@ func (bc *BookingController) ListBlocks(c *gin.Context) {
 // @Security BearerAuth
 // @Param block body models.BlockCreateDto true "Block Payload"
 // @Success 201 {object} models.BlockResponseDto "Created"
-// @Failure 400 {object} object "Bad Request"
-// @Failure 500 {object} object "Internal Server Error"
+// @Failure 400 {object} apperrors.ErrorResponse "Bad Request"
+// @Failure 500 {object} apperrors.ErrorResponse "Internal Server Error"
 // @Router /api/v1/bookings/blocks [post]
 func (bc *BookingController) CreateBlock(c *gin.Context) {
 	var dto models.BlockCreateDto
 	if err := c.ShouldBindJSON(&dto); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid payload format: " + err.Error()})
+		apperrors.ValidationError(c, err)
 		return
 	}
 
 	response, err := bc.service.CreateBlock(&dto)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apperrors.HandleError(c, err)
 		return
 	}
 
-	c.JSON(http.StatusCreated, response)
+	apperrors.Created(c, response)
 }
 
 // DeleteBlock godoc
@@ -264,18 +276,21 @@ func (bc *BookingController) CreateBlock(c *gin.Context) {
 // @Security BearerAuth
 // @Param id path string true "ID del bloqueo (UUID)"
 // @Success 200 {object} object "OK"
-// @Failure 500 {object} object "Internal Server Error"
+// @Failure 500 {object} apperrors.ErrorResponse "Internal Server Error"
 // @Router /api/v1/bookings/blocks/{id} [delete]
 func (bc *BookingController) DeleteBlock(c *gin.Context) {
 	id := c.Param("id")
-
-	err := bc.service.DeleteBlock(id)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	if !apperrors.ValidateUUID(c, id, "id") {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Block deleted successfully"})
+	err := bc.service.DeleteBlock(id)
+	if err != nil {
+		apperrors.HandleError(c, err)
+		return
+	}
+
+	apperrors.OK(c, gin.H{"message": "Block deleted successfully"})
 }
 
 // GetClientByPhone godoc
@@ -286,18 +301,18 @@ func (bc *BookingController) DeleteBlock(c *gin.Context) {
 // @Produce json
 // @Param phone path string true "Número de teléfono"
 // @Success 200 {object} object "OK"
-// @Failure 404 {object} object "Not Found"
+// @Failure 404 {object} apperrors.ErrorResponse "Not Found"
 // @Router /api/v1/bookings/client/{phone} [get]
 func (bc *BookingController) GetClientByPhone(c *gin.Context) {
 	phone := c.Param("phone")
 
 	user, err := bc.service.GetClientByPhone(phone)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Client not found"})
+		apperrors.NotFound(c, apperrors.CodeResourceNotFound, "Client not found")
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
+	apperrors.OK(c, gin.H{
 		"fullName": user.Name,
 		"phone":    user.PhoneNumber,
 	})

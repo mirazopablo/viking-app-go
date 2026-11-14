@@ -2,9 +2,9 @@ package controllers
 
 import (
 	"errors"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/mirazopablo/viking-app-go/apperrors"
 	"github.com/mirazopablo/viking-app-go/models"
 	"github.com/mirazopablo/viking-app-go/services"
 )
@@ -28,31 +28,31 @@ func NewNotificationController(service services.NotificationService) *Notificati
 // @Produce json
 // @Param subscription body models.PushSubscriptionCreateRequestDto true "Push Subscription Request"
 // @Success 200 {object} models.PushSubscription "OK"
-// @Failure 401 {object} map[string]string "Unauthorized"
-// @Failure 404 {object} map[string]string "Not Found"
+// @Failure 401 {object} apperrors.ErrorResponse "Unauthorized"
+// @Failure 404 {object} apperrors.ErrorResponse "Not Found"
 // @Router /public/notifications/subscribe [post]
 func (nc *NotificationController) Subscribe(c *gin.Context) {
 	var input models.PushSubscriptionCreateRequestDto
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		apperrors.ValidationError(c, err)
 		return
 	}
 
 	saved, err := nc.service.Subscribe(&input)
 	if err != nil {
 		if errors.Is(err, services.ErrWorkOrderNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Work order not found"})
+			apperrors.NotFound(c, apperrors.CodeResourceNotFound, "Work order not found")
 			return
 		}
 		if errors.Is(err, services.ErrInvalidSecurityCode) {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid security code"})
+			apperrors.Unauthorized(c, apperrors.CodeInvalidSecurityCode, "Invalid security code")
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apperrors.HandleError(c, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, saved)
+	apperrors.OK(c, saved)
 }
 
 // Unsubscribe godoc
@@ -68,16 +68,16 @@ func (nc *NotificationController) Subscribe(c *gin.Context) {
 func (nc *NotificationController) Unsubscribe(c *gin.Context) {
 	var input models.PushSubscriptionUnsubscribeRequestDto
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		apperrors.ValidationError(c, err)
 		return
 	}
 
 	if err := nc.service.Unsubscribe(input.Endpoint); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apperrors.HandleError(c, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"status": "unsubscribed"})
+	apperrors.OK(c, gin.H{"status": "unsubscribed"})
 }
 
 // GetHistory godoc
@@ -89,28 +89,31 @@ func (nc *NotificationController) Unsubscribe(c *gin.Context) {
 // @Param workOrderId query string true "Work Order UUID" format(uuid)
 // @Param securityCode query string true "Security Code"
 // @Success 200 {array} models.NotificationHistoryResponseDto "OK"
-// @Failure 401 {object} map[string]string "Unauthorized"
-// @Failure 404 {object} map[string]string "Not Found"
+// @Failure 401 {object} apperrors.ErrorResponse "Unauthorized"
+// @Failure 404 {object} apperrors.ErrorResponse "Not Found"
 // @Router /public/notifications/history [get]
 func (nc *NotificationController) GetHistory(c *gin.Context) {
 	workOrderID := c.Query("workOrderId")
+	if !apperrors.ValidateUUID(c, workOrderID, "workOrderId") {
+		return
+	}
 	securityCode := c.Query("securityCode")
 
 	history, err := nc.service.GetHistoryByWorkOrder(workOrderID, securityCode)
 	if err != nil {
 		if errors.Is(err, services.ErrWorkOrderNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Work order not found"})
+			apperrors.NotFound(c, apperrors.CodeResourceNotFound, "Work order not found")
 			return
 		}
 		if errors.Is(err, services.ErrInvalidSecurityCode) {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid security code"})
+			apperrors.Unauthorized(c, apperrors.CodeInvalidSecurityCode, "Invalid security code")
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apperrors.HandleError(c, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, history)
+	apperrors.OK(c, history)
 }
 
 // MarkAsRead godoc
@@ -123,26 +126,29 @@ func (nc *NotificationController) GetHistory(c *gin.Context) {
 // @Param workOrderId query string true "Work Order UUID" format(uuid)
 // @Param securityCode query string true "Security Code"
 // @Success 200 {object} map[string]string "OK"
-// @Failure 401 {object} map[string]string "Unauthorized"
-// @Failure 404 {object} map[string]string "Not Found"
+// @Failure 401 {object} apperrors.ErrorResponse "Unauthorized"
+// @Failure 404 {object} apperrors.ErrorResponse "Not Found"
 // @Router /public/notifications/mark-read [post]
 func (nc *NotificationController) MarkAsRead(c *gin.Context) {
 	workOrderID := c.Query("workOrderId")
+	if !apperrors.ValidateUUID(c, workOrderID, "workOrderId") {
+		return
+	}
 	securityCode := c.Query("securityCode")
 
 	err := nc.service.MarkHistoryAsRead(workOrderID, securityCode)
 	if err != nil {
 		if errors.Is(err, services.ErrWorkOrderNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Work order not found"})
+			apperrors.NotFound(c, apperrors.CodeResourceNotFound, "Work order not found")
 			return
 		}
 		if errors.Is(err, services.ErrInvalidSecurityCode) {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid security code"})
+			apperrors.Unauthorized(c, apperrors.CodeInvalidSecurityCode, "Invalid security code")
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apperrors.HandleError(c, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"status": "marked_as_read"})
+	apperrors.OK(c, gin.H{"status": "marked_as_read"})
 }

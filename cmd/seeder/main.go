@@ -148,7 +148,7 @@ func main() {
 		adminSecondaryPhone = promptString(reader, "Teléfono Secundario (opcional)", *secondaryPhoneFlag)
 
 		adminPassword = promptPassword(reader)
-		fmt.Println("==================================================\n")
+		fmt.Print("==================================================\n\n")
 	} else {
 		adminEmail = *emailFlag
 		adminPassword = *passwordFlag

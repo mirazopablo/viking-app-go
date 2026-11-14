@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/mirazopablo/viking-app-go/apperrors"
 	"github.com/mirazopablo/viking-app-go/models"
 	"github.com/mirazopablo/viking-app-go/services"
 )
@@ -35,25 +36,17 @@ func NewUserController(service services.UserService, jwtSvc services.JWTService)
 func (uc *UserController) SaveUser(c *gin.Context) {
 	var input models.RegisterDto
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		apperrors.ValidationError(c, err)
 		return
 	}
 
 	_, err := uc.service.RegisterUser(&input)
 	if err != nil {
-		if errors.Is(err, services.ErrEmailAlreadyTaken) {
-			c.JSON(http.StatusConflict, gin.H{"error": "Email already registered"})
-			return
-		}
-		if errors.Is(err, services.ErrPasswordRequired) {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apperrors.HandleError(c, err)
 		return
 	}
 
-	c.String(http.StatusOK, "User saved successfully")
+	apperrors.OK(c, gin.H{"message": "User saved successfully"})
 }
 
 // UpdateUser godoc
@@ -70,23 +63,26 @@ func (uc *UserController) SaveUser(c *gin.Context) {
 // @Router /api/user/update/{id} [patch]
 func (uc *UserController) UpdateUser(c *gin.Context) {
 	id := c.Param("id")
+	if !apperrors.ValidateUUID(c, id, "id") {
+		return
+	}
 	var input models.RegisterDto
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		apperrors.ValidationError(c, err)
 		return
 	}
 
 	updated, err := uc.service.UpdateUser(id, &input)
 	if err != nil {
 		if errors.Is(err, services.ErrUserNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+			apperrors.NotFound(c, apperrors.CodeResourceNotFound, "User not found")
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apperrors.HandleError(c, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, updated)
+	apperrors.OK(c, updated)
 }
 
 // SearchUser godoc
@@ -106,6 +102,9 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
 // @Router /api/user/search [get]
 func (uc *UserController) SearchUser(c *gin.Context) {
 	id := c.Query("id")
+	if id != "" && !apperrors.ValidateUUID(c, id, "id") {
+		return
+	}
 	dni := c.Query("dni")
 	name := c.Query("name")
 	email := c.Query("email")
@@ -123,10 +122,10 @@ func (uc *UserController) SearchUser(c *gin.Context) {
 
 	users, err := uc.service.SearchUsers(id, dni, name, email, phone, query, page, limit)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apperrors.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, users)
+	apperrors.OK(c, users)
 }
 
 // AutocompleteUser godoc
@@ -145,13 +144,13 @@ func (uc *UserController) AutocompleteUser(c *gin.Context) {
 	if limit < 1 {
 		limit = 10
 	}
-	
+
 	users, err := uc.service.AutocompleteUsers(query, limit)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apperrors.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, users)
+	apperrors.OK(c, users)
 }
 
 // GetCurrentUser godoc
@@ -167,17 +166,17 @@ func (uc *UserController) GetCurrentUser(c *gin.Context) {
 	// The AuthMiddleware already extracted the claims and set the "userID" in context
 	userID, exists := c.Get("userID")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		apperrors.Unauthorized(c, apperrors.CodeAuthTokenInvalid, "Unauthorized")
 		return
 	}
 
 	user, err := uc.service.GetUserByID(userID.(string))
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		apperrors.NotFound(c, apperrors.CodeResourceNotFound, "User not found")
 		return
 	}
 
-	c.JSON(http.StatusOK, user)
+	apperrors.OK(c, user)
 }
 
 // DeleteUser godoc
@@ -191,8 +190,11 @@ func (uc *UserController) GetCurrentUser(c *gin.Context) {
 // @Router /api/user/delete/{id} [delete]
 func (uc *UserController) DeleteUser(c *gin.Context) {
 	id := c.Param("id")
+	if !apperrors.ValidateUUID(c, id, "id") {
+		return
+	}
 	if err := uc.service.DeleteUser(id); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apperrors.HandleError(c, err)
 		return
 	}
 	c.Status(http.StatusOK)

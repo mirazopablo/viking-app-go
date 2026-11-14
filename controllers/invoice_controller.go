@@ -1,10 +1,10 @@
 package controllers
 
 import (
-	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/mirazopablo/viking-app-go/apperrors"
 	"github.com/mirazopablo/viking-app-go/models"
 	"github.com/mirazopablo/viking-app-go/services"
 )
@@ -29,14 +29,14 @@ func NewInvoiceController() *InvoiceController {
 // @Produce json
 // @Param invoice body models.CreateInvoiceRequest true "Datos de la factura"
 // @Success 201 {object} models.InvoiceResponse
-// @Failure 400 {object} map[string]string
-// @Failure 500 {object} map[string]string
+// @Failure 400 {object} apperrors.ErrorResponse
+// @Failure 500 {object} apperrors.ErrorResponse
 // @Security bearer-jwt
 // @Router /api/v1/invoices [post]
 func (c *InvoiceController) CreateInvoice(ctx *gin.Context) {
 	var req models.CreateInvoiceRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Datos inválidos: " + err.Error()})
+		apperrors.ValidationError(ctx, err)
 		return
 	}
 
@@ -50,20 +50,20 @@ func (c *InvoiceController) CreateInvoice(ctx *gin.Context) {
 
 	invoice, err := c.invoiceService.CreateInvoice(req, userIDPtr)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apperrors.HandleError(ctx, err)
 		return
 	}
 
 	resp := models.InvoiceResponse{
-		ID:           invoice.ID,
-		PuntoVenta:   invoice.PuntoVenta,
-		TipoCmp:      invoice.TipoCmp,
-		NumeroCmp:    invoice.NumeroCmp,
-		FechaEmision: invoice.FechaEmision,
-		DocTipo:      invoice.DocTipo,
-		DocNro:       invoice.DocNro,
-		ImporteTotal: invoice.ImporteTotal,
-		CAE:          invoice.CAE,
+		ID:            invoice.ID,
+		PuntoVenta:    invoice.PuntoVenta,
+		TipoCmp:       invoice.TipoCmp,
+		NumeroCmp:     invoice.NumeroCmp,
+		FechaEmision:  invoice.FechaEmision,
+		DocTipo:       invoice.DocTipo,
+		DocNro:        invoice.DocNro,
+		ImporteTotal:  invoice.ImporteTotal,
+		CAE:           invoice.CAE,
 		CAEVto:        invoice.CAEVto,
 		Resultado:     invoice.Resultado,
 		Status:        string(invoice.Status),
@@ -71,7 +71,7 @@ func (c *InvoiceController) CreateInvoice(ctx *gin.Context) {
 		Items:         invoice.Items,
 	}
 
-	ctx.JSON(http.StatusCreated, resp)
+	apperrors.Created(ctx, resp)
 }
 
 // ImportManualInvoice godoc
@@ -82,13 +82,13 @@ func (c *InvoiceController) CreateInvoice(ctx *gin.Context) {
 // @Produce json
 // @Param invoice body models.ImportManualInvoiceRequest true "Datos del comprobante emitido en ARCA"
 // @Success 201 {object} models.Invoice
-// @Failure 400 {object} map[string]string
+// @Failure 400 {object} apperrors.ErrorResponse
 // @Security bearer-jwt
 // @Router /api/v1/invoices/import-manual [post]
 func (c *InvoiceController) ImportManualInvoice(ctx *gin.Context) {
 	var req models.ImportManualInvoiceRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Datos inválidos: " + err.Error()})
+		apperrors.ValidationError(ctx, err)
 		return
 	}
 
@@ -101,11 +101,11 @@ func (c *InvoiceController) ImportManualInvoice(ctx *gin.Context) {
 
 	invoice, err := c.invoiceService.ImportManualInvoice(req, userIDPtr)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		apperrors.BadRequest(ctx, apperrors.CodeBusinessRule, err.Error())
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, invoice)
+	apperrors.Created(ctx, invoice)
 }
 
 // GetInvoices godoc
@@ -116,7 +116,7 @@ func (c *InvoiceController) ImportManualInvoice(ctx *gin.Context) {
 // @Param limit query int false "Límite de resultados" default(10)
 // @Param offset query int false "Desplazamiento" default(0)
 // @Success 200 {object} map[string]interface{}
-// @Failure 500 {object} map[string]string
+// @Failure 500 {object} apperrors.ErrorResponse
 // @Security bearer-jwt
 // @Router /api/v1/invoices [get]
 func (c *InvoiceController) GetInvoices(ctx *gin.Context) {
@@ -125,11 +125,11 @@ func (c *InvoiceController) GetInvoices(ctx *gin.Context) {
 
 	invoices, total, err := c.invoiceService.GetInvoices(limit, offset)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Error al recuperar facturas: " + err.Error()})
+		apperrors.HandleError(ctx, err)
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
+	apperrors.OK(ctx, gin.H{
 		"data":  invoices,
 		"total": total,
 	})
@@ -142,22 +142,22 @@ func (c *InvoiceController) GetInvoices(ctx *gin.Context) {
 // @Produce json
 // @Param id path int true "ID de la factura"
 // @Success 200 {object} models.Invoice
-// @Failure 404 {object} map[string]string
+// @Failure 404 {object} apperrors.ErrorResponse
 // @Security bearer-jwt
 // @Router /api/v1/invoices/{id} [get]
 func (c *InvoiceController) GetInvoiceByID(ctx *gin.Context) {
 	idParam := ctx.Param("id")
 	id, err := strconv.ParseUint(idParam, 10, 32)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "ID inválido"})
+		apperrors.BadRequest(ctx, apperrors.CodeInvalidID, "ID inválido")
 		return
 	}
 
 	invoice, err := c.invoiceService.GetInvoiceByID(uint(id))
 	if err != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{"error": "Factura no encontrada"})
+		apperrors.NotFound(ctx, apperrors.CodeResourceNotFound, "Factura no encontrada")
 		return
 	}
 
-	ctx.JSON(http.StatusOK, invoice)
+	apperrors.OK(ctx, invoice)
 }

@@ -1,10 +1,10 @@
 package controllers
 
 import (
-	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/mirazopablo/viking-app-go/apperrors"
 	"github.com/mirazopablo/viking-app-go/models"
 	"github.com/mirazopablo/viking-app-go/services"
 )
@@ -26,13 +26,13 @@ func NewAutomationController(bookingService services.BookingService) *Automation
 // @ID getTomorrowTasks
 // @Produce json
 // @Success 200 {array} models.TomorrowTaskDto
-// @Failure 500 {object} object "Internal Server Error"
+// @Failure 500 {object} apperrors.ErrorResponse "Internal Server Error"
 // @Router /api/v1/automation/tasks/tomorrow [get]
 func (ac *AutomationController) GetTomorrowTasks(c *gin.Context) {
 	// Calculate tomorrow in UTC-3
 	loc, err := time.LoadLocation("America/Argentina/Buenos_Aires")
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load timezone"})
+		apperrors.Internal(c, err)
 		return
 	}
 
@@ -40,7 +40,7 @@ func (ac *AutomationController) GetTomorrowTasks(c *gin.Context) {
 
 	bookings, err := ac.bookingService.GetBookingsByDate(tomorrow)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apperrors.HandleError(c, err)
 		return
 	}
 
@@ -60,7 +60,7 @@ func (ac *AutomationController) GetTomorrowTasks(c *gin.Context) {
 		response = make([]models.TomorrowTaskDto, 0)
 	}
 
-	c.JSON(http.StatusOK, response)
+	apperrors.OK(c, response)
 }
 
 // UpdateTaskStatus godoc
@@ -73,25 +73,28 @@ func (ac *AutomationController) GetTomorrowTasks(c *gin.Context) {
 // @Param id path string true "ID del turno (UUID)"
 // @Param payload body models.UpdateBookingStatusDto true "Nuevo estado"
 // @Success 200 {object} object "OK"
-// @Failure 400 {object} object "Bad Request"
-// @Failure 500 {object} object "Internal Server Error"
+// @Failure 400 {object} apperrors.ErrorResponse "Bad Request"
+// @Failure 500 {object} apperrors.ErrorResponse "Internal Server Error"
 // @Router /api/v1/automation/tasks/{id}/status [patch]
 func (ac *AutomationController) UpdateTaskStatus(c *gin.Context) {
 	id := c.Param("id")
-	
+	if !apperrors.ValidateUUID(c, id, "id") {
+		return
+	}
+
 	var dto models.UpdateBookingStatusDto
 	if err := c.ShouldBindJSON(&dto); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid payload format: " + err.Error()})
+		apperrors.ValidationError(c, err)
 		return
 	}
 
 	err := ac.bookingService.UpdateBookingStatus(id, &dto)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apperrors.HandleError(c, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Task status updated successfully via automation"})
+	apperrors.OK(c, gin.H{"message": "Task status updated successfully via automation"})
 }
 
 // UpdateTaskBotStatus godoc
@@ -104,25 +107,28 @@ func (ac *AutomationController) UpdateTaskStatus(c *gin.Context) {
 // @Param id path string true "ID del turno (UUID)"
 // @Param payload body models.UpdateBotStatusDto true "Estado del bot (botActive)"
 // @Success 200 {object} object "OK"
-// @Failure 400 {object} object "Bad Request"
-// @Failure 500 {object} object "Internal Server Error"
+// @Failure 400 {object} apperrors.ErrorResponse "Bad Request"
+// @Failure 500 {object} apperrors.ErrorResponse "Internal Server Error"
 // @Router /api/v1/automation/tasks/{id}/bot-status [patch]
 func (ac *AutomationController) UpdateTaskBotStatus(c *gin.Context) {
 	id := c.Param("id")
-	
+	if !apperrors.ValidateUUID(c, id, "id") {
+		return
+	}
+
 	var dto models.UpdateBotStatusDto
 	if err := c.ShouldBindJSON(&dto); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid payload format: " + err.Error()})
+		apperrors.ValidationError(c, err)
 		return
 	}
 
 	err := ac.bookingService.UpdateBotStatus(id, &dto)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apperrors.HandleError(c, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Bot status updated successfully via automation"})
+	apperrors.OK(c, gin.H{"message": "Bot status updated successfully via automation"})
 }
 
 // DeleteTask godoc
@@ -133,16 +139,19 @@ func (ac *AutomationController) UpdateTaskBotStatus(c *gin.Context) {
 // @Produce json
 // @Param id path string true "ID del turno (UUID)"
 // @Success 200 {object} object "OK"
-// @Failure 500 {object} object "Internal Server Error"
+// @Failure 500 {object} apperrors.ErrorResponse "Internal Server Error"
 // @Router /api/v1/automation/tasks/{id} [delete]
 func (ac *AutomationController) DeleteTask(c *gin.Context) {
 	id := c.Param("id")
-
-	err := ac.bookingService.DeleteBooking(id)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	if !apperrors.ValidateUUID(c, id, "id") {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Task deleted successfully via automation"})
+	err := ac.bookingService.DeleteBooking(id)
+	if err != nil {
+		apperrors.HandleError(c, err)
+		return
+	}
+
+	apperrors.OK(c, gin.H{"message": "Task deleted successfully via automation"})
 }

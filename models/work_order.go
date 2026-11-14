@@ -108,7 +108,7 @@ type WorkOrderSummaryDto struct {
 
 // WorkOrderPublicQueryRequestDto defines the input payload for client public inquiries.
 type WorkOrderPublicQueryRequestDto struct {
-	ID           string `json:"id" binding:"required"`
+	ID           string `json:"id" binding:"required,uuid"`
 	SecurityCode string `json:"securityCode" binding:"required"`
 }
 
