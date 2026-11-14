@@ -24,3 +24,7 @@ markdown/
 n8n_workflows/
 produccion/
 tests/
+# Certificados y claves ARCA
+*.key
+*.csr
+*.crt
