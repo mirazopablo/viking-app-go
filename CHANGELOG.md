@@ -2,6 +2,35 @@
 ## [Unreleased]
 
 
+<a name="v2.6.0"></a>
+## [v2.6.0](https://github.com/mirazopablo/viking-app-go/compare/v2.5.0...v2.6.0) (2026-11-14)
+
+### Bug Fixes
+- **controllers:** validar fechas y UUIDs en parámetros antes de invocar servicios
+- **scripts:** usar siempre el último commit de main al crear ramas
+- **seeder:** eliminar salto de línea redundante en fmt.Println
+- **work-orders:** exigir formato uuid en WorkOrderPublicQueryRequestDto
+
+### Code Refactoring
+- **auth:** usar helpers centralizados de apperrors en AuthController
+- **auth:** retornar AppError tipado en registro y login de usuarios
+- **billing:** migrar controladores comerciales y de turnos a apperrors
+- **middlewares:** estandarizar respuestas de error en auth y recovery middleware
+- **users:** migrar controladores de usuarios, roles y push a apperrors
+- **work-orders:** migrar controladores de órdenes, dispositivos, archivos y automatización a apperrors
+
+### Features
+- **accounting:** implementar ciclo contable de notas de venta conversion de presupuestos y dashboard
+- **apperrors:** agregar validadores estrictos de UUID y fecha YYYY-MM-DD
+- **apperrors:** centralizar contrato de errores y respuestas http
+- **biling:** agregar registro manual de facturas externas emitidas en arca
+- **biling:** implementar emision de factura c con servicios wsaa y wsfev1 de arca
+- **biling:** agregar configuracion y modelos de datos para factura c
+- **billig:** incorporar desglose de items y contenido en facturas c
+- **billing:** implementar condicion iva receptor rg 5616 y persistencia de tickets wsaa
+- **billing:** agregar variables de entorno para facturacion electronica arca
+
+
 <a name="v2.5.0"></a>
 ## [v2.5.0](https://github.com/mirazopablo/viking-app-go/compare/v2.4.0...v2.5.0) (2026-09-23)
 
