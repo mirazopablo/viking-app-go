@@ -35,7 +35,7 @@ type Budget struct {
 	Status          string          `gorm:"type:varchar(50);not null;default:'DRAFT'" json:"status"`
 	Currency        string          `gorm:"type:varchar(10);not null;default:'$'" json:"currency"`
 	TaxPercentage   float64         `gorm:"type:numeric(5,2);not null;default:0.00" json:"taxPercentage"`
-	BudgetData      json.RawMessage `gorm:"type:jsonb;not null" json:"budgetData"`
+	BudgetData      json.RawMessage `gorm:"type:jsonb;not null" json:"budgetData" swaggertype:"object"`
 	ItemsSubtotal   float64         `gorm:"type:numeric(12,2);not null;default:0.00" json:"itemsSubtotal"`
 	LaborTotal      float64         `gorm:"type:numeric(12,2);not null;default:0.00" json:"laborTotal"`
 	GrandTotal      float64         `gorm:"type:numeric(12,2);not null;default:0.00" json:"grandTotal"`
@@ -109,7 +109,7 @@ type BudgetSaveDto struct {
 	DeviceSerialNumber string               `json:"deviceSerialNumber,omitempty"`
 	Currency           string               `json:"currency,omitempty"`
 	TaxPercentage      float64              `json:"taxPercentage,omitempty"`
-	Blocks             json.RawMessage      `json:"blocks,omitempty"`
+	Blocks             json.RawMessage      `json:"blocks,omitempty" swaggertype:"object"`
 	Items              []BudgetItemSaveDto  `json:"items,omitempty"`
 	Labors             []BudgetLaborSaveDto `json:"labors,omitempty"`
 	Notes              string               `json:"notes,omitempty"`
@@ -139,7 +139,7 @@ type BudgetResponseDto struct {
 	Title       string          `json:"title,omitempty"`
 	Mode        string          `json:"mode,omitempty"`
 	Currency    string          `json:"currency,omitempty"`
-	BudgetData  json.RawMessage `json:"budgetData,omitempty"`
+	BudgetData  json.RawMessage `json:"budgetData,omitempty" swaggertype:"object"`
 	Totals      BudgetTotalsDto `json:"totals"`
 	CreatedAt   string          `json:"createdAt"`
 	UpdatedAt   string          `json:"updatedAt"`

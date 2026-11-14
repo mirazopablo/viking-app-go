@@ -1,5 +1,21 @@
 basePath: /
 definitions:
+  models.AccountingDashboardResponse:
+    properties:
+      by_payment_method:
+        additionalProperties:
+          format: float64
+          type: number
+        type: object
+      cash_flow:
+        $ref: '#/definitions/models.CashFlowSummary'
+      fiscal_vs_internal:
+        $ref: '#/definitions/models.FiscalVsInternalSummary'
+      monotributo_control:
+        $ref: '#/definitions/models.MonotributoControlSummary'
+      period:
+        $ref: '#/definitions/models.PeriodSummary'
+    type: object
   models.AvailabilityResponseDto:
     properties:
       availableSlots:
@@ -7,6 +23,38 @@ definitions:
           $ref: '#/definitions/models.TimeSlotDto'
         type: array
       date:
+        type: string
+    type: object
+  models.BlockCreateDto:
+    properties:
+      date:
+        type: string
+      endTime:
+        type: string
+      isFullDay:
+        type: boolean
+      reason:
+        type: string
+      startTime:
+        type: string
+    required:
+    - date
+    type: object
+  models.BlockResponseDto:
+    properties:
+      createdAt:
+        type: string
+      date:
+        type: string
+      endTime:
+        type: string
+      id:
+        type: string
+      isFullDay:
+        type: boolean
+      reason:
+        type: string
+      startTime:
         type: string
     type: object
   models.Booking:
@@ -19,19 +67,27 @@ definitions:
         type: string
       deviceType:
         type: string
+      endTime:
+        type: string
       fullName:
         type: string
       googleEventId:
         type: string
       id:
         type: string
+      isFullDay:
+        type: boolean
       notes:
         type: string
       phone:
         type: string
+      startTime:
+        type: string
       status:
         type: string
       timeSlotId:
+        type: string
+      type:
         type: string
       updatedAt:
         type: string
@@ -97,9 +153,7 @@ definitions:
   models.BudgetResponseDto:
     properties:
       budgetData:
-        items:
-          type: integer
-        type: array
+        type: object
       createdAt:
         type: string
       currency:
@@ -122,9 +176,7 @@ definitions:
   models.BudgetSaveDto:
     properties:
       blocks:
-        items:
-          type: integer
-        type: array
+        type: object
       clientAddress:
         type: string
       clientDni: {}
@@ -188,6 +240,98 @@ definitions:
         type: number
       totalSparePartsProfit:
         type: number
+    type: object
+  models.CashFlowSummary:
+    properties:
+      gross_income:
+        type: number
+      net_profit:
+        type: number
+      profit_margin_percentage:
+        type: number
+      spare_parts_cost:
+        type: number
+    type: object
+  models.ConvertBudgetToSaleNoteRequest:
+    properties:
+      notes:
+        type: string
+      payment_method:
+        type: string
+      payment_status:
+        type: string
+    required:
+    - payment_method
+    type: object
+  models.CreateInvoiceRequest:
+    properties:
+      concepto:
+        enum:
+        - 1
+        - 2
+        - 3
+        type: integer
+      condicion_iva_receptor_id:
+        description: 'RG 5616: default 5 (Consumidor Final)'
+        type: integer
+      doc_nro:
+        type: integer
+      doc_tipo:
+        type: integer
+      fch_serv_desde:
+        description: Campos requeridos si Concepto == 2 o 3 (Servicios)
+        type: string
+      fch_serv_hasta:
+        description: YYYYMMDD
+        type: string
+      fch_vto_pago:
+        description: YYYYMMDD
+        type: string
+      importe_total:
+        type: number
+      items:
+        items:
+          $ref: '#/definitions/models.InvoiceItemDto'
+        type: array
+    required:
+    - concepto
+    - doc_tipo
+    - importe_total
+    type: object
+  models.CreateSalesNoteRequest:
+    properties:
+      budget_id:
+        type: string
+      client_dni:
+        type: integer
+      client_id:
+        type: string
+      client_name:
+        type: string
+      client_phone:
+        type: string
+      discount:
+        type: number
+      items:
+        items:
+          $ref: '#/definitions/models.SalesNoteItemDto'
+        minItems: 1
+        type: array
+      notes:
+        type: string
+      payment_method:
+        type: string
+      payment_status:
+        type: string
+      total_amount:
+        type: number
+      work_order_id:
+        type: string
+    required:
+    - client_name
+    - items
+    - payment_method
+    - total_amount
     type: object
   models.DeviceCreateRequestDto:
     properties:
@@ -261,6 +405,214 @@ definitions:
       workOrderId:
         type: string
     type: object
+  models.FiscalVsInternalSummary:
+    properties:
+      fiscal_invoiced_total:
+        type: number
+      fiscal_percentage:
+        type: number
+      internal_sales_notes_total:
+        type: number
+    type: object
+  models.FiscalizeSalesNoteRequest:
+    properties:
+      concepto:
+        enum:
+        - 1
+        - 2
+        - 3
+        type: integer
+      condicion_iva_receptor_id:
+        type: integer
+      doc_nro:
+        type: integer
+      doc_tipo:
+        type: integer
+      fch_serv_desde:
+        type: string
+      fch_serv_hasta:
+        type: string
+      fch_vto_pago:
+        type: string
+    required:
+    - concepto
+    - doc_tipo
+    type: object
+  models.ImportManualInvoiceRequest:
+    properties:
+      cae:
+        type: string
+      cae_vto:
+        type: string
+      concepto:
+        enum:
+        - 1
+        - 2
+        - 3
+        type: integer
+      condicion_iva_receptor_id:
+        type: integer
+      doc_nro:
+        type: integer
+      doc_tipo:
+        type: integer
+      fecha_emision:
+        description: YYYYMMDD
+        type: string
+      importe_total:
+        type: number
+      items:
+        items:
+          $ref: '#/definitions/models.InvoiceItemDto'
+        type: array
+      numero_cmp:
+        type: integer
+      observaciones:
+        type: string
+      punto_venta:
+        type: integer
+      tipo_cmp:
+        description: 11 = Factura C
+        type: integer
+    required:
+    - cae
+    - cae_vto
+    - concepto
+    - doc_tipo
+    - fecha_emision
+    - importe_total
+    - numero_cmp
+    - punto_venta
+    - tipo_cmp
+    type: object
+  models.Invoice:
+    properties:
+      cae:
+        type: string
+      cae_vto:
+        description: YYYYMMDD
+        type: string
+      concepto:
+        description: '1: Productos, 2: Servicios, 3: Ambos'
+        type: integer
+      condicion_iva_receptor_id:
+        description: 'RG 5616: 5 = Consumidor Final'
+        type: integer
+      created_at:
+        type: string
+      doc_nro:
+        type: integer
+      doc_tipo:
+        description: '99: Consumidor Final, 80: CUIT, 96: DNI'
+        type: integer
+      fecha_emision:
+        description: YYYYMMDD
+        type: string
+      id:
+        type: integer
+      importe_total:
+        type: number
+      items:
+        items:
+          $ref: '#/definitions/models.InvoiceItem'
+        type: array
+      numero_cmp:
+        type: integer
+      observaciones:
+        type: string
+      punto_venta:
+        type: integer
+      resultado:
+        description: 'A: Aprobado, R: Rechazado'
+        type: string
+      status:
+        $ref: '#/definitions/models.InvoiceStatus'
+      tipo_cmp:
+        description: 11 = Factura C
+        type: integer
+      updated_at:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  models.InvoiceItem:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+      invoice_id:
+        type: integer
+      item_type:
+        description: LABOR, SPARE_PART, ACCESSORY, SERVICE
+        type: string
+      quantity:
+        type: number
+      total_price:
+        type: number
+      unit_price:
+        type: number
+    type: object
+  models.InvoiceItemDto:
+    properties:
+      description:
+        type: string
+      item_type:
+        type: string
+      quantity:
+        type: number
+      total_price:
+        type: number
+      unit_price:
+        type: number
+    required:
+    - description
+    - quantity
+    - unit_price
+    type: object
+  models.InvoiceResponse:
+    properties:
+      cae:
+        type: string
+      cae_vto:
+        type: string
+      doc_nro:
+        type: integer
+      doc_tipo:
+        type: integer
+      fecha_emision:
+        type: string
+      id:
+        type: integer
+      importe_total:
+        type: number
+      items:
+        items:
+          $ref: '#/definitions/models.InvoiceItem'
+        type: array
+      numero_cmp:
+        type: integer
+      observaciones:
+        type: string
+      punto_venta:
+        type: integer
+      resultado:
+        type: string
+      status:
+        type: string
+      tipo_cmp:
+        type: integer
+    type: object
+  models.InvoiceStatus:
+    enum:
+    - APPROVED
+    - REJECTED
+    - PENDING
+    type: string
+    x-enum-varnames:
+    - InvoiceStatusApproved
+    - InvoiceStatusRejected
+    - InvoiceStatusPending
   models.LoginResponseDto:
     properties:
       token:
@@ -284,6 +636,19 @@ definitions:
     - email
     - password
     type: object
+  models.MonotributoControlSummary:
+    properties:
+      accumulated_last_12_months:
+        type: number
+      category_annual_limit:
+        type: number
+      current_category:
+        type: string
+      remaining_before_next_category:
+        type: number
+      usage_percentage:
+        type: number
+    type: object
   models.NotificationHistoryResponseDto:
     properties:
       body:
@@ -299,6 +664,13 @@ definitions:
       title:
         type: string
       type:
+        type: string
+    type: object
+  models.PeriodSummary:
+    properties:
+      from:
+        type: string
+      to:
         type: string
     type: object
   models.PushSubscription:
@@ -412,6 +784,97 @@ definitions:
         type: string
     required:
     - descripcion
+    type: object
+  models.SalesNote:
+    properties:
+      budget_id:
+        type: string
+      client_dni:
+        type: integer
+      client_id:
+        type: string
+      client_name:
+        type: string
+      client_phone:
+        type: string
+      cost_amount:
+        type: number
+      created_at:
+        type: string
+      created_by_staff_id:
+        type: string
+      discount:
+        type: number
+      id:
+        type: integer
+      invoice:
+        $ref: '#/definitions/models.Invoice'
+      invoice_id:
+        type: integer
+      is_fiscal:
+        type: boolean
+      items:
+        items:
+          $ref: '#/definitions/models.SalesNoteItem'
+        type: array
+      net_profit:
+        type: number
+      notes:
+        type: string
+      number:
+        description: e.g. NV-0001-00000015
+        type: string
+      payment_method:
+        type: string
+      payment_status:
+        type: string
+      subtotal:
+        type: number
+      total_amount:
+        type: number
+      updated_at:
+        type: string
+      work_order_id:
+        type: string
+    type: object
+  models.SalesNoteItem:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+      item_type:
+        description: LABOR, SPARE_PART, ACCESSORY
+        type: string
+      quantity:
+        type: number
+      sales_note_id:
+        type: integer
+      total_price:
+        type: number
+      unit_cost:
+        type: number
+      unit_price:
+        type: number
+    type: object
+  models.SalesNoteItemDto:
+    properties:
+      description:
+        type: string
+      item_type:
+        description: LABOR, SPARE_PART, ACCESSORY
+        type: string
+      quantity:
+        type: number
+      unit_cost:
+        type: number
+      unit_price:
+        type: number
+    required:
+    - description
+    - item_type
+    - quantity
+    - unit_price
     type: object
   models.SecurityCodeResponseDto:
     properties:
@@ -650,6 +1113,49 @@ paths:
       summary: Saludo
       tags:
       - Home Controller
+  /api/budget/{id}/convert-to-sale-note:
+    post:
+      consumes:
+      - application/json
+      description: Transforma una cotización aprobada en una Nota de Venta interna
+        en caja
+      parameters:
+      - description: ID del Presupuesto (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Datos de cobro
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/models.ConvertBudgetToSaleNoteRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - bearer-jwt: []
+      summary: Convertir Presupuesto aprobado a Nota de Venta
+      tags:
+      - Budget
   /api/budget/by-work-order/{workOrderId}:
     get:
       description: Obtiene la estructura del presupuesto para su renderizado Web en
@@ -1193,6 +1699,31 @@ paths:
       summary: Actualizar Usuario
       tags:
       - User Controller
+  /api/v1/accounting/dashboard:
+    get:
+      description: Consolida ingresos reales, desglose fiscal vs interno y control
+        de Monotributo
+      parameters:
+      - description: Fecha desde (YYYY-MM-DD)
+        in: query
+        name: from
+        type: string
+      - description: Fecha hasta (YYYY-MM-DD)
+        in: query
+        name: to
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.AccountingDashboardResponse'
+      security:
+      - bearer-jwt: []
+      summary: Obtener métricas del Dashboard Contable
+      tags:
+      - Accounting
   /api/v1/automation/tasks/{id}:
     delete:
       description: Elimina el turno en DB y Google Calendar (ej. al cancelar por WhatsApp)
@@ -1442,6 +1973,108 @@ paths:
       summary: Obtener slots disponibles
       tags:
       - Bookings
+  /api/v1/bookings/blocks:
+    get:
+      description: Retorna los bloqueos configurados
+      operationId: listBlocks
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.BlockResponseDto'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Listar bloqueos activos
+      tags:
+      - Bookings (Blocks)
+    post:
+      consumes:
+      - application/json
+      description: Crea una excepción de disponibilidad
+      operationId: createBlock
+      parameters:
+      - description: Block Payload
+        in: body
+        name: block
+        required: true
+        schema:
+          $ref: '#/definitions/models.BlockCreateDto'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.BlockResponseDto'
+        "400":
+          description: Bad Request
+          schema:
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Crear nuevo bloqueo
+      tags:
+      - Bookings (Blocks)
+  /api/v1/bookings/blocks/{id}:
+    delete:
+      description: Elimina una excepción de disponibilidad
+      operationId: deleteBlock
+      parameters:
+      - description: ID del bloqueo (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Eliminar bloqueo
+      tags:
+      - Bookings (Blocks)
+  /api/v1/bookings/client/{phone}:
+    get:
+      description: Obtiene el nombre del cliente basado en su número de teléfono
+      operationId: getClientByPhone
+      parameters:
+      - description: Número de teléfono
+        in: path
+        name: phone
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            type: object
+      summary: Obtener cliente por teléfono
+      tags:
+      - Bookings
   /api/v1/bookings/date/{date}:
     get:
       description: Obtiene la lista de turnos (bookings) para una fecha específica.
@@ -1468,6 +2101,305 @@ paths:
       summary: Obtener turnos por fecha
       tags:
       - Bookings
+  /api/v1/bookings/today:
+    get:
+      description: Obtiene la lista de turnos (bookings) para el día de hoy automáticamente
+        calculando la fecha.
+      operationId: getTodayBookings
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Booking'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            type: object
+      summary: Obtener turnos del día actual
+      tags:
+      - Bookings
+  /api/v1/bookings/tomorrow:
+    get:
+      description: Obtiene la lista de turnos (bookings) para el día de mañana automáticamente
+        calculando la fecha.
+      operationId: getTomorrowBookings
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Booking'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            type: object
+      summary: Obtener turnos del día de mañana
+      tags:
+      - Bookings
+  /api/v1/invoices:
+    get:
+      description: Obtiene un listado paginado de las facturas registradas localmente
+      parameters:
+      - default: 10
+        description: Límite de resultados
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Desplazamiento
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - bearer-jwt: []
+      summary: Listar facturas emitidas
+      tags:
+      - Invoices
+    post:
+      consumes:
+      - application/json
+      description: Emite un comprobante fiscal Tipo 11 (Factura C) ante ARCA y devuelve
+        el CAE obtenido
+      parameters:
+      - description: Datos de la factura
+        in: body
+        name: invoice
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateInvoiceRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.InvoiceResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - bearer-jwt: []
+      summary: Emitir Factura C electrónica en ARCA
+      tags:
+      - Invoices
+  /api/v1/invoices/{id}:
+    get:
+      description: Obtiene el detalle de un comprobante emitido
+      parameters:
+      - description: ID de la factura
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Invoice'
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - bearer-jwt: []
+      summary: Obtener factura por ID
+      tags:
+      - Invoices
+  /api/v1/invoices/import-manual:
+    post:
+      consumes:
+      - application/json
+      description: Permite cargar manualmente una Factura emitida por fuera del sistema
+        para cuadrar la contabilidad
+      parameters:
+      - description: Datos del comprobante emitido en ARCA
+        in: body
+        name: invoice
+        required: true
+        schema:
+          $ref: '#/definitions/models.ImportManualInvoiceRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Invoice'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - bearer-jwt: []
+      summary: Registrar factura emitida externamente en ARCA (RCEL / Facturador)
+      tags:
+      - Invoices
+  /api/v1/sales-notes:
+    get:
+      description: Obtiene un listado paginado de comprobantes de venta internos
+      parameters:
+      - default: 10
+        description: Límite
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Desplazamiento
+        in: query
+        name: offset
+        type: integer
+      - description: Método de Pago (CASH, TRANSFER, MERCADOPAGO)
+        in: query
+        name: payment_method
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - bearer-jwt: []
+      summary: Listar Notas de Venta
+      tags:
+      - Accounting
+    post:
+      consumes:
+      - application/json
+      description: Emite una Nota de Venta interna (Letra [ X ] no fiscal) para control
+        de caja
+      parameters:
+      - description: Datos de la venta
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateSalesNoteRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.SalesNote'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - bearer-jwt: []
+      summary: Crear Nota de Venta interna
+      tags:
+      - Accounting
+  /api/v1/sales-notes/{id}:
+    get:
+      parameters:
+      - description: ID de la Nota de Venta
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.SalesNote'
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - bearer-jwt: []
+      summary: Obtener Nota de Venta por ID
+      tags:
+      - Accounting
+  /api/v1/sales-notes/{id}/fiscalize:
+    post:
+      consumes:
+      - application/json
+      description: Emite Factura C oficial ante ARCA para una Nota de Venta previa
+        y le asigna el CAE
+      parameters:
+      - description: ID de la Nota de Venta
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Datos fiscales del receptor
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/models.FiscalizeSalesNoteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - bearer-jwt: []
+      summary: Fiscalizar Nota de Venta existente en ARCA
+      tags:
+      - Accounting
   /api/work-order/{orderId}:
     get:
       description: Retorna el detalle completo de una orden de trabajo individual
