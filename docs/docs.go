@@ -125,10 +125,7 @@ const docTemplate = `{
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/apperrors.ErrorResponse"
                         }
                     }
                 }
@@ -269,19 +266,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/apperrors.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/apperrors.ErrorResponse"
                         }
                     }
                 }
@@ -1010,7 +1001,7 @@ const docTemplate = `{
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/apperrors.ErrorResponse"
                         }
                     }
                 }
@@ -1046,7 +1037,7 @@ const docTemplate = `{
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/apperrors.ErrorResponse"
                         }
                     }
                 }
@@ -1094,13 +1085,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/apperrors.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/apperrors.ErrorResponse"
                         }
                     }
                 }
@@ -1148,13 +1139,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/apperrors.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/apperrors.ErrorResponse"
                         }
                     }
                 }
@@ -1195,7 +1186,7 @@ const docTemplate = `{
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/apperrors.ErrorResponse"
                         }
                     }
                 }
@@ -1237,13 +1228,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/apperrors.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/apperrors.ErrorResponse"
                         }
                     }
                 }
@@ -1278,7 +1269,7 @@ const docTemplate = `{
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/apperrors.ErrorResponse"
                         }
                     }
                 }
@@ -1322,13 +1313,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/apperrors.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/apperrors.ErrorResponse"
                         }
                     }
                 }
@@ -1366,7 +1357,7 @@ const docTemplate = `{
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/apperrors.ErrorResponse"
                         }
                     }
                 }
@@ -1402,7 +1393,7 @@ const docTemplate = `{
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/apperrors.ErrorResponse"
                         }
                     }
                 }
@@ -1441,7 +1432,7 @@ const docTemplate = `{
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/apperrors.ErrorResponse"
                         }
                     }
                 }
@@ -1471,7 +1462,7 @@ const docTemplate = `{
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/apperrors.ErrorResponse"
                         }
                     }
                 }
@@ -1501,7 +1492,7 @@ const docTemplate = `{
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/apperrors.ErrorResponse"
                         }
                     }
                 }
@@ -1549,13 +1540,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/apperrors.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/apperrors.ErrorResponse"
                         }
                     }
                 }
@@ -1603,13 +1594,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/apperrors.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/apperrors.ErrorResponse"
                         }
                     }
                 }
@@ -1657,10 +1648,7 @@ const docTemplate = `{
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/apperrors.ErrorResponse"
                         }
                     }
                 }
@@ -1703,19 +1691,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/apperrors.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/apperrors.ErrorResponse"
                         }
                     }
                 }
@@ -1760,10 +1742,7 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/apperrors.ErrorResponse"
                         }
                     }
                 }
@@ -1803,10 +1782,7 @@ const docTemplate = `{
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/apperrors.ErrorResponse"
                         }
                     }
                 }
@@ -1897,10 +1873,7 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/apperrors.ErrorResponse"
                         }
                     }
                 }
@@ -1939,10 +1912,7 @@ const docTemplate = `{
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/apperrors.ErrorResponse"
                         }
                     }
                 }
@@ -1995,19 +1965,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/apperrors.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/apperrors.ErrorResponse"
                         }
                     }
                 }
@@ -2290,6 +2254,24 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/models.LoginResponseDto"
                         }
+                    },
+                    "400": {
+                        "description": "Validation error",
+                        "schema": {
+                            "$ref": "#/definitions/apperrors.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid credentials",
+                        "schema": {
+                            "$ref": "#/definitions/apperrors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/apperrors.ErrorResponse"
+                        }
                     }
                 }
             }
@@ -2505,7 +2487,28 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "string"
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validation or business rule error",
+                        "schema": {
+                            "$ref": "#/definitions/apperrors.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Email already registered",
+                        "schema": {
+                            "$ref": "#/definitions/apperrors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/apperrors.ErrorResponse"
                         }
                     }
                 }
@@ -2603,19 +2606,13 @@ const docTemplate = `{
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/apperrors.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/apperrors.ErrorResponse"
                         }
                     }
                 }
@@ -2665,19 +2662,13 @@ const docTemplate = `{
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/apperrors.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/apperrors.ErrorResponse"
                         }
                     }
                 }
@@ -2718,19 +2709,13 @@ const docTemplate = `{
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/apperrors.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/apperrors.ErrorResponse"
                         }
                     }
                 }
@@ -2811,19 +2796,13 @@ const docTemplate = `{
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/apperrors.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/apperrors.ErrorResponse"
                         }
                     }
                 }
@@ -2864,19 +2843,13 @@ const docTemplate = `{
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/apperrors.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/apperrors.ErrorResponse"
                         }
                     }
                 }
@@ -2917,19 +2890,13 @@ const docTemplate = `{
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/apperrors.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/apperrors.ErrorResponse"
                         }
                     }
                 }
@@ -2937,6 +2904,24 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "apperrors.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "example": "AUTH_INVALID_CREDENTIALS"
+                },
+                "details": {},
+                "message": {
+                    "type": "string",
+                    "example": "Invalid email or password"
+                },
+                "success": {
+                    "type": "boolean",
+                    "example": false
+                }
+            }
+        },
         "models.AccountingDashboardResponse": {
             "type": "object",
             "properties": {
