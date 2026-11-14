@@ -28,8 +28,8 @@ func NewNotificationController(service services.NotificationService) *Notificati
 // @Produce json
 // @Param subscription body models.PushSubscriptionCreateRequestDto true "Push Subscription Request"
 // @Success 200 {object} models.PushSubscription "OK"
-// @Failure 401 {object} map[string]string "Unauthorized"
-// @Failure 404 {object} map[string]string "Not Found"
+// @Failure 401 {object} apperrors.ErrorResponse "Unauthorized"
+// @Failure 404 {object} apperrors.ErrorResponse "Not Found"
 // @Router /public/notifications/subscribe [post]
 func (nc *NotificationController) Subscribe(c *gin.Context) {
 	var input models.PushSubscriptionCreateRequestDto

@@ -26,7 +26,7 @@ func NewAutomationController(bookingService services.BookingService) *Automation
 // @ID getTomorrowTasks
 // @Produce json
 // @Success 200 {array} models.TomorrowTaskDto
-// @Failure 500 {object} object "Internal Server Error"
+// @Failure 500 {object} apperrors.ErrorResponse "Internal Server Error"
 // @Router /api/v1/automation/tasks/tomorrow [get]
 func (ac *AutomationController) GetTomorrowTasks(c *gin.Context) {
 	// Calculate tomorrow in UTC-3

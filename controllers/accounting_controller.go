@@ -30,7 +30,7 @@ func NewAccountingController() *AccountingController {
 // @Produce json
 // @Param payload body models.CreateSalesNoteRequest true "Datos de la venta"
 // @Success 201 {object} models.SalesNote
-// @Failure 400 {object} map[string]string
+// @Failure 400 {object} apperrors.ErrorResponse
 // @Security bearer-jwt
 // @Router /api/v1/sales-notes [post]
 func (c *AccountingController) CreateSalesNote(ctx *gin.Context) {
@@ -65,8 +65,8 @@ func (c *AccountingController) CreateSalesNote(ctx *gin.Context) {
 // @Param id path string true "ID del Presupuesto (UUID)"
 // @Param payload body models.ConvertBudgetToSaleNoteRequest true "Datos de cobro"
 // @Success 201 {object} map[string]interface{}
-// @Failure 400 {object} map[string]string
-// @Failure 409 {object} map[string]string
+// @Failure 400 {object} apperrors.ErrorResponse
+// @Failure 409 {object} apperrors.ErrorResponse
 // @Security bearer-jwt
 // @Router /api/budget/{id}/convert-to-sale-note [post]
 func (c *AccountingController) ConvertBudgetToSaleNote(ctx *gin.Context) {
@@ -113,8 +113,8 @@ func (c *AccountingController) ConvertBudgetToSaleNote(ctx *gin.Context) {
 // @Param id path int true "ID de la Nota de Venta"
 // @Param payload body models.FiscalizeSalesNoteRequest true "Datos fiscales del receptor"
 // @Success 200 {object} map[string]interface{}
-// @Failure 400 {object} map[string]string
-// @Failure 500 {object} map[string]string
+// @Failure 400 {object} apperrors.ErrorResponse
+// @Failure 500 {object} apperrors.ErrorResponse
 // @Security bearer-jwt
 // @Router /api/v1/sales-notes/{id}/fiscalize [post]
 func (c *AccountingController) FiscalizeSalesNote(ctx *gin.Context) {

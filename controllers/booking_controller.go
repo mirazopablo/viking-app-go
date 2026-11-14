@@ -29,8 +29,8 @@ func NewBookingController(service services.BookingService) *BookingController {
 // @Param date query string true "Fecha en formato YYYY-MM-DD"
 // @Param deviceType query string false "Tipo de equipo/servicio (general | pc | laptop | mobile | gaming)"
 // @Success 200 {object} models.AvailabilityResponseDto "OK"
-// @Failure 400 {object} object "Bad Request"
-// @Failure 500 {object} object "Internal Server Error"
+// @Failure 400 {object} apperrors.ErrorResponse "Bad Request"
+// @Failure 500 {object} apperrors.ErrorResponse "Internal Server Error"
 // @Router /api/v1/bookings/availability [get]
 func (bc *BookingController) GetAvailability(c *gin.Context) {
 	date := c.Query("date")
@@ -161,8 +161,8 @@ func (bc *BookingController) GetTomorrowBookings(c *gin.Context) {
 // @Param id path string true "ID del turno (UUID)"
 // @Param payload body models.UpdateBookingStatusDto true "Nuevo estado"
 // @Success 200 {object} object "OK"
-// @Failure 400 {object} object "Bad Request"
-// @Failure 500 {object} object "Internal Server Error"
+// @Failure 400 {object} apperrors.ErrorResponse "Bad Request"
+// @Failure 500 {object} apperrors.ErrorResponse "Internal Server Error"
 // @Router /api/v1/bookings/{id}/status [patch]
 func (bc *BookingController) UpdateBookingStatus(c *gin.Context) {
 	id := c.Param("id")

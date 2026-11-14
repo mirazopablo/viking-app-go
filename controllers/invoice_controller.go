@@ -29,8 +29,8 @@ func NewInvoiceController() *InvoiceController {
 // @Produce json
 // @Param invoice body models.CreateInvoiceRequest true "Datos de la factura"
 // @Success 201 {object} models.InvoiceResponse
-// @Failure 400 {object} map[string]string
-// @Failure 500 {object} map[string]string
+// @Failure 400 {object} apperrors.ErrorResponse
+// @Failure 500 {object} apperrors.ErrorResponse
 // @Security bearer-jwt
 // @Router /api/v1/invoices [post]
 func (c *InvoiceController) CreateInvoice(ctx *gin.Context) {
@@ -82,7 +82,7 @@ func (c *InvoiceController) CreateInvoice(ctx *gin.Context) {
 // @Produce json
 // @Param invoice body models.ImportManualInvoiceRequest true "Datos del comprobante emitido en ARCA"
 // @Success 201 {object} models.Invoice
-// @Failure 400 {object} map[string]string
+// @Failure 400 {object} apperrors.ErrorResponse
 // @Security bearer-jwt
 // @Router /api/v1/invoices/import-manual [post]
 func (c *InvoiceController) ImportManualInvoice(ctx *gin.Context) {
@@ -116,7 +116,7 @@ func (c *InvoiceController) ImportManualInvoice(ctx *gin.Context) {
 // @Param limit query int false "Límite de resultados" default(10)
 // @Param offset query int false "Desplazamiento" default(0)
 // @Success 200 {object} map[string]interface{}
-// @Failure 500 {object} map[string]string
+// @Failure 500 {object} apperrors.ErrorResponse
 // @Security bearer-jwt
 // @Router /api/v1/invoices [get]
 func (c *InvoiceController) GetInvoices(ctx *gin.Context) {
