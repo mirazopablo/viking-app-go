@@ -125,3 +125,71 @@ func TestOKAndCreatedHelpers(t *testing.T) {
 	}
 }
 
+func TestValidateDateRejectsSQLiAndTruncatedPayloads(t *testing.T) {
+	setupTestRouter()
+
+	r := gin.New()
+	r.GET("/avail", func(c *gin.Context) {
+		date := c.Query("date")
+		if !ValidateDate(c, date, "date") {
+			return
+		}
+		OK(c, gin.H{"date": date})
+	})
+
+	cases := []struct {
+		name       string
+		query      string
+		wantStatus int
+		wantCode   string
+	}{
+		{"valid date", "?date=2026-11-20", http.StatusOK, ""},
+		{"sqli basic", "?date='%20OR%201=1;--", http.StatusBadRequest, CodeValidationError},
+		{"sqli aggressive with valid prefix", "?date=2026-11-20';%20SELECT%20pg_sleep(5);--", http.StatusBadRequest, CodeValidationError},
+		{"invalid calendar date", "?date=2026-02-31", http.StatusBadRequest, CodeValidationError},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			w := httptest.NewRecorder()
+			r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/avail"+tc.query, nil))
+			if w.Code != tc.wantStatus {
+				t.Fatalf("expected status %d, got %d (body: %s)", tc.wantStatus, w.Code, w.Body.String())
+			}
+			if tc.wantCode != "" {
+				var body ErrorResponse
+				if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil {
+					t.Fatalf("failed to unmarshal: %v", err)
+				}
+				if body.Code != tc.wantCode {
+					t.Fatalf("expected code %s, got %s", tc.wantCode, body.Code)
+				}
+			}
+		})
+	}
+}
+
+func TestValidateUUIDRejectsSQLi(t *testing.T) {
+	setupTestRouter()
+
+	r := gin.New()
+	r.GET("/item/:id", func(c *gin.Context) {
+		if !ValidateUUID(c, c.Param("id"), "id") {
+			return
+		}
+		OK(c, gin.H{"id": c.Param("id")})
+	})
+
+	wBad := httptest.NewRecorder()
+	r.ServeHTTP(wBad, httptest.NewRequest(http.MethodGet, "/item/not-a-uuid", nil))
+	if wBad.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", wBad.Code)
+	}
+
+	wGood := httptest.NewRecorder()
+	r.ServeHTTP(wGood, httptest.NewRequest(http.MethodGet, "/item/4d1e72f7-6d02-4774-a037-7a2311ed873f", nil))
+	if wGood.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", wGood.Code)
+	}
+}
+
