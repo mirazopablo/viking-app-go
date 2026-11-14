@@ -15,6 +15,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/mirazopablo/viking-app-go/apperrors"
 	"github.com/mirazopablo/viking-app-go/config"
 	"github.com/mirazopablo/viking-app-go/services"
 )
@@ -46,7 +47,7 @@ func NewDiagnosticPointController(service services.DiagnosticPointService) *Diag
 func (dpc *DiagnosticPointController) AddDiagnosticPoint(c *gin.Context) {
 	fileHeader, err := c.FormFile("file")
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "File upload is required: " + err.Error()})
+		apperrors.BadRequest(c, apperrors.CodeValidationError, "File upload is required: "+err.Error())
 		return
 	}
 
@@ -81,13 +82,13 @@ func (dpc *DiagnosticPointController) AddDiagnosticPoint(c *gin.Context) {
 	}
 
 	if strings.TrimSpace(workOrderID) == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "workOrderId is required"})
+		apperrors.BadRequest(c, apperrors.CodeValidationError, "workOrderId is required")
 		return
 	}
 
 	workOrderDir := filepath.Join(config.AppConfig.UploadDir, workOrderID)
 	if err = os.MkdirAll(workOrderDir, os.ModePerm); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create work order upload directory"})
+		apperrors.Internal(c, err)
 		return
 	}
 
@@ -98,7 +99,7 @@ func (dpc *DiagnosticPointController) AddDiagnosticPoint(c *gin.Context) {
 	savePath := filepath.Join(workOrderDir, newFileName)
 
 	if err = c.SaveUploadedFile(fileHeader, savePath); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save file: " + err.Error()})
+		apperrors.Internal(c, err)
 		return
 	}
 
@@ -111,18 +112,18 @@ func (dpc *DiagnosticPointController) AddDiagnosticPoint(c *gin.Context) {
 	saved, err := dpc.service.AddDiagnosticPoint(dpID, workOrderID, clientID, description, imageURL)
 	if err != nil {
 		if errors.Is(err, services.ErrWorkOrderNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Associated work order not found"})
+			apperrors.NotFound(c, apperrors.CodeResourceNotFound, "Associated work order not found")
 			return
 		}
 		if errors.Is(err, services.ErrUserNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Associated client not found"})
+			apperrors.NotFound(c, apperrors.CodeResourceNotFound, "Associated client not found")
 			return
 		}
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		apperrors.BadRequest(c, apperrors.CodeBusinessRule, err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, saved)
+	apperrors.OK(c, saved)
 }
 
 // GetDiagnosticPointsByWorkOrderAndClient godoc
@@ -142,11 +143,11 @@ func (dpc *DiagnosticPointController) GetDiagnosticPointsByWorkOrderAndClient(c 
 
 	points, err := dpc.service.GetByWorkOrderAndClient(workOrderID, clientID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apperrors.HandleError(c, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, points)
+	apperrors.OK(c, points)
 }
 
 // GetDiagnosticPointsByWorkOrder godoc
@@ -164,11 +165,11 @@ func (dpc *DiagnosticPointController) GetDiagnosticPointsByWorkOrder(c *gin.Cont
 
 	points, err := dpc.service.GetByWorkOrderAndClient(workOrderID, "")
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apperrors.HandleError(c, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, points)
+	apperrors.OK(c, points)
 }
 
 // DeleteDiagnosticPoint godoc
@@ -184,10 +185,10 @@ func (dpc *DiagnosticPointController) DeleteDiagnosticPoint(c *gin.Context) {
 	id := c.Param("id")
 	if err := dpc.service.DeleteDiagnosticPoint(id); err != nil {
 		if errors.Is(err, services.ErrDiagnosticPointNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Diagnostic point not found"})
+			apperrors.NotFound(c, apperrors.CodeResourceNotFound, "Diagnostic point not found")
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apperrors.HandleError(c, err)
 		return
 	}
 	c.Status(http.StatusOK)

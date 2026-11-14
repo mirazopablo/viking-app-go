@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/mirazopablo/viking-app-go/apperrors"
 	"github.com/mirazopablo/viking-app-go/models"
 	"github.com/mirazopablo/viking-app-go/services"
 )
@@ -34,7 +35,7 @@ func NewWorkOrderController(service services.WorkOrderService) *WorkOrderControl
 func (woc *WorkOrderController) SaveWorkOrder(c *gin.Context) {
 	var input models.WorkOrderCreateRequest
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		apperrors.ValidationError(c, err)
 		return
 	}
 
@@ -50,18 +51,18 @@ func (woc *WorkOrderController) SaveWorkOrder(c *gin.Context) {
 	saved, err := woc.service.CreateWorkOrder(&input, staffID)
 	if err != nil {
 		if errors.Is(err, services.ErrUserNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Associated client not found"})
+			apperrors.NotFound(c, apperrors.CodeResourceNotFound, "Associated client not found")
 			return
 		}
 		if errors.Is(err, services.ErrDeviceNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Associated device not found"})
+			apperrors.NotFound(c, apperrors.CodeResourceNotFound, "Associated device not found")
 			return
 		}
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		apperrors.BadRequest(c, apperrors.CodeBusinessRule, err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, saved)
+	apperrors.OK(c, saved)
 }
 
 // UpdateWorkOrderStatus godoc
@@ -80,21 +81,21 @@ func (woc *WorkOrderController) UpdateWorkOrderStatus(c *gin.Context) {
 	id := c.Param("orderId")
 	var input models.WorkOrderStatusUpdateRequestDto
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		apperrors.ValidationError(c, err)
 		return
 	}
 
 	updated, err := woc.service.UpdateWorkOrderStatus(id, &input)
 	if err != nil {
 		if errors.Is(err, services.ErrWorkOrderNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Work order not found"})
+			apperrors.NotFound(c, apperrors.CodeResourceNotFound, "Work order not found")
 			return
 		}
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		apperrors.BadRequest(c, apperrors.CodeBusinessRule, err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, updated)
+	apperrors.OK(c, updated)
 }
 
 // RegenerateSecurityCode godoc
@@ -112,13 +113,13 @@ func (woc *WorkOrderController) RegenerateSecurityCode(c *gin.Context) {
 	updated, err := woc.service.RegenerateSecurityCode(id)
 	if err != nil {
 		if errors.Is(err, services.ErrWorkOrderNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Work order not found"})
+			apperrors.NotFound(c, apperrors.CodeResourceNotFound, "Work order not found")
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apperrors.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, updated)
+	apperrors.OK(c, updated)
 }
 
 // GetWorkOrderByID godoc
@@ -136,13 +137,13 @@ func (woc *WorkOrderController) GetWorkOrderByID(c *gin.Context) {
 	wo, err := woc.service.GetWorkOrderByID(id)
 	if err != nil {
 		if errors.Is(err, services.ErrWorkOrderNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Work order not found"})
+			apperrors.NotFound(c, apperrors.CodeResourceNotFound, "Work order not found")
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apperrors.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, wo)
+	apperrors.OK(c, wo)
 }
 
 // SearchWorkOrder godoc
@@ -166,11 +167,11 @@ func (woc *WorkOrderController) SearchWorkOrder(c *gin.Context) {
 
 	orders, err := woc.service.SearchWorkOrders(staffId, clientDni, deviceSerialNumber, queryStr)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apperrors.HandleError(c, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, orders)
+	apperrors.OK(c, orders)
 }
 
 // DeleteWorkOrder godoc
@@ -186,10 +187,10 @@ func (woc *WorkOrderController) DeleteWorkOrder(c *gin.Context) {
 	id := c.Param("orderId")
 	if err := woc.service.DeleteWorkOrder(id); err != nil {
 		if errors.Is(err, services.ErrWorkOrderNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Work order not found"})
+			apperrors.NotFound(c, apperrors.CodeResourceNotFound, "Work order not found")
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apperrors.HandleError(c, err)
 		return
 	}
 	c.Status(http.StatusOK)
@@ -204,31 +205,31 @@ func (woc *WorkOrderController) DeleteWorkOrder(c *gin.Context) {
 // @Produce json
 // @Param query body models.WorkOrderPublicQueryRequestDto true "Public Query Request"
 // @Success 200 {object} models.WorkOrderPublicStatusResponseDto "OK"
-// @Failure 401 {object} map[string]string "Unauthorized"
-// @Failure 404 {object} map[string]string "Not Found"
+// @Failure 401 {object} apperrors.ErrorResponse "Unauthorized"
+// @Failure 404 {object} apperrors.ErrorResponse "Not Found"
 // @Router /public/work-order/status [post]
 func (woc *WorkOrderController) GetPublicStatus(c *gin.Context) {
 	var input models.WorkOrderPublicQueryRequestDto
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		apperrors.ValidationError(c, err)
 		return
 	}
 
 	result, err := woc.service.GetPublicWorkOrderStatus(input.ID, input.SecurityCode)
 	if err != nil {
 		if errors.Is(err, services.ErrWorkOrderNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Work order not found"})
+			apperrors.NotFound(c, apperrors.CodeResourceNotFound, "Work order not found")
 			return
 		}
 		if errors.Is(err, services.ErrInvalidSecurityCode) {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid security code"})
+			apperrors.Unauthorized(c, apperrors.CodeInvalidSecurityCode, "Invalid security code")
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apperrors.HandleError(c, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	apperrors.OK(c, result)
 }
 
 // GetPublicStatusByDni godoc
@@ -240,29 +241,29 @@ func (woc *WorkOrderController) GetPublicStatus(c *gin.Context) {
 // @Produce json
 // @Param query body models.WorkOrderPublicDniQueryRequestDto true "Public DNI Query Request"
 // @Success 200 {object} models.WorkOrderPublicStatusResponseDto "OK"
-// @Failure 401 {object} map[string]string "Unauthorized"
-// @Failure 404 {object} map[string]string "Not Found"
+// @Failure 401 {object} apperrors.ErrorResponse "Unauthorized"
+// @Failure 404 {object} apperrors.ErrorResponse "Not Found"
 // @Router /public/work-order/status-by-dni [post]
 func (woc *WorkOrderController) GetPublicStatusByDni(c *gin.Context) {
 	var input models.WorkOrderPublicDniQueryRequestDto
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		apperrors.ValidationError(c, err)
 		return
 	}
 
 	result, err := woc.service.GetPublicWorkOrderStatusByDNI(input.ClientDni, input.SecurityCode)
 	if err != nil {
 		if errors.Is(err, services.ErrWorkOrderNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "No work orders found for the provided DNI"})
+			apperrors.NotFound(c, apperrors.CodeResourceNotFound, "No work orders found for the provided DNI")
 			return
 		}
 		if errors.Is(err, services.ErrInvalidSecurityCode) {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid security code for the provided DNI"})
+			apperrors.Unauthorized(c, apperrors.CodeInvalidSecurityCode, "Invalid security code for the provided DNI")
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apperrors.HandleError(c, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	apperrors.OK(c, result)
 }

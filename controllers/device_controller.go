@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/mirazopablo/viking-app-go/apperrors"
 	"github.com/mirazopablo/viking-app-go/models"
 	"github.com/mirazopablo/viking-app-go/services"
 )
@@ -33,21 +34,21 @@ func NewDeviceController(service services.DeviceService) *DeviceController {
 func (dc *DeviceController) RegisterDevice(c *gin.Context) {
 	var input models.DeviceCreateRequestDto
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		apperrors.ValidationError(c, err)
 		return
 	}
 
 	saved, err := dc.service.RegisterDevice(&input)
 	if err != nil {
 		if errors.Is(err, services.ErrUserNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Associated user not found"})
+			apperrors.NotFound(c, apperrors.CodeResourceNotFound, "Associated user not found")
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apperrors.HandleError(c, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, saved)
+	apperrors.OK(c, saved)
 }
 
 // UpdateDevice godoc
@@ -66,25 +67,25 @@ func (dc *DeviceController) UpdateDevice(c *gin.Context) {
 	id := c.Param("id")
 	var input models.DeviceUpdateRequestDto
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		apperrors.ValidationError(c, err)
 		return
 	}
 
 	updated, err := dc.service.UpdateDevice(id, &input)
 	if err != nil {
 		if errors.Is(err, services.ErrDeviceNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Device not found"})
+			apperrors.NotFound(c, apperrors.CodeResourceNotFound, "Device not found")
 			return
 		}
 		if errors.Is(err, services.ErrUserNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Associated user not found"})
+			apperrors.NotFound(c, apperrors.CodeResourceNotFound, "Associated user not found")
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apperrors.HandleError(c, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, updated)
+	apperrors.OK(c, updated)
 }
 
 // SearchDevice godoc
@@ -112,11 +113,11 @@ func (dc *DeviceController) SearchDevice(c *gin.Context) {
 
 	devices, err := dc.service.SearchDevices(id, serialNumber, brand, userDni, userName, queryStr)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apperrors.HandleError(c, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, devices)
+	apperrors.OK(c, devices)
 }
 
 // DeleteDevice godoc
@@ -132,10 +133,10 @@ func (dc *DeviceController) DeleteDevice(c *gin.Context) {
 	id := c.Param("id")
 	if err := dc.service.DeleteDevice(id); err != nil {
 		if errors.Is(err, services.ErrDeviceNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Device not found"})
+			apperrors.NotFound(c, apperrors.CodeResourceNotFound, "Device not found")
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apperrors.HandleError(c, err)
 		return
 	}
 	c.Status(http.StatusOK)

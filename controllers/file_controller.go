@@ -1,11 +1,11 @@
 package controllers
 
 import (
-	"net/http"
 	"path/filepath"
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/mirazopablo/viking-app-go/apperrors"
 	"github.com/mirazopablo/viking-app-go/config"
 )
 
@@ -32,7 +32,7 @@ func (fc *FileController) ServeFile(c *gin.Context) {
 
 	// Prevent directory traversal attacks while allowing safe subdirectories (like workOrderId/image.jpg)
 	if strings.Contains(relPath, "..") {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid filepath"})
+		apperrors.BadRequest(c, apperrors.CodeValidationError, "Invalid filepath")
 		return
 	}
 

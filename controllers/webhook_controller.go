@@ -1,9 +1,8 @@
 package controllers
 
 import (
-	"net/http"
-
 	"github.com/gin-gonic/gin"
+	"github.com/mirazopablo/viking-app-go/apperrors"
 	"github.com/mirazopablo/viking-app-go/services"
 )
 
@@ -20,9 +19,9 @@ func NewWebhookController(debounceService services.WebhookDebounceService) *Webh
 // HandleWhatsAppWebhook intercepts the webhook from Evolution API
 func (wc *WebhookController) HandleWhatsAppWebhook(c *gin.Context) {
 	var payload map[string]interface{}
-	
+
 	if err := c.ShouldBindJSON(&payload); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
+		apperrors.ValidationError(c, err)
 		return
 	}
 
@@ -30,5 +29,5 @@ func (wc *WebhookController) HandleWhatsAppWebhook(c *gin.Context) {
 	go wc.debounceService.HandleIncomingWebhook(payload)
 
 	// Always reply 200 OK so the API doesn't retry
-	c.JSON(http.StatusOK, gin.H{"status": "received"})
+	apperrors.OK(c, gin.H{"status": "received"})
 }
