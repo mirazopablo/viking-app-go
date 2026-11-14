@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/mirazopablo/viking-app-go/apperrors"
 	"github.com/mirazopablo/viking-app-go/models"
 	"github.com/mirazopablo/viking-app-go/services"
 )
@@ -31,10 +32,10 @@ func NewRoleController(service services.RoleService) *RoleController {
 func (rc *RoleController) GetAllRoles(c *gin.Context) {
 	roles, err := rc.service.GetAllRoles()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apperrors.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, roles)
+	apperrors.OK(c, roles)
 }
 
 // GetRoleByID godoc
@@ -52,13 +53,13 @@ func (rc *RoleController) GetRoleByID(c *gin.Context) {
 	role, err := rc.service.GetRoleByID(id)
 	if err != nil {
 		if errors.Is(err, services.ErrRoleNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Role not found"})
+			apperrors.NotFound(c, apperrors.CodeResourceNotFound, "Role not found")
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apperrors.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, role)
+	apperrors.OK(c, role)
 }
 
 // CreateRole godoc
@@ -75,16 +76,16 @@ func (rc *RoleController) GetRoleByID(c *gin.Context) {
 func (rc *RoleController) CreateRole(c *gin.Context) {
 	var input models.RoleCreateRequest
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		apperrors.ValidationError(c, err)
 		return
 	}
 
 	createdRole, err := rc.service.CreateRole(&input)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apperrors.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, createdRole)
+	apperrors.OK(c, createdRole)
 }
 
 // UpdateRole godoc
@@ -103,20 +104,20 @@ func (rc *RoleController) UpdateRole(c *gin.Context) {
 	id := c.Param("id")
 	var input models.RoleCreateRequest
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		apperrors.ValidationError(c, err)
 		return
 	}
 
 	updatedRole, err := rc.service.UpdateRole(id, &input)
 	if err != nil {
 		if errors.Is(err, services.ErrRoleNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Role not found"})
+			apperrors.NotFound(c, apperrors.CodeResourceNotFound, "Role not found")
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apperrors.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, updatedRole)
+	apperrors.OK(c, updatedRole)
 }
 
 // DeleteRole godoc
@@ -132,10 +133,10 @@ func (rc *RoleController) DeleteRole(c *gin.Context) {
 	id := c.Param("id")
 	if err := rc.service.DeleteRole(id); err != nil {
 		if errors.Is(err, services.ErrRoleNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Role not found"})
+			apperrors.NotFound(c, apperrors.CodeResourceNotFound, "Role not found")
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apperrors.HandleError(c, err)
 		return
 	}
 	c.Status(http.StatusOK)

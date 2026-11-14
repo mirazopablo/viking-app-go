@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/mirazopablo/viking-app-go/apperrors"
 	"github.com/mirazopablo/viking-app-go/services"
 )
 
@@ -30,19 +31,19 @@ func NewUserRoleController(roleSvc services.RoleService) *UserRoleController {
 func (urc *UserRoleController) GetUserPermission(c *gin.Context) {
 	roleIDVal, exists := c.Get("roleID")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Role ID not found in token context"})
+		apperrors.Unauthorized(c, apperrors.CodeAuthTokenInvalid, "Role ID not found in token context")
 		return
 	}
 
 	roleID, ok := roleIDVal.(string)
 	if !ok || roleID == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid role ID in token context"})
+		apperrors.Unauthorized(c, apperrors.CodeAuthTokenInvalid, "Invalid role ID in token context")
 		return
 	}
 
 	role, err := urc.roleSvc.GetRoleByID(roleID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apperrors.HandleError(c, err)
 		return
 	}
 
@@ -61,23 +62,23 @@ func (urc *UserRoleController) GetUserPermission(c *gin.Context) {
 func (urc *UserRoleController) IsUserStaff(c *gin.Context) {
 	roleIDVal, exists := c.Get("roleID")
 	if !exists {
-		c.JSON(http.StatusOK, false)
+		apperrors.OK(c, false)
 		return
 	}
 
 	roleID, ok := roleIDVal.(string)
 	if !ok || roleID == "" {
-		c.JSON(http.StatusOK, false)
+		apperrors.OK(c, false)
 		return
 	}
 
 	role, err := urc.roleSvc.GetRoleByID(roleID)
 	if err != nil {
-		c.JSON(http.StatusOK, false)
+		apperrors.OK(c, false)
 		return
 	}
 
 	desc := strings.ToUpper(strings.TrimSpace(role.Name))
 	isStaff := desc == "ADMIN" || desc == "STAFF" || desc == "TECNICO"
-	c.JSON(http.StatusOK, isStaff)
+	apperrors.OK(c, isStaff)
 }
