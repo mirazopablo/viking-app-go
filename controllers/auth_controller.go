@@ -1,11 +1,10 @@
 package controllers
 
 import (
-	"errors"
-	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/mirazopablo/viking-app-go/apperrors"
 	"github.com/mirazopablo/viking-app-go/models"
 	"github.com/mirazopablo/viking-app-go/services"
 )
@@ -28,31 +27,26 @@ func NewAuthController(service services.UserService) *AuthController {
 // @Accept json
 // @Produce json
 // @Param user body models.RegisterDto true "Register Request"
-// @Success 200 {string} string "OK"
+// @Success 200 {object} map[string]string "OK"
+// @Failure 400 {object} apperrors.ErrorResponse "Validation or business rule error"
+// @Failure 409 {object} apperrors.ErrorResponse "Email already registered"
+// @Failure 500 {object} apperrors.ErrorResponse "Internal server error"
 // @Security bearer-jwt
 // @Router /auth/signup [post]
 func (ac *AuthController) RegisterUser(c *gin.Context) {
 	var input models.RegisterDto
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		apperrors.ValidationError(c, err)
 		return
 	}
 
 	_, err := ac.service.RegisterUser(&input)
 	if err != nil {
-		if errors.Is(err, services.ErrEmailAlreadyTaken) {
-			c.JSON(http.StatusConflict, gin.H{"error": "Email already registered"})
-			return
-		}
-		if errors.Is(err, services.ErrPasswordRequired) {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apperrors.HandleError(c, err)
 		return
 	}
 
-	c.String(http.StatusOK, "User registered successfully")
+	apperrors.OK(c, gin.H{"message": "User registered successfully"})
 }
 
 // AuthenticateUser godoc
@@ -64,25 +58,24 @@ func (ac *AuthController) RegisterUser(c *gin.Context) {
 // @Produce json
 // @Param creds body models.LoginUserDto true "Login Credentials"
 // @Success 200 {object} models.LoginResponseDto "OK"
+// @Failure 400 {object} apperrors.ErrorResponse "Validation error"
+// @Failure 401 {object} apperrors.ErrorResponse "Invalid credentials"
+// @Failure 500 {object} apperrors.ErrorResponse "Internal server error"
 // @Router /auth/login [post]
 func (ac *AuthController) AuthenticateUser(c *gin.Context) {
 	var input models.LoginUserDto
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		apperrors.ValidationError(c, err)
 		return
 	}
 
 	resp, err := ac.service.LoginUser(&input)
 	if err != nil {
-		if errors.Is(err, services.ErrInvalidCreds) {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		apperrors.HandleError(c, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, resp)
+	apperrors.OK(c, resp)
 }
 
 // ValidateToken godoc
@@ -96,7 +89,7 @@ func (ac *AuthController) AuthenticateUser(c *gin.Context) {
 func (ac *AuthController) ValidateToken(c *gin.Context) {
 	authHeader := c.GetHeader("Authorization")
 	if authHeader == "" {
-		c.JSON(http.StatusOK, false)
+		apperrors.OK(c, false)
 		return
 	}
 
@@ -104,5 +97,5 @@ func (ac *AuthController) ValidateToken(c *gin.Context) {
 	tokenString = strings.TrimSpace(tokenString)
 
 	isValid := ac.service.ValidateTokenString(tokenString)
-	c.JSON(http.StatusOK, isValid)
+	apperrors.OK(c, isValid)
 }
