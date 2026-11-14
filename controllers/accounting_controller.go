@@ -71,6 +71,9 @@ func (c *AccountingController) CreateSalesNote(ctx *gin.Context) {
 // @Router /api/budget/{id}/convert-to-sale-note [post]
 func (c *AccountingController) ConvertBudgetToSaleNote(ctx *gin.Context) {
 	budgetID := ctx.Param("id")
+	if !apperrors.ValidateUUID(ctx, budgetID, "id") {
+		return
+	}
 
 	var req models.ConvertBudgetToSaleNoteRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -216,6 +219,12 @@ func (c *AccountingController) GetSalesNoteByID(ctx *gin.Context) {
 func (c *AccountingController) GetDashboardMetrics(ctx *gin.Context) {
 	from := ctx.Query("from")
 	to := ctx.Query("to")
+	if from != "" && !apperrors.ValidateDate(ctx, from, "from") {
+		return
+	}
+	if to != "" && !apperrors.ValidateDate(ctx, to, "to") {
+		return
+	}
 
 	metrics, err := c.accountingService.GetDashboardMetrics(from, to)
 	if err != nil {

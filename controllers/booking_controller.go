@@ -38,6 +38,9 @@ func (bc *BookingController) GetAvailability(c *gin.Context) {
 		apperrors.BadRequest(c, apperrors.CodeValidationError, "Date parameter is required")
 		return
 	}
+	if !apperrors.ValidateDate(c, date, "date") {
+		return
+	}
 
 	deviceType := c.Query("deviceType")
 
@@ -93,6 +96,9 @@ func (bc *BookingController) CreateBooking(c *gin.Context) {
 // @Router /api/v1/bookings/date/{date} [get]
 func (bc *BookingController) GetBookingsByDate(c *gin.Context) {
 	date := c.Param("date")
+	if !apperrors.ValidateDate(c, date, "date") {
+		return
+	}
 
 	bookings, err := bc.service.GetBookingsByDate(date)
 	if err != nil {
@@ -160,6 +166,9 @@ func (bc *BookingController) GetTomorrowBookings(c *gin.Context) {
 // @Router /api/v1/bookings/{id}/status [patch]
 func (bc *BookingController) UpdateBookingStatus(c *gin.Context) {
 	id := c.Param("id")
+	if !apperrors.ValidateUUID(c, id, "id") {
+		return
+	}
 
 	var dto models.UpdateBookingStatusDto
 	if err := c.ShouldBindJSON(&dto); err != nil {
@@ -191,6 +200,9 @@ func (bc *BookingController) UpdateBookingStatus(c *gin.Context) {
 // @Router /api/v1/bookings/{id}/bot-status [patch]
 func (bc *BookingController) UpdateBotStatus(c *gin.Context) {
 	id := c.Param("id")
+	if !apperrors.ValidateUUID(c, id, "id") {
+		return
+	}
 
 	var dto models.UpdateBotStatusDto
 	if err := c.ShouldBindJSON(&dto); err != nil {
@@ -268,6 +280,9 @@ func (bc *BookingController) CreateBlock(c *gin.Context) {
 // @Router /api/v1/bookings/blocks/{id} [delete]
 func (bc *BookingController) DeleteBlock(c *gin.Context) {
 	id := c.Param("id")
+	if !apperrors.ValidateUUID(c, id, "id") {
+		return
+	}
 
 	err := bc.service.DeleteBlock(id)
 	if err != nil {

@@ -63,6 +63,9 @@ func (uc *UserController) SaveUser(c *gin.Context) {
 // @Router /api/user/update/{id} [patch]
 func (uc *UserController) UpdateUser(c *gin.Context) {
 	id := c.Param("id")
+	if !apperrors.ValidateUUID(c, id, "id") {
+		return
+	}
 	var input models.RegisterDto
 	if err := c.ShouldBindJSON(&input); err != nil {
 		apperrors.ValidationError(c, err)
@@ -99,6 +102,9 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
 // @Router /api/user/search [get]
 func (uc *UserController) SearchUser(c *gin.Context) {
 	id := c.Query("id")
+	if id != "" && !apperrors.ValidateUUID(c, id, "id") {
+		return
+	}
 	dni := c.Query("dni")
 	name := c.Query("name")
 	email := c.Query("email")
@@ -184,6 +190,9 @@ func (uc *UserController) GetCurrentUser(c *gin.Context) {
 // @Router /api/user/delete/{id} [delete]
 func (uc *UserController) DeleteUser(c *gin.Context) {
 	id := c.Param("id")
+	if !apperrors.ValidateUUID(c, id, "id") {
+		return
+	}
 	if err := uc.service.DeleteUser(id); err != nil {
 		apperrors.HandleError(c, err)
 		return

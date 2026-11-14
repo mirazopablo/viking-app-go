@@ -94,6 +94,9 @@ func (nc *NotificationController) Unsubscribe(c *gin.Context) {
 // @Router /public/notifications/history [get]
 func (nc *NotificationController) GetHistory(c *gin.Context) {
 	workOrderID := c.Query("workOrderId")
+	if !apperrors.ValidateUUID(c, workOrderID, "workOrderId") {
+		return
+	}
 	securityCode := c.Query("securityCode")
 
 	history, err := nc.service.GetHistoryByWorkOrder(workOrderID, securityCode)
@@ -128,6 +131,9 @@ func (nc *NotificationController) GetHistory(c *gin.Context) {
 // @Router /public/notifications/mark-read [post]
 func (nc *NotificationController) MarkAsRead(c *gin.Context) {
 	workOrderID := c.Query("workOrderId")
+	if !apperrors.ValidateUUID(c, workOrderID, "workOrderId") {
+		return
+	}
 	securityCode := c.Query("securityCode")
 
 	err := nc.service.MarkHistoryAsRead(workOrderID, securityCode)

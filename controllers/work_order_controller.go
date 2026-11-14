@@ -79,6 +79,9 @@ func (woc *WorkOrderController) SaveWorkOrder(c *gin.Context) {
 // @Router /api/work-order/update/{orderId} [patch]
 func (woc *WorkOrderController) UpdateWorkOrderStatus(c *gin.Context) {
 	id := c.Param("orderId")
+	if !apperrors.ValidateUUID(c, id, "orderId") {
+		return
+	}
 	var input models.WorkOrderStatusUpdateRequestDto
 	if err := c.ShouldBindJSON(&input); err != nil {
 		apperrors.ValidationError(c, err)
@@ -110,6 +113,9 @@ func (woc *WorkOrderController) UpdateWorkOrderStatus(c *gin.Context) {
 // @Router /api/work-order/regenerate-code/{orderId} [patch]
 func (woc *WorkOrderController) RegenerateSecurityCode(c *gin.Context) {
 	id := c.Param("orderId")
+	if !apperrors.ValidateUUID(c, id, "orderId") {
+		return
+	}
 	updated, err := woc.service.RegenerateSecurityCode(id)
 	if err != nil {
 		if errors.Is(err, services.ErrWorkOrderNotFound) {
@@ -134,6 +140,9 @@ func (woc *WorkOrderController) RegenerateSecurityCode(c *gin.Context) {
 // @Router /api/work-order/{orderId} [get]
 func (woc *WorkOrderController) GetWorkOrderByID(c *gin.Context) {
 	id := c.Param("orderId")
+	if !apperrors.ValidateUUID(c, id, "orderId") {
+		return
+	}
 	wo, err := woc.service.GetWorkOrderByID(id)
 	if err != nil {
 		if errors.Is(err, services.ErrWorkOrderNotFound) {
@@ -185,6 +194,9 @@ func (woc *WorkOrderController) SearchWorkOrder(c *gin.Context) {
 // @Router /api/work-order/delete/{orderId} [delete]
 func (woc *WorkOrderController) DeleteWorkOrder(c *gin.Context) {
 	id := c.Param("orderId")
+	if !apperrors.ValidateUUID(c, id, "orderId") {
+		return
+	}
 	if err := woc.service.DeleteWorkOrder(id); err != nil {
 		if errors.Is(err, services.ErrWorkOrderNotFound) {
 			apperrors.NotFound(c, apperrors.CodeResourceNotFound, "Work order not found")

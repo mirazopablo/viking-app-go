@@ -140,6 +140,9 @@ func (dpc *DiagnosticPointController) AddDiagnosticPoint(c *gin.Context) {
 func (dpc *DiagnosticPointController) GetDiagnosticPointsByWorkOrderAndClient(c *gin.Context) {
 	workOrderID := c.Param("workOrderId")
 	clientID := c.Param("clientId")
+	if !apperrors.ValidateUUID(c, workOrderID, "workOrderId") || !apperrors.ValidateUUID(c, clientID, "clientId") {
+		return
+	}
 
 	points, err := dpc.service.GetByWorkOrderAndClient(workOrderID, clientID)
 	if err != nil {
@@ -162,6 +165,9 @@ func (dpc *DiagnosticPointController) GetDiagnosticPointsByWorkOrderAndClient(c 
 // @Router /api/diagnostic-points/by-work-order/{workOrderId} [get]
 func (dpc *DiagnosticPointController) GetDiagnosticPointsByWorkOrder(c *gin.Context) {
 	workOrderID := c.Param("workOrderId")
+	if !apperrors.ValidateUUID(c, workOrderID, "workOrderId") {
+		return
+	}
 
 	points, err := dpc.service.GetByWorkOrderAndClient(workOrderID, "")
 	if err != nil {
@@ -183,6 +189,9 @@ func (dpc *DiagnosticPointController) GetDiagnosticPointsByWorkOrder(c *gin.Cont
 // @Router /api/diagnostic-points/delete/{id} [delete]
 func (dpc *DiagnosticPointController) DeleteDiagnosticPoint(c *gin.Context) {
 	id := c.Param("id")
+	if !apperrors.ValidateUUID(c, id, "id") {
+		return
+	}
 	if err := dpc.service.DeleteDiagnosticPoint(id); err != nil {
 		if errors.Is(err, services.ErrDiagnosticPointNotFound) {
 			apperrors.NotFound(c, apperrors.CodeResourceNotFound, "Diagnostic point not found")

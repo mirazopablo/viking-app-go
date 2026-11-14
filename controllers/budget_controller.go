@@ -63,6 +63,9 @@ func (bc *BudgetController) SaveBudget(c *gin.Context) {
 // @Router /api/budget/by-work-order/{workOrderId} [get]
 func (bc *BudgetController) GetBudgetByWorkOrder(c *gin.Context) {
 	workOrderID := c.Param("workOrderId")
+	if !apperrors.ValidateUUID(c, workOrderID, "workOrderId") {
+		return
+	}
 	isPublic := c.Query("public") == "true"
 
 	res, err := bc.service.GetBudgetByWorkOrder(workOrderID, isPublic)
@@ -92,6 +95,9 @@ func (bc *BudgetController) GetBudgetByWorkOrder(c *gin.Context) {
 // @Router /public/work-order/budget/{workOrderId} [get]
 func (bc *BudgetController) GetPublicBudgetByWorkOrder(c *gin.Context) {
 	workOrderID := c.Param("workOrderId")
+	if !apperrors.ValidateUUID(c, workOrderID, "workOrderId") {
+		return
+	}
 	securityCode := c.Query("securityCode")
 
 	res, err := bc.service.GetBudgetByWorkOrder(workOrderID, true, securityCode)
@@ -125,6 +131,9 @@ func (bc *BudgetController) GetPublicBudgetByWorkOrder(c *gin.Context) {
 // @Router /api/budget/update-status/{id} [patch]
 func (bc *BudgetController) UpdateBudgetStatus(c *gin.Context) {
 	id := c.Param("id")
+	if !apperrors.ValidateUUID(c, id, "id") {
+		return
+	}
 
 	var dto models.BudgetStatusUpdateDto
 	if err := c.ShouldBindJSON(&dto); err != nil {
@@ -158,6 +167,9 @@ func (bc *BudgetController) UpdateBudgetStatus(c *gin.Context) {
 // @Router /api/budget/delete/{id} [delete]
 func (bc *BudgetController) DeleteBudget(c *gin.Context) {
 	id := c.Param("id")
+	if !apperrors.ValidateUUID(c, id, "id") {
+		return
+	}
 
 	if err := bc.service.DeleteBudget(id); err != nil {
 		if errors.Is(err, services.ErrBudgetNotFound) {

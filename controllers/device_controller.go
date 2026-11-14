@@ -65,6 +65,9 @@ func (dc *DeviceController) RegisterDevice(c *gin.Context) {
 // @Router /api/device/update/{id} [patch]
 func (dc *DeviceController) UpdateDevice(c *gin.Context) {
 	id := c.Param("id")
+	if !apperrors.ValidateUUID(c, id, "id") {
+		return
+	}
 	var input models.DeviceUpdateRequestDto
 	if err := c.ShouldBindJSON(&input); err != nil {
 		apperrors.ValidationError(c, err)
@@ -105,6 +108,9 @@ func (dc *DeviceController) UpdateDevice(c *gin.Context) {
 // @Router /api/device/search [get]
 func (dc *DeviceController) SearchDevice(c *gin.Context) {
 	id := c.Query("id")
+	if id != "" && !apperrors.ValidateUUID(c, id, "id") {
+		return
+	}
 	serialNumber := c.Query("serialNumber")
 	brand := c.Query("brand")
 	userDni := c.Query("userDni")
@@ -131,6 +137,9 @@ func (dc *DeviceController) SearchDevice(c *gin.Context) {
 // @Router /api/device/delete/{id} [delete]
 func (dc *DeviceController) DeleteDevice(c *gin.Context) {
 	id := c.Param("id")
+	if !apperrors.ValidateUUID(c, id, "id") {
+		return
+	}
 	if err := dc.service.DeleteDevice(id); err != nil {
 		if errors.Is(err, services.ErrDeviceNotFound) {
 			apperrors.NotFound(c, apperrors.CodeResourceNotFound, "Device not found")

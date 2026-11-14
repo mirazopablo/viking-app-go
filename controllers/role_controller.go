@@ -50,6 +50,9 @@ func (rc *RoleController) GetAllRoles(c *gin.Context) {
 // @Router /auth/roles/{id} [get]
 func (rc *RoleController) GetRoleByID(c *gin.Context) {
 	id := c.Param("id")
+	if !apperrors.ValidateUUID(c, id, "id") {
+		return
+	}
 	role, err := rc.service.GetRoleByID(id)
 	if err != nil {
 		if errors.Is(err, services.ErrRoleNotFound) {
@@ -102,6 +105,9 @@ func (rc *RoleController) CreateRole(c *gin.Context) {
 // @Router /auth/roles/{id} [put]
 func (rc *RoleController) UpdateRole(c *gin.Context) {
 	id := c.Param("id")
+	if !apperrors.ValidateUUID(c, id, "id") {
+		return
+	}
 	var input models.RoleCreateRequest
 	if err := c.ShouldBindJSON(&input); err != nil {
 		apperrors.ValidationError(c, err)
@@ -131,6 +137,9 @@ func (rc *RoleController) UpdateRole(c *gin.Context) {
 // @Router /auth/roles/{id} [delete]
 func (rc *RoleController) DeleteRole(c *gin.Context) {
 	id := c.Param("id")
+	if !apperrors.ValidateUUID(c, id, "id") {
+		return
+	}
 	if err := rc.service.DeleteRole(id); err != nil {
 		if errors.Is(err, services.ErrRoleNotFound) {
 			apperrors.NotFound(c, apperrors.CodeResourceNotFound, "Role not found")

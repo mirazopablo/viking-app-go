@@ -78,6 +78,9 @@ func (ac *AutomationController) GetTomorrowTasks(c *gin.Context) {
 // @Router /api/v1/automation/tasks/{id}/status [patch]
 func (ac *AutomationController) UpdateTaskStatus(c *gin.Context) {
 	id := c.Param("id")
+	if !apperrors.ValidateUUID(c, id, "id") {
+		return
+	}
 
 	var dto models.UpdateBookingStatusDto
 	if err := c.ShouldBindJSON(&dto); err != nil {
@@ -109,6 +112,9 @@ func (ac *AutomationController) UpdateTaskStatus(c *gin.Context) {
 // @Router /api/v1/automation/tasks/{id}/bot-status [patch]
 func (ac *AutomationController) UpdateTaskBotStatus(c *gin.Context) {
 	id := c.Param("id")
+	if !apperrors.ValidateUUID(c, id, "id") {
+		return
+	}
 
 	var dto models.UpdateBotStatusDto
 	if err := c.ShouldBindJSON(&dto); err != nil {
@@ -137,6 +143,9 @@ func (ac *AutomationController) UpdateTaskBotStatus(c *gin.Context) {
 // @Router /api/v1/automation/tasks/{id} [delete]
 func (ac *AutomationController) DeleteTask(c *gin.Context) {
 	id := c.Param("id")
+	if !apperrors.ValidateUUID(c, id, "id") {
+		return
+	}
 
 	err := ac.bookingService.DeleteBooking(id)
 	if err != nil {
