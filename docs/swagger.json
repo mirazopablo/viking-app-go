@@ -216,6 +216,71 @@
                 }
             }
         },
+        "/api/budget/{id}/convert-to-sale-note": {
+            "post": {
+                "security": [
+                    {
+                        "bearer-jwt": []
+                    }
+                ],
+                "description": "Transforma una cotización aprobada en una Nota de Venta interna en caja",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Budget"
+                ],
+                "summary": "Convertir Presupuesto aprobado a Nota de Venta",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID del Presupuesto (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Datos de cobro",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.ConvertBudgetToSaleNoteRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/device/delete/{id}": {
             "delete": {
                 "security": [
@@ -876,6 +941,45 @@
                 }
             }
         },
+        "/api/v1/accounting/dashboard": {
+            "get": {
+                "security": [
+                    {
+                        "bearer-jwt": []
+                    }
+                ],
+                "description": "Consolida ingresos reales, desglose fiscal vs interno y control de Monotributo",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Accounting"
+                ],
+                "summary": "Obtener métricas del Dashboard Contable",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Fecha desde (YYYY-MM-DD)",
+                        "name": "from",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Fecha hasta (YYYY-MM-DD)",
+                        "name": "to",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.AccountingDashboardResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/automation/tasks/tomorrow": {
             "get": {
                 "description": "Retorna los turnos de mañana en UTC-3 mapeados para n8n",
@@ -1139,6 +1243,165 @@
                 }
             }
         },
+        "/api/v1/bookings/blocks": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retorna los bloqueos configurados",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Bookings (Blocks)"
+                ],
+                "summary": "Listar bloqueos activos",
+                "operationId": "listBlocks",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.BlockResponseDto"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Crea una excepción de disponibilidad",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Bookings (Blocks)"
+                ],
+                "summary": "Crear nuevo bloqueo",
+                "operationId": "createBlock",
+                "parameters": [
+                    {
+                        "description": "Block Payload",
+                        "name": "block",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.BlockCreateDto"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.BlockResponseDto"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/bookings/blocks/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Elimina una excepción de disponibilidad",
+                "tags": [
+                    "Bookings (Blocks)"
+                ],
+                "summary": "Eliminar bloqueo",
+                "operationId": "deleteBlock",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID del bloqueo (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/bookings/client/{phone}": {
+            "get": {
+                "description": "Obtiene el nombre del cliente basado en su número de teléfono",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Bookings"
+                ],
+                "summary": "Obtener cliente por teléfono",
+                "operationId": "getClientByPhone",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Número de teléfono",
+                        "name": "phone",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/bookings/date/{date}": {
             "get": {
                 "description": "Obtiene la lista de turnos (bookings) para una fecha específica.",
@@ -1159,6 +1422,66 @@
                         "required": true
                     }
                 ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Booking"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/bookings/today": {
+            "get": {
+                "description": "Obtiene la lista de turnos (bookings) para el día de hoy automáticamente calculando la fecha.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Bookings"
+                ],
+                "summary": "Obtener turnos del día actual",
+                "operationId": "getTodayBookings",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Booking"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/bookings/tomorrow": {
+            "get": {
+                "description": "Obtiene la lista de turnos (bookings) para el día de mañana automáticamente calculando la fecha.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Bookings"
+                ],
+                "summary": "Obtener turnos del día de mañana",
+                "operationId": "getTomorrowBookings",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -1281,6 +1604,404 @@
                         "description": "Internal Server Error",
                         "schema": {
                             "type": "object"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/invoices": {
+            "get": {
+                "security": [
+                    {
+                        "bearer-jwt": []
+                    }
+                ],
+                "description": "Obtiene un listado paginado de las facturas registradas localmente",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Invoices"
+                ],
+                "summary": "Listar facturas emitidas",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Límite de resultados",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Desplazamiento",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "bearer-jwt": []
+                    }
+                ],
+                "description": "Emite un comprobante fiscal Tipo 11 (Factura C) ante ARCA y devuelve el CAE obtenido",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Invoices"
+                ],
+                "summary": "Emitir Factura C electrónica en ARCA",
+                "parameters": [
+                    {
+                        "description": "Datos de la factura",
+                        "name": "invoice",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.CreateInvoiceRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.InvoiceResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/invoices/import-manual": {
+            "post": {
+                "security": [
+                    {
+                        "bearer-jwt": []
+                    }
+                ],
+                "description": "Permite cargar manualmente una Factura emitida por fuera del sistema para cuadrar la contabilidad",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Invoices"
+                ],
+                "summary": "Registrar factura emitida externamente en ARCA (RCEL / Facturador)",
+                "parameters": [
+                    {
+                        "description": "Datos del comprobante emitido en ARCA",
+                        "name": "invoice",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.ImportManualInvoiceRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.Invoice"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/invoices/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "bearer-jwt": []
+                    }
+                ],
+                "description": "Obtiene el detalle de un comprobante emitido",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Invoices"
+                ],
+                "summary": "Obtener factura por ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID de la factura",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Invoice"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/sales-notes": {
+            "get": {
+                "security": [
+                    {
+                        "bearer-jwt": []
+                    }
+                ],
+                "description": "Obtiene un listado paginado de comprobantes de venta internos",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Accounting"
+                ],
+                "summary": "Listar Notas de Venta",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Límite",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Desplazamiento",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Método de Pago (CASH, TRANSFER, MERCADOPAGO)",
+                        "name": "payment_method",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "bearer-jwt": []
+                    }
+                ],
+                "description": "Emite una Nota de Venta interna (Letra [ X ] no fiscal) para control de caja",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Accounting"
+                ],
+                "summary": "Crear Nota de Venta interna",
+                "parameters": [
+                    {
+                        "description": "Datos de la venta",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.CreateSalesNoteRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.SalesNote"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/sales-notes/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "bearer-jwt": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Accounting"
+                ],
+                "summary": "Obtener Nota de Venta por ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID de la Nota de Venta",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.SalesNote"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/sales-notes/{id}/fiscalize": {
+            "post": {
+                "security": [
+                    {
+                        "bearer-jwt": []
+                    }
+                ],
+                "description": "Emite Factura C oficial ante ARCA para una Nota de Venta previa y le asigna el CAE",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Accounting"
+                ],
+                "summary": "Fiscalizar Nota de Venta existente en ARCA",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID de la Nota de Venta",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Datos fiscales del receptor",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.FiscalizeSalesNoteRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     }
                 }
@@ -2210,6 +2931,30 @@
         }
     },
     "definitions": {
+        "models.AccountingDashboardResponse": {
+            "type": "object",
+            "properties": {
+                "by_payment_method": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "number",
+                        "format": "float64"
+                    }
+                },
+                "cash_flow": {
+                    "$ref": "#/definitions/models.CashFlowSummary"
+                },
+                "fiscal_vs_internal": {
+                    "$ref": "#/definitions/models.FiscalVsInternalSummary"
+                },
+                "monotributo_control": {
+                    "$ref": "#/definitions/models.MonotributoControlSummary"
+                },
+                "period": {
+                    "$ref": "#/definitions/models.PeriodSummary"
+                }
+            }
+        },
         "models.AvailabilityResponseDto": {
             "type": "object",
             "properties": {
@@ -2220,6 +2965,55 @@
                     }
                 },
                 "date": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.BlockCreateDto": {
+            "type": "object",
+            "required": [
+                "date"
+            ],
+            "properties": {
+                "date": {
+                    "type": "string"
+                },
+                "endTime": {
+                    "type": "string"
+                },
+                "isFullDay": {
+                    "type": "boolean"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "startTime": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.BlockResponseDto": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "date": {
+                    "type": "string"
+                },
+                "endTime": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "isFullDay": {
+                    "type": "boolean"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "startTime": {
                     "type": "string"
                 }
             }
@@ -2239,6 +3033,9 @@
                 "deviceType": {
                     "type": "string"
                 },
+                "endTime": {
+                    "type": "string"
+                },
                 "fullName": {
                     "type": "string"
                 },
@@ -2248,16 +3045,25 @@
                 "id": {
                     "type": "string"
                 },
+                "isFullDay": {
+                    "type": "boolean"
+                },
                 "notes": {
                     "type": "string"
                 },
                 "phone": {
                     "type": "string"
                 },
+                "startTime": {
+                    "type": "string"
+                },
                 "status": {
                     "type": "string"
                 },
                 "timeSlotId": {
+                    "type": "string"
+                },
+                "type": {
                     "type": "string"
                 },
                 "updatedAt": {
@@ -2356,10 +3162,7 @@
             "type": "object",
             "properties": {
                 "budgetData": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
+                    "type": "object"
                 },
                 "createdAt": {
                     "type": "string"
@@ -2399,10 +3202,7 @@
             ],
             "properties": {
                 "blocks": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
+                    "type": "object"
                 },
                 "clientAddress": {
                     "type": "string"
@@ -2492,6 +3292,140 @@
                 },
                 "totalSparePartsProfit": {
                     "type": "number"
+                }
+            }
+        },
+        "models.CashFlowSummary": {
+            "type": "object",
+            "properties": {
+                "gross_income": {
+                    "type": "number"
+                },
+                "net_profit": {
+                    "type": "number"
+                },
+                "profit_margin_percentage": {
+                    "type": "number"
+                },
+                "spare_parts_cost": {
+                    "type": "number"
+                }
+            }
+        },
+        "models.ConvertBudgetToSaleNoteRequest": {
+            "type": "object",
+            "required": [
+                "payment_method"
+            ],
+            "properties": {
+                "notes": {
+                    "type": "string"
+                },
+                "payment_method": {
+                    "type": "string"
+                },
+                "payment_status": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.CreateInvoiceRequest": {
+            "type": "object",
+            "required": [
+                "concepto",
+                "doc_tipo",
+                "importe_total"
+            ],
+            "properties": {
+                "concepto": {
+                    "type": "integer",
+                    "enum": [
+                        1,
+                        2,
+                        3
+                    ]
+                },
+                "condicion_iva_receptor_id": {
+                    "description": "RG 5616: default 5 (Consumidor Final)",
+                    "type": "integer"
+                },
+                "doc_nro": {
+                    "type": "integer"
+                },
+                "doc_tipo": {
+                    "type": "integer"
+                },
+                "fch_serv_desde": {
+                    "description": "Campos requeridos si Concepto == 2 o 3 (Servicios)",
+                    "type": "string"
+                },
+                "fch_serv_hasta": {
+                    "description": "YYYYMMDD",
+                    "type": "string"
+                },
+                "fch_vto_pago": {
+                    "description": "YYYYMMDD",
+                    "type": "string"
+                },
+                "importe_total": {
+                    "type": "number"
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.InvoiceItemDto"
+                    }
+                }
+            }
+        },
+        "models.CreateSalesNoteRequest": {
+            "type": "object",
+            "required": [
+                "client_name",
+                "items",
+                "payment_method",
+                "total_amount"
+            ],
+            "properties": {
+                "budget_id": {
+                    "type": "string"
+                },
+                "client_dni": {
+                    "type": "integer"
+                },
+                "client_id": {
+                    "type": "string"
+                },
+                "client_name": {
+                    "type": "string"
+                },
+                "client_phone": {
+                    "type": "string"
+                },
+                "discount": {
+                    "type": "number"
+                },
+                "items": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/definitions/models.SalesNoteItemDto"
+                    }
+                },
+                "notes": {
+                    "type": "string"
+                },
+                "payment_method": {
+                    "type": "string"
+                },
+                "payment_status": {
+                    "type": "string"
+                },
+                "total_amount": {
+                    "type": "number"
+                },
+                "work_order_id": {
+                    "type": "string"
                 }
             }
         },
@@ -2603,6 +3537,307 @@
                 }
             }
         },
+        "models.FiscalVsInternalSummary": {
+            "type": "object",
+            "properties": {
+                "fiscal_invoiced_total": {
+                    "type": "number"
+                },
+                "fiscal_percentage": {
+                    "type": "number"
+                },
+                "internal_sales_notes_total": {
+                    "type": "number"
+                }
+            }
+        },
+        "models.FiscalizeSalesNoteRequest": {
+            "type": "object",
+            "required": [
+                "concepto",
+                "doc_tipo"
+            ],
+            "properties": {
+                "concepto": {
+                    "type": "integer",
+                    "enum": [
+                        1,
+                        2,
+                        3
+                    ]
+                },
+                "condicion_iva_receptor_id": {
+                    "type": "integer"
+                },
+                "doc_nro": {
+                    "type": "integer"
+                },
+                "doc_tipo": {
+                    "type": "integer"
+                },
+                "fch_serv_desde": {
+                    "type": "string"
+                },
+                "fch_serv_hasta": {
+                    "type": "string"
+                },
+                "fch_vto_pago": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.ImportManualInvoiceRequest": {
+            "type": "object",
+            "required": [
+                "cae",
+                "cae_vto",
+                "concepto",
+                "doc_tipo",
+                "fecha_emision",
+                "importe_total",
+                "numero_cmp",
+                "punto_venta",
+                "tipo_cmp"
+            ],
+            "properties": {
+                "cae": {
+                    "type": "string"
+                },
+                "cae_vto": {
+                    "type": "string"
+                },
+                "concepto": {
+                    "type": "integer",
+                    "enum": [
+                        1,
+                        2,
+                        3
+                    ]
+                },
+                "condicion_iva_receptor_id": {
+                    "type": "integer"
+                },
+                "doc_nro": {
+                    "type": "integer"
+                },
+                "doc_tipo": {
+                    "type": "integer"
+                },
+                "fecha_emision": {
+                    "description": "YYYYMMDD",
+                    "type": "string"
+                },
+                "importe_total": {
+                    "type": "number"
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.InvoiceItemDto"
+                    }
+                },
+                "numero_cmp": {
+                    "type": "integer"
+                },
+                "observaciones": {
+                    "type": "string"
+                },
+                "punto_venta": {
+                    "type": "integer"
+                },
+                "tipo_cmp": {
+                    "description": "11 = Factura C",
+                    "type": "integer"
+                }
+            }
+        },
+        "models.Invoice": {
+            "type": "object",
+            "properties": {
+                "cae": {
+                    "type": "string"
+                },
+                "cae_vto": {
+                    "description": "YYYYMMDD",
+                    "type": "string"
+                },
+                "concepto": {
+                    "description": "1: Productos, 2: Servicios, 3: Ambos",
+                    "type": "integer"
+                },
+                "condicion_iva_receptor_id": {
+                    "description": "RG 5616: 5 = Consumidor Final",
+                    "type": "integer"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "doc_nro": {
+                    "type": "integer"
+                },
+                "doc_tipo": {
+                    "description": "99: Consumidor Final, 80: CUIT, 96: DNI",
+                    "type": "integer"
+                },
+                "fecha_emision": {
+                    "description": "YYYYMMDD",
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "importe_total": {
+                    "type": "number"
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.InvoiceItem"
+                    }
+                },
+                "numero_cmp": {
+                    "type": "integer"
+                },
+                "observaciones": {
+                    "type": "string"
+                },
+                "punto_venta": {
+                    "type": "integer"
+                },
+                "resultado": {
+                    "description": "A: Aprobado, R: Rechazado",
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/models.InvoiceStatus"
+                },
+                "tipo_cmp": {
+                    "description": "11 = Factura C",
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.InvoiceItem": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "invoice_id": {
+                    "type": "integer"
+                },
+                "item_type": {
+                    "description": "LABOR, SPARE_PART, ACCESSORY, SERVICE",
+                    "type": "string"
+                },
+                "quantity": {
+                    "type": "number"
+                },
+                "total_price": {
+                    "type": "number"
+                },
+                "unit_price": {
+                    "type": "number"
+                }
+            }
+        },
+        "models.InvoiceItemDto": {
+            "type": "object",
+            "required": [
+                "description",
+                "quantity",
+                "unit_price"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "item_type": {
+                    "type": "string"
+                },
+                "quantity": {
+                    "type": "number"
+                },
+                "total_price": {
+                    "type": "number"
+                },
+                "unit_price": {
+                    "type": "number"
+                }
+            }
+        },
+        "models.InvoiceResponse": {
+            "type": "object",
+            "properties": {
+                "cae": {
+                    "type": "string"
+                },
+                "cae_vto": {
+                    "type": "string"
+                },
+                "doc_nro": {
+                    "type": "integer"
+                },
+                "doc_tipo": {
+                    "type": "integer"
+                },
+                "fecha_emision": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "importe_total": {
+                    "type": "number"
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.InvoiceItem"
+                    }
+                },
+                "numero_cmp": {
+                    "type": "integer"
+                },
+                "observaciones": {
+                    "type": "string"
+                },
+                "punto_venta": {
+                    "type": "integer"
+                },
+                "resultado": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "tipo_cmp": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.InvoiceStatus": {
+            "type": "string",
+            "enum": [
+                "APPROVED",
+                "REJECTED",
+                "PENDING"
+            ],
+            "x-enum-varnames": [
+                "InvoiceStatusApproved",
+                "InvoiceStatusRejected",
+                "InvoiceStatusPending"
+            ]
+        },
         "models.LoginResponseDto": {
             "type": "object",
             "properties": {
@@ -2636,6 +3871,26 @@
                 }
             }
         },
+        "models.MonotributoControlSummary": {
+            "type": "object",
+            "properties": {
+                "accumulated_last_12_months": {
+                    "type": "number"
+                },
+                "category_annual_limit": {
+                    "type": "number"
+                },
+                "current_category": {
+                    "type": "string"
+                },
+                "remaining_before_next_category": {
+                    "type": "number"
+                },
+                "usage_percentage": {
+                    "type": "number"
+                }
+            }
+        },
         "models.NotificationHistoryResponseDto": {
             "type": "object",
             "properties": {
@@ -2658,6 +3913,17 @@
                     "type": "string"
                 },
                 "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.PeriodSummary": {
+            "type": "object",
+            "properties": {
+                "from": {
+                    "type": "string"
+                },
+                "to": {
                     "type": "string"
                 }
             }
@@ -2817,6 +4083,141 @@
                     "maxLength": 100,
                     "minLength": 2,
                     "example": "ADMIN"
+                }
+            }
+        },
+        "models.SalesNote": {
+            "type": "object",
+            "properties": {
+                "budget_id": {
+                    "type": "string"
+                },
+                "client_dni": {
+                    "type": "integer"
+                },
+                "client_id": {
+                    "type": "string"
+                },
+                "client_name": {
+                    "type": "string"
+                },
+                "client_phone": {
+                    "type": "string"
+                },
+                "cost_amount": {
+                    "type": "number"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "created_by_staff_id": {
+                    "type": "string"
+                },
+                "discount": {
+                    "type": "number"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "invoice": {
+                    "$ref": "#/definitions/models.Invoice"
+                },
+                "invoice_id": {
+                    "type": "integer"
+                },
+                "is_fiscal": {
+                    "type": "boolean"
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.SalesNoteItem"
+                    }
+                },
+                "net_profit": {
+                    "type": "number"
+                },
+                "notes": {
+                    "type": "string"
+                },
+                "number": {
+                    "description": "e.g. NV-0001-00000015",
+                    "type": "string"
+                },
+                "payment_method": {
+                    "type": "string"
+                },
+                "payment_status": {
+                    "type": "string"
+                },
+                "subtotal": {
+                    "type": "number"
+                },
+                "total_amount": {
+                    "type": "number"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "work_order_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.SalesNoteItem": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "item_type": {
+                    "description": "LABOR, SPARE_PART, ACCESSORY",
+                    "type": "string"
+                },
+                "quantity": {
+                    "type": "number"
+                },
+                "sales_note_id": {
+                    "type": "integer"
+                },
+                "total_price": {
+                    "type": "number"
+                },
+                "unit_cost": {
+                    "type": "number"
+                },
+                "unit_price": {
+                    "type": "number"
+                }
+            }
+        },
+        "models.SalesNoteItemDto": {
+            "type": "object",
+            "required": [
+                "description",
+                "item_type",
+                "quantity",
+                "unit_price"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "item_type": {
+                    "description": "LABOR, SPARE_PART, ACCESSORY",
+                    "type": "string"
+                },
+                "quantity": {
+                    "type": "number"
+                },
+                "unit_cost": {
+                    "type": "number"
+                },
+                "unit_price": {
+                    "type": "number"
                 }
             }
         },
