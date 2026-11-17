@@ -1,4 +1,4 @@
-name: Build and Push Docker Image
+name: Build, Release and Push Docker Image
 
 on:
   push:
@@ -9,7 +9,55 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      version: ${{ steps.svu.outputs.version }}
+      released: ${{ steps.svu.outputs.released }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: false
+
+      - name: Install svu
+        run: go install github.com/caarlos0/svu@latest
+
+      - name: Calculate next semantic version
+        id: svu
+        run: |
+          CURRENT_VERSION=$(svu current)
+          NEXT_VERSION=$(svu next --force-patch-increment)
+
+          if [ "$CURRENT_VERSION" = "$NEXT_VERSION" ]; then
+            echo "No new version bump detected (current: $CURRENT_VERSION)."
+            echo "released=false" >> "$GITHUB_OUTPUT"
+            echo "version=$CURRENT_VERSION" >> "$GITHUB_OUTPUT"
+          else
+            echo "New version detected: $CURRENT_VERSION -> $NEXT_VERSION"
+            echo "released=true" >> "$GITHUB_OUTPUT"
+            echo "version=$NEXT_VERSION" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create GitHub Release and Tag
+        if: steps.svu.outputs.released == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.svu.outputs.version }}
+          name: ${{ steps.svu.outputs.version }}
+          generate_release_notes: true
+
   build-and-push:
+    needs: release
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -33,6 +81,7 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=latest
+            type=raw,value=${{ needs.release.outputs.version }},enable=${{ needs.release.outputs.released == 'true' }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
